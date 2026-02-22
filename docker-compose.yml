@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: backend-postgres
+    environment:
+      POSTGRES_USER: eduhaiti
+      POSTGRES_PASSWORD: eduhaiti
+      POSTGRES_DB: eduhaiti_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    image: node:20-alpine
+    container_name: backend-api
+    working_dir: /app
+    command: sh -c "npm install; npm run start:dev"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://eduhaiti:eduhaiti@postgres:5432/eduhaiti_dev
+      JWT_SECRET: change-me
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/backend:/app
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      - postgres
+
+  frontend:
+    image: node:20-alpine
+    container_name: backend-frontend
+    working_dir: /app
+    command: sh -c "npm install; npm run dev -- --host"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_node_modules:
+  frontend_node_modules:

@@ -23,3 +23,39 @@ O **EduHaiti** é uma plataforma digital de gestão escolar focada na eficiênci
 
 ---
 *Développé pour l'avenir de l'éducation en Haïti.*
+
+## 📦 Estrutura do Monorepo
+```
+apps/
+	backend/    # NestJS + Prisma
+	frontend/   # React + Vite + Tailwind
+packages/
+```
+
+## 🚀 Como Rodar (Dev)
+### 1) Banco + Apps com Docker
+```bash
+docker compose up
+```
+
+### 2) Rodar localmente (sem Docker)
+```bash
+# backend
+cd apps/backend
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run start:dev
+
+# frontend
+cd ../frontend
+npm install
+npm run dev
+```
+
+## 🔐 Autenticacao (MVP)
+- Fluxo de login com codigo enviado por email (modo dev retorna `devCode`).
+- Endpoints principais: `/api/auth/request-code`, `/api/auth/verify-code`, `/api/auth/me`.
+
+## 🌍 Idiomas
+- Francais (FR) e Kreyol Ayisyen (HT) ja configurados no frontend.

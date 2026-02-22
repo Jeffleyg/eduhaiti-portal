@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Space+Grotesk:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --navy: #002147;
+  --red: #d21034;
+  --sky: #00a8e8;
+  --sand: #f4f1ea;
+  --ink: #0b1220;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #ffffff 0%, #f8f6f1 55%, #f1f4f9 100%);
+  color: var(--ink);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.bg-atlas {
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(0, 168, 232, 0.18), transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(210, 16, 52, 0.2), transparent 35%),
+    radial-gradient(circle at 80% 80%, rgba(0, 33, 71, 0.2), transparent 45%);
+}
+
+.bg-grid {
+  background-image: linear-gradient(90deg, rgba(0, 33, 71, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 33, 71, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 33, 71, 0.08);
+  box-shadow: 0 24px 70px rgba(0, 33, 71, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.fade-rise {
+  animation: rise 0.9s ease forwards;
+}
+
+@layer components {
+  .chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-brand-navy/10 bg-white/70 px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-navy;
+  }
+
+  .primary-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-red px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-red/25 transition-transform duration-200 hover:-translate-y-0.5;
+  }
+
+  .outline-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-navy/20 bg-white px-5 py-3 text-sm font-semibold text-brand-navy transition-colors duration-200 hover:border-brand-navy/40;
+  }
+}
