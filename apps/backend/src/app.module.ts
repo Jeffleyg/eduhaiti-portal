@@ -11,6 +11,7 @@ import { AttendanceModule } from "./attendance/attendance.module"
 import { MessagesModule } from "./messages/messages.module"
 import { ResourcesModule } from "./resources/resources.module"
 import { AssignmentsModule } from "./assignments/assignments.module"
+import { AnnouncementsModule } from "./announcements/announcements.module"
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AssignmentsModule } from "./assignments/assignments.module"
     MessagesModule,
     ResourcesModule,
     AssignmentsModule,
+    AnnouncementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

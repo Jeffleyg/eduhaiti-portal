@@ -13,6 +13,7 @@ async function main() {
   const teacherPassword = process.env.TEACHER_PASSWORD ?? "Teacher@123"
   const studentPassword = process.env.STUDENT_PASSWORD ?? "Student@123"
 
+  // Create or update Admin
   let admin = await prisma.user.findUnique({ where: { email: adminEmail } })
   if (!admin) {
     const passwordHash = await bcrypt.hash(adminPassword, 10)
@@ -26,121 +27,177 @@ async function main() {
       },
     })
     console.log("✅ Admin created:", admin.email)
-  } else if (!admin.passwordHash) {
-    const passwordHash = await bcrypt.hash(adminPassword, 10)
-    await prisma.user.update({
-      where: { id: admin.id },
-      data: { passwordHash },
-    })
-    console.log("✅ Admin password updated:", admin.email)
   }
 
+  // Create or update Teacher
   let teacher = await prisma.user.findUnique({ where: { email: teacherEmail } })
   if (!teacher) {
     const passwordHash = await bcrypt.hash(teacherPassword, 10)
     teacher = await prisma.user.create({
       data: {
         email: teacherEmail,
+        firstName: "Mme",
+        lastName: "Clair",
         name: "Mme. Clair",
         role: "TEACHER",
         isActive: true,
         passwordHash,
+        subjects: ["Mathématiques", "Français"],
       },
     })
     console.log("✅ Teacher created:", teacher.email)
-  } else if (!teacher.passwordHash) {
-    const passwordHash = await bcrypt.hash(teacherPassword, 10)
-    await prisma.user.update({
-      where: { id: teacher.id },
-      data: { passwordHash },
-    })
-    console.log("✅ Teacher password updated:", teacher.email)
   }
 
+  // Create or update Student
   let student = await prisma.user.findUnique({ where: { email: studentEmail } })
   if (!student) {
     const passwordHash = await bcrypt.hash(studentPassword, 10)
     student = await prisma.user.create({
       data: {
         email: studentEmail,
-        name: "Jean Pierre",
+        firstName: "Jean",
+        lastName: "Dupont",
+        name: "Jean Dupont",
+        enrollmentNumber: "2026-0001",
         role: "STUDENT",
         isActive: true,
         passwordHash,
       },
     })
     console.log("✅ Student created:", student.email)
-  } else if (!student.passwordHash) {
-    const passwordHash = await bcrypt.hash(studentPassword, 10)
+  }
+
+  // Create School
+  let school = await prisma.school.findUnique({ 
+    where: { name: "EduHaiti Academy" } 
+  })
+  if (!school) {
+    school = await prisma.school.create({
+      data: {
+        name: "EduHaiti Academy",
+        email: "info@eduhaiti.ht",
+        address: "Port-au-Prince, Haiti",
+        city: "Port-au-Prince",
+        country: "Haiti",
+        principal: "Jean-Pierre Dessalines",
+      },
+    })
+    console.log("✅ School created:", school.name)
+  }
+
+  // Create Academic Year
+  let academicYear = await prisma.academicYear.findUnique({
+    where: { year: "2025-2026" },
+  })
+  if (!academicYear) {
+    academicYear = await prisma.academicYear.create({
+      data: {
+        year: "2025-2026",
+        schoolId: school.id,
+        startDate: new Date("2025-09-01"),
+        endDate: new Date("2026-06-30"),
+        isActive: true,
+      },
+    })
+    console.log("✅ Academic year created:", academicYear.year)
+  }
+
+  // Create Series
+  let seriesTrois = await prisma.series.findFirst({
+    where: {
+      academicYearId: academicYear.id,
+      name: "3eme",
+    },
+  })
+
+  if (!seriesTrois) {
+    seriesTrois = await prisma.series.create({
+      data: {
+        name: "3eme",
+        academicYearId: academicYear.id,
+        description: "Third Year",
+      },
+    })
+    console.log("✅ Series 3eme created")
+  }
+
+  // Create Disciplines
+  const disciplineNames = [
+    "Mathématiques",
+    "Français",
+    "Sciences Naturelles",
+    "Histoire-Géographie",
+    "Anglais",
+  ]
+
+  for (const name of disciplineNames) {
+    const exists = await prisma.discipline.findFirst({
+      where: { seriesId: seriesTrois.id, name },
+    })
+    if (!exists) {
+      await prisma.discipline.create({
+        data: {
+          name,
+          code: name.substring(0, 3).toUpperCase(),
+          seriesId: seriesTrois.id,
+          credits: 3,
+        },
+      })
+    }
+  }
+  console.log(`✅ Disciplines created`)
+
+  // Create Class
+  let classA = await prisma.class.findFirst({
+    where: {
+      academicYearId: academicYear.id,
+      seriesId: seriesTrois.id,
+      name: "3eme-A",
+    },
+  })
+
+  if (!classA) {
+    classA = await prisma.class.create({
+      data: {
+        name: "3eme-A",
+        level: "3eme",
+        academicYearId: academicYear.id,
+        seriesId: seriesTrois.id,
+        teacherId: teacher.id,
+        maxStudents: 30,
+      },
+    })
+    console.log("✅ Class 3eme-A created")
+  }
+
+  // Enroll student if not already enrolled
+  const enrollment = await prisma.class.findFirst({
+    where: {
+      id: classA.id,
+      students: { some: { id: student.id } },
+    },
+  })
+
+  if (!enrollment) {
+    await prisma.class.update({
+      where: { id: classA.id },
+      data: {
+        students: {
+          connect: { id: student.id },
+        },
+      },
+    })
+    console.log("✅ Student enrolled in class")
+  }
+
+  console.log("\n🎉 Database seed completed!")
+}  } else if (!teacher.passwordHash) {
+    const passwordHash = await bcrypt.hash(teacherPassword, 10)
     await prisma.user.update({
-      where: { id: student.id },
+      where: { id: teacher.id },
       data: { passwordHash },
     })
-    console.log("✅ Student password updated:", student.email)
-  }
-
-  let classRoom = await prisma.class.findFirst({ where: { teacherId: teacher.id } })
-  if (!classRoom) {
-    classRoom = await prisma.class.create({
-      data: {
-        name: "Classe 3B",
-        level: "3eme",
-        teacherId: teacher.id,
-        students: { connect: [{ id: student.id }] },
-      },
-    })
-    console.log("✅ Class created:", classRoom.name)
-  }
-
-  const gradesExist = await prisma.grade.findFirst({ where: { studentId: student.id } })
-  if (!gradesExist) {
-    const subjects = ["Mathematiques", "Sciences", "Francais"]
-    for (const subject of subjects) {
-      await prisma.grade.create({
-        data: {
-          studentId: student.id,
-          classId: classRoom.id,
-          subject,
-          score: Math.floor(Math.random() * 8) + 12,
-          maxScore: 20,
-          status: Math.random() > 0.3 ? "published" : "draft",
-        },
-      })
-    }
-    console.log("✅ Grades created for student")
-  }
-
-  const attendanceExist = await prisma.attendance.findFirst({ where: { studentId: student.id } })
-  if (!attendanceExist) {
-    for (let i = 0; i < 10; i++) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      await prisma.attendance.create({
-        data: {
-          studentId: student.id,
-          classId: classRoom.id,
-          date,
-          status: Math.random() > 0.1 ? "present" : "absent",
-        },
-      })
-    }
-    console.log("✅ Attendance records created")
-  }
-
-  const messageExists = await prisma.message.findFirst({ where: { fromId: teacher.id } })
-  if (!messageExists) {
-    await prisma.message.create({
-      data: {
-        fromId: teacher.id,
-        toId: student.id,
-        subject: "Bienvenue en ligne",
-        body: "Bonjour! Vous pouvez maintenant suivre vos notes et votre presence en ligne.",
-      },
-    })
-    console.log("✅ Message created")
-  }
-
-  console.log("✨ Seeding completed!")
+  console.log("\n🎉 Database seed completed!")
 }
 
 main()
