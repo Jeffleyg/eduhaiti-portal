@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id                    String               @id @default(uuid())
+  email                 String               @unique
+  name                  String?
+  firstName             String?
+  lastName              String?
+  dateOfBirth           DateTime?
+  address               String?
+  gender                Gender?
+  fatherName            String?
+  motherName            String?
+  enrollmentNumber      String?              @unique
+  passwordHash          String?
+  mustChangePassword    Boolean              @default(false)
+  tempPasswordExpiresAt DateTime?
+  subjects              String[]             @default([])
+  role                  Role                 @default(STUDENT)
+  isActive              Boolean              @default(true)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  loginCodes            LoginCode[]
+  classesTeaching       Class[]              @relation("ClassesTeaching")
+  classesAttending      Class[]              @relation("ClassStudents")
+  grades                Grade[]
+  attendance            Attendance[]
+  sentMessages          Message[]            @relation("SentMessages")
+  receivedMessages      Message[]            @relation("ReceivedMessages")
+  resourcesUploaded     Resource[]           @relation("UploadedBy")
+  assignmentsCreated    Assignment[]         @relation("CreatedBy")
+  assignmentSubmissions AssignmentSubmission[] @relation("SubmittedBy")
+}
+
+model LoginCode {
+  id         String   @id @default(uuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([email])
+}
+
+model Class {
+  id         String   @id @default(uuid())
+  name       String
+  level      String   @default("3eme")
+  teacher    User     @relation("ClassesTeaching", fields: [teacherId], references: [id])
+  teacherId  String
+  students   User[]   @relation("ClassStudents")
+  grades     Grade[]
+  attendance Attendance[]
+  resources  Resource[]
+  assignments Assignment[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([teacherId])
+}
+
+model Grade {
+  id        String   @id @default(uuid())
+  student   User     @relation(fields: [studentId], references: [id])
+  studentId String
+  class     Class    @relation(fields: [classId], references: [id])
+  classId   String
+  subject   String
+  score     Float
+  maxScore  Float    @default(20)
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, classId])
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  student   User     @relation(fields: [studentId], references: [id])
+  studentId String
+  class     Class    @relation(fields: [classId], references: [id])
+  classId   String
+  date      DateTime
+  status    String   @default("present")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, classId, date])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  from      User     @relation("SentMessages", fields: [fromId], references: [id])
+  fromId    String
+  to        User     @relation("ReceivedMessages", fields: [toId], references: [id])
+  toId      String
+  subject   String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([fromId, toId])
+}
+
+model Resource {
+  id          String   @id @default(uuid())
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId     String
+  title       String
+  description String?
+  filePath    String
+  fileType    String   // pdf, slides, doc, etc
+  uploadedBy  User     @relation("UploadedBy", fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([classId, uploadedById])
+}
+
+model Assignment {
+  id                    String                @id @default(uuid())
+  class                 Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId               String
+  title                 String
+  description           String?
+  filePath              String?               // optional file with instructions
+  createdBy             User                  @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById           String
+  dueDate               DateTime
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  submissions           AssignmentSubmission[]
+
+  @@index([classId, createdById, dueDate])
+}
+
+model AssignmentSubmission {
+  id           String   @id @default(uuid())
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  student      User     @relation("SubmittedBy", fields: [studentId], references: [id])
+  studentId    String
+  filePath     String   // student's submitted file
+  submittedAt  DateTime @default(now())
+  grade        Float?
+  feedback     String?
+  updatedAt    DateTime @updatedAt
+
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId, studentId])
+}
