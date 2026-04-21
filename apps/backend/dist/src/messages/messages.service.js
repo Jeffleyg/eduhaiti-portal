@@ -12,10 +12,62 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 let MessagesService = class MessagesService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
+    }
+    async listRecipients(userId, role) {
+        if (!userId)
+            return [];
+        if (role === client_1.Role.TEACHER) {
+            return this.prisma.user.findMany({
+                where: {
+                    id: { not: userId },
+                    OR: [
+                        {
+                            role: client_1.Role.STUDENT,
+                            classesAttending: { some: { teacherId: userId } },
+                        },
+                        { role: client_1.Role.ADMIN },
+                    ],
+                },
+                select: { id: true, name: true, email: true, role: true },
+                orderBy: [{ role: "asc" }, { name: "asc" }],
+            });
+        }
+        if (role === client_1.Role.STUDENT) {
+            return this.prisma.user.findMany({
+                where: {
+                    id: { not: userId },
+                    OR: [
+                        {
+                            role: client_1.Role.TEACHER,
+                            classesTeaching: {
+                                some: {
+                                    students: {
+                                        some: { id: userId },
+                                    },
+                                },
+                            },
+                        },
+                        { role: client_1.Role.ADMIN },
+                    ],
+                },
+                select: { id: true, name: true, email: true, role: true },
+                orderBy: [{ role: "asc" }, { name: "asc" }],
+            });
+        }
+        return this.prisma.user.findMany({
+            where: {
+                id: { not: userId },
+                isActive: true,
+            },
+            select: { id: true, name: true, email: true, role: true },
+            orderBy: [{ role: "asc" }, { name: "asc" }],
+            take: 200,
+        });
     }
     async findReceivedBy(userId) {
         return this.prisma.message.findMany({

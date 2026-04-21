@@ -25,6 +25,15 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Database
+
+This backend uses Prisma with PostgreSQL on Supabase.
+
+Set these variables in `apps/backend/.env` before running migrations or the app:
+
+- `DATABASE_URL` for the pooled/runtime connection.
+- `DIRECT_URL` for the direct Prisma migration connection.
+
 ## Project setup
 
 ```bash

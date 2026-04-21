@@ -40,6 +40,17 @@ export declare class MessagesController {
         body: string;
         isRead: boolean;
     })[]>;
+    getRecipients(req: {
+        user?: {
+            sub?: string;
+            role?: string;
+        };
+    }): Promise<{
+        id: string;
+        email: string;
+        name: string | null;
+        role: import(".prisma/client").$Enums.Role;
+    }[]>;
     sendMessage(body: any, req: {
         user?: {
             sub?: string;

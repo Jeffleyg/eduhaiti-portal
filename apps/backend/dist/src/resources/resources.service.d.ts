@@ -12,9 +12,9 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;
@@ -29,9 +29,9 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;
@@ -46,9 +46,9 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;
@@ -57,9 +57,9 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;

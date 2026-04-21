@@ -30,6 +30,7 @@ export class CreateStudentDto {
   @IsString()
   motherName?: string
 
+  @IsOptional()
   @IsString()
-  classId: string
+  classId?: string
 }

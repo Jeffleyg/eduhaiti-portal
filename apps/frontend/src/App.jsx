@@ -18,49 +18,72 @@ import StudentSchedule from "./pages/student/StudentSchedule.jsx"
 import StudentResources from "./pages/student/StudentResources.jsx"
 import StudentAssignments from "./pages/student/StudentAssignments.jsx"
 import StudentMessages from "./pages/student/StudentMessages.jsx"
+import AdminAcademicConfig from "./pages/admin/AdminAcademicConfig.jsx"
+import AdminStudentManagement from "./pages/admin/AdminStudentManagement.jsx"
+import AdminDisciplineManagement from "./pages/admin/AdminDisciplineManagement.jsx"
+import AdminClassManagement from "./pages/admin/AdminClassManagement.jsx"
+import UserProfile from "./pages/common/UserProfile.jsx"
+import ProfessorAcademicRequests from "./pages/professor/ProfessorAcademicRequests.jsx"
+import StudentAcademicRequests from "./pages/student/StudentAcademicRequests.jsx"
+import { SurvivalModeProvider } from "./context/SurvivalModeContext.jsx"
+import { SyncControlProvider } from "./context/SyncControlContext.jsx"
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/change-password" element={<ChangePassword />} />
-          </Route>
+      <SurvivalModeProvider>
+        <SyncControlProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/change-password" element={<ChangePassword />} />
+              </Route>
 
-          <Route element={<ProtectedRoute role="professor" />}>
-            <Route path="/professor" element={<AppShell role="professor" />}>
-              <Route index element={<ProfessorDashboard />} />
-              <Route path="notes" element={<ProfessorGrades />} />
-              <Route path="presence" element={<ProfessorAttendance />} />
-              <Route path="ressources" element={<ProfessorResources />} />
-              <Route path="tarefas" element={<ProfessorAssignments />} />
-              <Route path="messages" element={<ProfessorMessages />} />
-            </Route>
-          </Route>
+              <Route element={<ProtectedRoute role="professor" />}>
+                <Route path="/professor" element={<AppShell role="professor" />}>
+                  <Route index element={<ProfessorDashboard />} />
+                  <Route path="notes" element={<ProfessorGrades />} />
+                  <Route path="presence" element={<ProfessorAttendance />} />
+                  <Route path="ressources" element={<ProfessorResources />} />
+                  <Route path="tarefas" element={<ProfessorAssignments />} />
+                  <Route path="messages" element={<ProfessorMessages />} />
+                  <Route path="profile" element={<UserProfile />} />
+                  <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
+                </Route>
+              </Route>
 
-          <Route element={<ProtectedRoute role="student" />}>
-            <Route path="/student" element={<AppShell role="student" />}>
-              <Route index element={<StudentDashboard />} />
-              <Route path="resultats" element={<StudentResults />} />
-              <Route path="horaire" element={<StudentSchedule />} />
-              <Route path="ressources" element={<StudentResources />} />
-              <Route path="tarefas" element={<StudentAssignments />} />
-              <Route path="messages" element={<StudentMessages />} />
-            </Route>
-          </Route>
+              <Route element={<ProtectedRoute role="student" />}>
+                <Route path="/student" element={<AppShell role="student" />}>
+                  <Route index element={<StudentDashboard />} />
+                  <Route path="resultats" element={<StudentResults />} />
+                  <Route path="horaire" element={<StudentSchedule />} />
+                  <Route path="ressources" element={<StudentResources />} />
+                  <Route path="tarefas" element={<StudentAssignments />} />
+                  <Route path="messages" element={<StudentMessages />} />
+                  <Route path="profile" element={<UserProfile />} />
+                  <Route path="academic-requests" element={<StudentAcademicRequests />} />
+                </Route>
+              </Route>
 
-          <Route element={<ProtectedRoute role="admin" />}>
-            <Route path="/admin" element={<AppShell role="admin" />}>
-              <Route index element={<AdminUsers />} />
-            </Route>
-          </Route>
+              <Route element={<ProtectedRoute role="admin" />}>
+                <Route path="/admin" element={<AppShell role="admin" />}>
+                  <Route index element={<AdminUsers />} />
+                  <Route path="students" element={<AdminStudentManagement />} />
+                  <Route path="classes" element={<AdminClassManagement />} />
+                  <Route path="disciplines" element={<AdminDisciplineManagement />} />
+                  <Route path="profile" element={<UserProfile />} />
+                  <Route path="academic" element={<AdminAcademicConfig />} />
+                  <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
+                </Route>
+              </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </SyncControlProvider>
+      </SurvivalModeProvider>
     </AuthProvider>
   )
 }

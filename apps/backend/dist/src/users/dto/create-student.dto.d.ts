@@ -8,5 +8,5 @@ export declare class CreateStudentDto {
     gender: Gender;
     fatherName?: string;
     motherName?: string;
-    classId: string;
+    classId?: string;
 }

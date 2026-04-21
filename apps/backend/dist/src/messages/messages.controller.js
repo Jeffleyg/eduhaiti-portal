@@ -16,6 +16,7 @@ exports.MessagesController = void 0;
 const common_1 = require("@nestjs/common");
 const messages_service_1 = require("./messages.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const client_1 = require("@prisma/client");
 let MessagesController = class MessagesController {
     messagesService;
     constructor(messagesService) {
@@ -28,6 +29,11 @@ let MessagesController = class MessagesController {
     async getSent(req) {
         const userId = req.user?.sub;
         return this.messagesService.findSentBy(userId ?? "");
+    }
+    async getRecipients(req) {
+        const userId = req.user?.sub;
+        const role = req.user?.role ?? client_1.Role.STUDENT;
+        return this.messagesService.listRecipients(userId ?? "", role);
     }
     async sendMessage(body, req) {
         const userId = req.user?.sub;
@@ -51,6 +57,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], MessagesController.prototype, "getSent", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)("recipients"),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], MessagesController.prototype, "getRecipients", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(),

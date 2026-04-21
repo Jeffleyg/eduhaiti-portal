@@ -89,6 +89,20 @@ export class ClassesController {
     return this.classesService.findAll(academicYearId, seriesId)
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get("meta/academic-years")
+  async getAcademicYears() {
+    return this.classesService.listAcademicYears()
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get("meta/series")
+  async getSeries(@Query("academicYearId") academicYearId?: string) {
+    return this.classesService.listSeries(academicYearId)
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get("my-classes")
   async getMyClasses(@Req() req: { user?: { sub?: string; role?: string } }) {

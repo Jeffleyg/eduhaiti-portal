@@ -54,6 +54,7 @@ const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const resources_service_1 = require("./resources.service");
 const client_1 = require("@prisma/client");
+const asset_optimization_service_1 = require("../content-delivery/services/asset-optimization.service");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const uploadDir = "uploads";
@@ -62,8 +63,10 @@ if (!fs.existsSync(uploadDir)) {
 }
 let ResourcesController = class ResourcesController {
     resourcesService;
-    constructor(resourcesService) {
+    assetOptimizationService;
+    constructor(resourcesService, assetOptimizationService) {
         this.resourcesService = resourcesService;
+        this.assetOptimizationService = assetOptimizationService;
     }
     async getByClass(classId) {
         return this.resourcesService.findByClass(classId);
@@ -72,9 +75,17 @@ let ResourcesController = class ResourcesController {
         if (!file) {
             throw new common_1.BadRequestException("No file uploaded");
         }
-        const fileType = path.extname(file.originalname).toLowerCase().replace(".", "");
         const filePath = `uploads/${file.filename}`;
-        return this.resourcesService.create(classId, body.title, body.description, filePath, fileType, req.user.sub);
+        const optimized = await this.assetOptimizationService.optimizeUploadedAsset(filePath);
+        const fileType = optimized.fileType || path.extname(file.originalname).toLowerCase().replace(".", "");
+        const resource = await this.resourcesService.create(classId, body.title, body.description, optimized.optimizedPath, fileType, req.user.sub);
+        return {
+            ...resource,
+            optimization: {
+                contentHash: optimized.contentHash,
+                sizeBytes: optimized.sizeBytes,
+            },
+        };
     }
     async deleteResource(resourceId) {
         return this.resourcesService.delete(resourceId);
@@ -121,6 +132,7 @@ __decorate([
 ], ResourcesController.prototype, "deleteResource", null);
 exports.ResourcesController = ResourcesController = __decorate([
     (0, common_1.Controller)("resources"),
-    __metadata("design:paramtypes", [resources_service_1.ResourcesService])
+    __metadata("design:paramtypes", [resources_service_1.ResourcesService,
+        asset_optimization_service_1.AssetOptimizationService])
 ], ResourcesController);
 //# sourceMappingURL=resources.controller.js.map

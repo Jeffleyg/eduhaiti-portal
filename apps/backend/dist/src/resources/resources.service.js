@@ -18,7 +18,7 @@ let ResourcesService = class ResourcesService {
         this.prisma = prisma;
     }
     async create(classId, title, description, filePath, fileType, uploadedById) {
-        return this.prisma.resource.create({
+        const resource = await this.prisma.resource.create({
             data: {
                 classId,
                 title,
@@ -33,6 +33,22 @@ let ResourcesService = class ResourcesService {
                 },
             },
         });
+        await this.prisma.auditLog.create({
+            data: {
+                entityType: "RESOURCE",
+                entityId: resource.id,
+                action: "CREATE",
+                userId: uploadedById,
+                changes: JSON.stringify({
+                    id: resource.id,
+                    classId,
+                    title,
+                    filePath,
+                    fileType,
+                }),
+            },
+        });
+        return resource;
     }
     async findByClass(classId) {
         return this.prisma.resource.findMany({
@@ -56,9 +72,24 @@ let ResourcesService = class ResourcesService {
         });
     }
     async delete(resourceId) {
-        return this.prisma.resource.delete({
+        const deleted = await this.prisma.resource.delete({
             where: { id: resourceId },
         });
+        await this.prisma.auditLog.create({
+            data: {
+                entityType: "RESOURCE",
+                entityId: deleted.id,
+                action: "DELETE",
+                changes: JSON.stringify({
+                    id: deleted.id,
+                    classId: deleted.classId,
+                    title: deleted.title,
+                    filePath: deleted.filePath,
+                    fileType: deleted.fileType,
+                }),
+            },
+        });
+        return deleted;
     }
 };
 exports.ResourcesService = ResourcesService;

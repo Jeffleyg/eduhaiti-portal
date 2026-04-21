@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -52,6 +53,27 @@ enum PaymentStatus {
   OVERDUE
 }
 
+enum AcademicRequestType {
+  ENROLLMENT_LETTER
+  GRADE_REVIEW
+  ABSENCE_JUSTIFICATION
+  PROGRAM_CHANGE
+  OTHER
+}
+
+enum AcademicRequestStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum IdempotencyStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 // ========== SCHOOL & ORGANIZATION ==========
 model School {
   id        String    @id @default(uuid())
@@ -71,6 +93,8 @@ model School {
   announcements Announcement[]
   payments      Payment[]
   events        CalendarEvent[]
+  academicPeriods AcademicPeriod[]
+  academicSetting AcademicSetting?
 }
 
 model AcademicYear {
@@ -160,6 +184,8 @@ model User {
   announcements         Announcement[]         @relation("CreatedBy")
   payments              Payment[]
   scorecards            Scorecard[]
+  academicRequestsSubmitted AcademicRequest[]  @relation("AcademicRequestStudent")
+  academicRequestsReviewed  AcademicRequest[]  @relation("AcademicRequestReviewer")
 }
 
 model LoginCode {
@@ -195,6 +221,7 @@ model Class {
   attendance  Attendance[]
   resources   Resource[]
   assignments Assignment[]
+  academicRequests AcademicRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -349,6 +376,56 @@ model CalendarEvent {
   @@index([schoolId, startDate])
 }
 
+model AcademicPeriod {
+  id          String   @id @default(uuid())
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId    String
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  isOpen      Boolean  @default(true)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([schoolId, startDate])
+  @@unique([schoolId, name])
+}
+
+model AcademicSetting {
+  id                      String   @id @default(uuid())
+  school                  School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId                String   @unique
+  passAverage             Float    @default(10)
+  maxAbsencesPerCourse    Int      @default(5)
+  assignmentLateDaysLimit Int      @default(2)
+  gradeReviewWindowDays   Int      @default(7)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model AcademicRequest {
+  id                String                @id @default(uuid())
+  student           User                  @relation("AcademicRequestStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId         String
+  class             Class?                @relation(fields: [classId], references: [id], onDelete: SetNull)
+  classId           String?
+  type              AcademicRequestType
+  status            AcademicRequestStatus @default(PENDING)
+  title             String
+  details           String                @db.Text
+  reviewedBy        User?                 @relation("AcademicRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedById      String?
+  resolutionComment String?
+  resolvedAt        DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([studentId, status])
+  @@index([classId])
+  @@index([reviewedById])
+}
+
 // ========== GRADING & PERFORMANCE ==========
 model Scorecard {
   id             String       @id @default(uuid())
@@ -409,4 +486,17 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([userId])
+}
+
+model IdempotencyRecord {
+  id              String            @id @default(uuid())
+  idempotencyKey  String            @unique
+  operation       String
+  status          IdempotencyStatus @default(PENDING)
+  responsePayload Json?
+  errorMessage    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([operation, status])
 }

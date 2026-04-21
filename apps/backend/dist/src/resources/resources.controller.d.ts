@@ -1,7 +1,9 @@
 import { ResourcesService } from "./resources.service";
+import { AssetOptimizationService } from "../content-delivery/services/asset-optimization.service";
 export declare class ResourcesController {
     private readonly resourcesService;
-    constructor(resourcesService: ResourcesService);
+    private readonly assetOptimizationService;
+    constructor(resourcesService: ResourcesService, assetOptimizationService: AssetOptimizationService);
     getByClass(classId: string): Promise<({
         uploadedBy: {
             id: string;
@@ -12,9 +14,9 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;
@@ -23,18 +25,21 @@ export declare class ResourcesController {
         title: string;
         description?: string;
     }, req: any): Promise<{
+        optimization: {
+            contentHash: string;
+            sizeBytes: number;
+        };
         uploadedBy: {
             id: string;
             email: string;
             name: string | null;
         };
-    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;
@@ -43,9 +48,9 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
         classId: string;
         title: string;
-        description: string | null;
         filePath: string;
         fileType: string;
         uploadedById: string;

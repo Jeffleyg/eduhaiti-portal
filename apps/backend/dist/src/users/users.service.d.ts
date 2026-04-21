@@ -29,4 +29,35 @@ export declare class UsersService {
         name: string | null;
         role: import(".prisma/client").$Enums.Role;
     }>;
+    findAllStudents(): Promise<{
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        classesAttending: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+    }[]>;
+    findAllTeachers(): Promise<{
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        subjects: string[];
+        isActive: boolean;
+        createdAt: Date;
+        classesTeaching: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+    }[]>;
 }

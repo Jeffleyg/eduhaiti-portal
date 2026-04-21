@@ -196,8 +196,32 @@ export class GradesService {
       summary,
     }
   }
-}
-      data: { score, status },
+
+  async listAcademicYearsForStudent(studentId: string) {
+    const grades = await this.prisma.grade.findMany({
+      where: {
+        studentId,
+        status: "PUBLISHED",
+      },
+      select: {
+        academicYear: {
+          select: {
+            id: true,
+            year: true,
+            startDate: true,
+            endDate: true,
+            isActive: true,
+          },
+        },
+      },
+      distinct: ["academicYearId"],
+      orderBy: {
+        academicYear: {
+          year: "desc",
+        },
+      },
     })
+
+    return grades.map((item) => item.academicYear)
   }
 }

@@ -46,11 +46,20 @@ body {
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(0, 33, 71, 0.08);
   box-shadow: 0 24px 70px rgba(0, 33, 71, 0.12);
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
 .fade-rise {
   animation: rise 0.9s ease forwards;
+}
+
+.survival-no-animations *,
+.survival-no-animations *::before,
+.survival-no-animations *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }
 
 @layer components {

@@ -1,0 +1,473 @@
+ 
+ 
+ 
+ 
+1           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+Rest API MonCash 
+Documentation 
+ 
+INTRODUCTION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         2         
+REST API HOST                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        2         
+MONCASH GATEWAY BASE URL                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         2         
+AUTHENTICATION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        2         
+SAMPLE AUTHENTICATION BASIC                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          2
+ 
+CREATE PAYMENT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        3          
+SAMPLE CREATE PAYMENT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          3
+ 
+PAYMENT DETAILS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        4          
+SAMPLE CAPTURE PAYMENT BY TRANSACTION ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          4
+ 
+SAMPLE CAPTURE PAYMENT BY ORDER ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          5
+ 
+CHECK CUSTOMER STATUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        6          
+SAMPLE REQUEST FOR CHECK CUSTOMER STATUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          6
+ 
+PREFUNDED/PAYOUT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        7          
+SAMPLE PAYOUT REQUEST                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          7
+ 
+CHECK PREFUNDED TRANSACTION STATUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         8          
+SAMPLE REQUEST FOR PREFUNDED TRANSACTION STATUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          8
+ 
+BALANCE PREFUNDED                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         9          
+SAMPLE REQUEST FOR BALANCE (PREFUNDED)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        9
+ 
+ 
+----------------Page (0) Break----------------
+ 
+ 
+ 
+ 
+2           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+ 
+INTRODUCTION                                                                                                                        
+Use the MonCash REST API to easily and securely accept payments on your website or mobile app.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+ 
+REST API HOST                                                                                                                
+HOST                                           _REST_API                                                                                          can be                                                            moncashbutton.digicelgroup.com                                                                                                                                                                                                                                                                                   /Api                                       for live and 
+sandbox.moncashbutton.digicelgroup.com                                                                                                                                                                                                                                                                                                                                                            /Api                                       for test.                                                                  
+MONCASH GATEWAY BASE URL                                                                                                                                                                                                                                               
+The GATEWAY_BASE can be                                                                                                                                                                                                                                      https://moncashbutton.digicelgroup.com/Moncash                                                                                                                                                                                                                                                                                                                                                                                                                                    -      middleware                                                                                                      for live and 
+http                                    s        ://sandbox.moncashbutton.digicelgroup.com/Moncash                                                                                                                                                                                                                                                                                                                                                                                                                                                                -      middleware                                                                                                      for test                                                              
+AUTHENTICATION                                                                                                                                          
+To call the resources of the MonCash REST API, you must authenticate by including the bearer token in the 
+Authorization header using the Bearer authentication scheme. The value should be Bearer <Access                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     -      Token> or 
+Basic <client_id>:<secret>. The client_id an                                                                                                                                                                                                                                                                                                                                                          d client_secret can be generated from the business portal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+SAMPLE AUTHENTICATION BASIC                                                                                                                                                                                                                                                                                                                                                                                   
+ 
+ 
+ 
+G             
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Request                                                                     
+curl                                     -      X POST http                                                                                                s        ://client_id:client_secret@HOST_REST_API/oauth/token                                                                                                                                                                                                                                                                                                                                                                                                                                                                        -      H                       "Accept: application/json"                                                                                                                                                                                                                         -
+d                "scope=read,write&grant_type=client_credentials"                                                                                                                                                                                                                                                                                                                                                                                                                                 
+Response                                                                                
+{             
+                                   "access_token":                                                                                                                                        <Access                                                                 -      token>,                                                              
+                             "token_type":"bearer",                                                                                                                                                                                            
+                             "expires_in":59,                                                                                                                                 
+                        "scope":"read,write",                                                                                                                                                                             
+                        "jti":"the jti"                                                                                                 
+}       
+                                                                      
+ 
+ 
+                                                                                                                                  /oauth/token                                                                                                              POST                                            
+----------------Page (1) Break----------------
+ 
+ 
+ 
+ 
+3           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+CREATE PAYMENT                                                                                                                                          
+To create a payment, you must send the 
+orderId
+      and 
+amount
+      as an HTTP POST request, 
+including an Authorization Bearer Token in the header. The response will be in JSON (or 
+another format) and will contain the parameters success and a redirect URL to load the 
+Payment Gateway of MonCash Middleware.                                                                                                                                                                                                                                                                                                                                                                          
+SAMPLE CREATE PAYMENT                                                                                                                                                                                                                                                                                                                    
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+The                                    redirect URL to load the Payment Gateway                                                                                                                                                                                                                                                                                                                                                                        will be:                                                             
+      GATEWAY_BASE+/Payment/Redirect                                                                                                                                                                                                                                                                                                         ?token=<                                                                            payment                                                                          -      token                                                 >          
+ 
+ 
+                                                                                                                                  /v1/CreatePayment                                                                                                                                                                  POST                                            
+Request                                                                     
+curl                                     -      X POST http                                                                                                s        ://HOST_REST_API/v1/CreatePayment                                                                                                                                                                                                                                                                                                                       -      H                  'accept: application/json'                                                                                                                                                                                                              -      H                  'authorization: Bearer 
+<Access                                                                 -      token> '                                                                       -      H                  'content                                                                   -      type: application/json'                                                                                                                                                                                          -      d                '{"amount": <amount>, "orderId": <orderId>}'                                                                                                                                                                                                                                                                                                                                                                                
+Response                                                                                
+{       
+                        "path": "/v1/CreatePayment",                                                                                                                                                                                                                                                   
+                        "payment_token": {                                                                                                                                                                   
+                                               "expired": "2019                                                                                                                                      -      05                    -      24 12:46:55:107",                                                                                                                                                
+                                               "created": "2019                                                                                                                                       -      05                    -      24 12:36:55:107",                                                                                                                                                
+                                               "token": <payment                                                                                                                                                           -      token>                                                          
+                        },            
+                        "timestamp": 1558715815122,                                                                                                                                                                                                                                                           
+                        "status": 202                                                                                                            
+                        “mode”: <sandbox or live>                                                                                                                                                                                                                          
+}       
+ 
+ 
+ 
+----------------Page (2) Break----------------
+ 
+ 
+ 
+ 
+4           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+PAYMENT                                                                                DETAILS                                                               
+ 
+To retrieve payment details from the return URL business script, you must send the 
+transactionId
+      or                   
+orderId
+      as an HTTP POST request with an Authorization Bearer Token. 
+The response will be in JSON (or another format) and will contain the payment details.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+S             AMPLE CAPTURE PAYMENT BY TRANSACTION ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                                                  /v1/RetrieveTransactionPayment                                                                                                                                                                                                                                                                             POST                                            
+Request                                                                     
+curl                                     -      X POST http                                                                                                s        ://HOST_REST_API/v1/                                                                                                                                                                                        RetrieveTransactionPayment                                                                                                                                                                                                                                                 -      H                  'accept: application/json'                                                                                                                                                                                                              -      H 
+'authorization: Bearer <Access                                                                                                                                                                                                                                                      -      token> '                                                                       -      H                  'content                                                                   -      type: application/json'                                                                                                                                                                                          -      d                '{ "                            transactionId": <                                                                                                                                       
+transactionId>}'                                                                                                                                
+Response                                                                                
+{       
+                        "path": "/v1/RetrieveTransactionPayment",                                                                                                                                                                                                                                                                                                                                                               
+                        "payment": {                                                                                                          
+                                               "reference": "1559796839",                                                                                                                                                                                                                                 
+                                               "transaction_id": "12874820",                                                                                                                                                                                                                                                   
+                                               "cost": 10,                                                                                    
+                                               "message": "successful",                                                                                                                                                                                                        
+                                               "payer": "50937007294"                                                                                                                                                                                                        
+                        },            
+                        "timestamp": 1560029360970,                                                                                                                                                                                                                                                           
+                        "status": 200                                                                                                           
+}       
+ 
+ 
+----------------Page (3) Break----------------
+ 
+ 
+ 
+ 
+5           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+ 
+ 
+ 
+SAMPLE                                                                                                  CAPTURE PAYMENT BY ORDER ID                                                                                                                                                                                                                                                                                                                                                                                  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                                                  /v1/RetrieveOrderPayment                                                                                                                                                                                                                               POST                                            
+Request                                                                     
+cu                    rl                  -      X POST http://HOST_REST_API                                                                                                                                                                                                                                                  /v1/                                 RetrieveOrderPayment                                                                                                                                                                                                      -      H                  'accept: application/json'                                                                                                                                                                                                                    -      H 
+'authorization: Bearer <Access                                                                                                                                                                                                                                                          -      token> '                                                                        -      H                  'content                                                                      -      type: application/json'                                                                                                                                                                                               -      d                 '{ "                            order                                               Id                ": <                                 order                                               Id                >}'                     
+Response                                                                                 
+{        
+                       "path": "/v1/                                                                                                       RetrieveOrderPayment                                                                                                                                                                                                      ",             
+                       "payment": {                                                                                                           
+                                              "reference": "1559796839",                                                                                                                                                                                                                              
+                                              "transaction_id": "12874820",                                                                                                                                                                                                                                                 
+                                              "cost": 10,                                                                                    
+                                              "message": "successful",                                                                                                                                                                                                           
+                                              "payer": "50937007294"                                                                                                                                                                                                  
+                       },            
+                       "timestamp": 1560029360970,                                                                                                                                                                                                                                                      
+                       "status": 200                                                                                                          
+}        
+ 
+ 
+----------------Page (4) Break----------------
+ 
+ 
+ 
+ 
+6          
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+CHECK CUSTOMER STATUS                                                                                                                                                                                                            
+To check the customer status, you must send the 
+account
+      (the customer's account) as 
+an HTTP POST request, including an Authorization Bearer Token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+SAMPLE REQUEST FOR CHECK CUSTOMER STATUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                                                  /v1/CustomerStatus                                                                                                                                                                        POST                                            
+Request                                                                     
+curl                                     -      X POST https://HOST_REST_API/v1/ CustomerStatus                                                                                                                                                                                                                                                                                                                                                                                                                                           -      H                  'accept: application/json'                                                                                                                                                                                                              -      H                  'authorization: 
+Bearer <Access                                                                                                                            -      token> '                                                                       -      H                  'content                                                                   -      type: application/json'                                                                                                                                                                                          -      d                '{"account": <account of customer>}'                                                                                                                                                                                                                                                                                                              
+Response                                                                                
+{       
+                        "path": "/v1/CustomerStatus",                                                                                                                                                                                                                                                          
+            "customerStatus": {                                                                                                                                                                    
+                                               "type": "fullkyc",                                                                                                                                      
+                                               "status": ["registered","active"]                                                                                                                                                                                                                                                              
+                        }       
+                        "timestamp": 1558715815122,                                                                                                                                                                                                                                                           
+                        "status": 200                                                                                                           
+                        "mode": <sandbox or live>                                                                                                                                                                                                                       
+}       
+ 
+ 
+ 
+----------------Page (5) Break----------------
+ 
+ 
+ 
+ 
+7           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+PREFUNDED/PAYOUT                                                                                                                                                                  
+To                         pay the customer, you must send the 
+receiver
+      (the customer's account), 
+amount
+, 
+desc
+, and 
+reference
+      (a unique value that represents your transaction) in an HTTP POST 
+request, including an Authorization Bearer Token.                                                                                                                                                                                                                                                                                                                                                                                                                     
+SAMPLE PAYOUT REQUEST                                                                                                                                                                                                                                                                                                                   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                                                  /v1/                                 Transfert                                                                           POST                                            
+Request                                                                     
+curl                                     -      X POST https://HOST_REST_API/v1/Transfert                                                                                                                                                                                                                                                                                                                                                                           -      H                  'accept: application/json'                                                                                                                                                                                                              -      H                  'authorization: Bearer 
+<Access                                                                 -      token> '                                                                       -      H                  'content                                                                   -      type: application/json'                                                                                                                                                                                          -      d                '{"amount": <amount>,  "receiver ": <Receive 
+Account>,  "desc": <                                                                                                                                                                    Some description                                                                                                                                              >          , "reference": <Id that represents your transaction>}                                                                                                                                                                                                                                                                                                                                                                                                                                            '    
+Response                                                                                
+{             
+                        "path": "/Api/v1/Transfert",                                                                                                                                                                                                                                
+                        "transfer": {                                                                                                  
+                                               "transaction_id": "                                                                                                                                                     Transaction id                                                                                                                  ",             
+                                               "amount": 100.0,                                                                                                                                           
+                                               "receiver": "                                                                                                  Receiver account                                                                                                                                            ",             
+                                               "message": "                                                                                                       successful                                                                                    ",             
+                                               "desc": "Test Api Transfer"                                                                                                                                                                                                                       
+                        },            
+                        "timestamp": 1589927614388,                                                                                                                                                                                                                                                            
+                        "status": 200                                                                                                           
+      }       
+ 
+ 
+ 
+----------------Page (6) Break----------------
+ 
+ 
+ 
+ 
+8          
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+CHECK PREFUNDED TRANSACTION STATUS                                                                                                                                                                                                                                                                                                                                    
+To check the status of a prefunded transaction, you must send the 
+reference
+      (a unique 
+value that represents your transaction) as an HTTP POST request, including an 
+Authorization Bearer Token.                                                                                                                                                                                                                                     
+SAMPLE REQUEST FOR PREFUNDED TRANSACTION STATUS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                                                  /v1/                                 PrefundedTransactionStatus                                                                                                                                                                                                                                         
+ 
+POST                                            
+Request                                                                     
+curl                                     -      X POST https://HOST_REST_API/v1/Transfert                                                                                                                                                                                                                                                                                                                                                                           -      H                  'accept: application/json'                                                                                                                                                                                                              -      H                  'authorization: Bearer 
+<Access                                                                 -      token> '                                                                       -      H                  'content                                                                   -      type: application/json'                                                                                                                                                                                          -      d                '{"reference": <Id that represents your transaction>}'                                                                                                                                                                                                                                                                                                                                                                                                                                                
+Response                                                                                
+{           
+                                  "path": "/Api/v1/PrefundedTransactionStatus",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                  "transStatus": "successful",                                                                                                                                                                                                                                                                                                                                                                       
+                                  "timestamp": 1732154100298,                                                                                                                                                                                                                                                                                                                                                                                                         
+                                  "status": 200                                                                                                                                                                       
+}           
+{           
+                                  "path": "/Api/v1/PrefundedTransactionStatus",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                  "error": "Not Found",                                                                                                                                                                                                                                                                                        
+                                  "message": "Can't find this transaction",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+                                  "timestamp": 1732131728381,                                                                                                                                                                                                                                                                                                                                                                                                          
+                        "status": 404                                                                                                            
+}       
+{       
+                        "path": "/Api/v1/Transfert",                                                                                                                                                                                                                                
+                        "error": "Forbidden",                                                                                                                                                                         
+                        "message": "Maximum Account Balance",                                                                                                                                                                                                                                                                                                                                                     
+                        "timestamp": 1732154199606,                                                                                                                                                                                                                                                            
+                        "status": 403                                                                                                            
+}       
+ 
+ 
+----------------Page (7) Break----------------
+ 
+ 
+ 
+ 
+9           
+© 2019 Digicel.                                                                                                                                          All Rights Reserved.                                                                                                                                                                                                           
+BALANCE PREFUNDED                                                                                                                                                                         
+To check the balance, you must send an HTTP GET request with an Authorization Bearer 
+Token.                                                      
+SAMPLE REQUEST FOR BALANCE (PREFUNDED)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+                                                                                                                                  /v1                          /PrefundedBalance                                                                                                                                                           GET                                T           
+Request                                                                     
+curl                                     -      X               GET                                     https://HOST_REST_API/v1/                                                                                                                                                                                                                              Prefund                                                                 edBalance                                                                                         -      H                  'accept: application/json'                                                                                                                                                                                                              -      H                  'authorization: 
+Bearer <Access                                                                                                                            -      token> '                                                                  
+Response                                                                                
+{       
+                        "path": "/Api/v1/PrefundedBalance",                                                                                                                                                                                                                                                                                                         
+                        "balance": {                                                                                              
+                                               "balance": 29814021.179999999701976776123046875,                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                               "message": "successful"                                                                                                                                                                                                    
+                        },            
+                        "timestamp": 1732205962423,                                                                                                                                                                                                                                                              
+                        "status": 200                                                                                                           
+}       
+ 
+ 
+----------------Page (8) Break----------------

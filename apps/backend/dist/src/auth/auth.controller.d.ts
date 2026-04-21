@@ -1,6 +1,7 @@
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -32,8 +33,55 @@ export declare class AuthController {
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        dateOfBirth: Date | null;
+        address: string | null;
+        gender: import(".prisma/client").$Enums.Gender | null;
+        fatherName: string | null;
+        motherName: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
+        classesTeaching: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+        classesAttending: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+    } | null>;
+    updateProfile(req: {
+        user?: {
+            sub?: string;
+        };
+    }, body: UpdateProfileDto): Promise<{
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        dateOfBirth: Date | null;
+        address: string | null;
+        gender: import(".prisma/client").$Enums.Gender | null;
+        fatherName: string | null;
+        motherName: string | null;
+        mustChangePassword: boolean;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        classesTeaching: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+        classesAttending: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
     } | null>;
 }

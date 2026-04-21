@@ -42,7 +42,7 @@ function AdminUsers() {
   useEffect(() => {
     const loadClasses = async () => {
       try {
-        const response = await apiFetch("/classes", { token })
+        const response = await apiFetch("/admin/classes", { token })
         setClasses(response ?? [])
       } catch (err) {
         setError(err.message)

@@ -2,6 +2,8 @@ import { Gender } from "@prisma/client";
 declare class NewClassDto {
     name: string;
     level?: string;
+    academicYearId?: string;
+    seriesId?: string;
 }
 export declare class CreateTeacherDto {
     email: string;

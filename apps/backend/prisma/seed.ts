@@ -191,13 +191,6 @@ async function main() {
   }
 
   console.log("\n🎉 Database seed completed!")
-}  } else if (!teacher.passwordHash) {
-    const passwordHash = await bcrypt.hash(teacherPassword, 10)
-    await prisma.user.update({
-      where: { id: teacher.id },
-      data: { passwordHash },
-    })
-  console.log("\n🎉 Database seed completed!")
 }
 
 main()

@@ -12,6 +12,16 @@ import { MessagesModule } from "./messages/messages.module"
 import { ResourcesModule } from "./resources/resources.module"
 import { AssignmentsModule } from "./assignments/assignments.module"
 import { AnnouncementsModule } from "./announcements/announcements.module"
+import { SyncModule } from "./sync/sync.module"
+import { HybridGatewayModule } from "./hybrid-gateway/hybrid-gateway.module"
+import { HealthModule } from "./health/health.module"
+import { FinanceIntegrationModule } from "./finance-integration/finance-integration.module"
+import { ContentDeliveryModule } from "./content-delivery/content-delivery.module"
+import { AnalyticsModule } from "./analytics/analytics.module"
+import { AcademicPeriodsModule } from "./academic-periods/academic-periods.module"
+import { AcademicSettingsModule } from "./academic-settings/academic-settings.module"
+import { AcademicRequestsModule } from "./academic-requests/academic-requests.module"
+import { DisciplinesModule } from "./disciplines/disciplines.module"
 
 @Module({
   imports: [
@@ -28,6 +38,16 @@ import { AnnouncementsModule } from "./announcements/announcements.module"
     ResourcesModule,
     AssignmentsModule,
     AnnouncementsModule,
+    SyncModule,
+    HybridGatewayModule,
+    HealthModule,
+    FinanceIntegrationModule,
+    ContentDeliveryModule,
+    AnalyticsModule,
+    AcademicPeriodsModule,
+    AcademicSettingsModule,
+    AcademicRequestsModule,
+    DisciplinesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

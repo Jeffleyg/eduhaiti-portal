@@ -6,7 +6,7 @@ export class ResourcesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(classId: string, title: string, description: string | undefined, filePath: string, fileType: string, uploadedById: string) {
-    return this.prisma.resource.create({
+    const resource = await this.prisma.resource.create({
       data: {
         classId,
         title,
@@ -21,6 +21,24 @@ export class ResourcesService {
         },
       },
     })
+
+    await this.prisma.auditLog.create({
+      data: {
+        entityType: "RESOURCE",
+        entityId: resource.id,
+        action: "CREATE",
+        userId: uploadedById,
+        changes: JSON.stringify({
+          id: resource.id,
+          classId,
+          title,
+          filePath,
+          fileType,
+        }),
+      },
+    })
+
+    return resource
   }
 
   async findByClass(classId: string) {
@@ -47,8 +65,25 @@ export class ResourcesService {
   }
 
   async delete(resourceId: string) {
-    return this.prisma.resource.delete({
+    const deleted = await this.prisma.resource.delete({
       where: { id: resourceId },
     })
+
+    await this.prisma.auditLog.create({
+      data: {
+        entityType: "RESOURCE",
+        entityId: deleted.id,
+        action: "DELETE",
+        changes: JSON.stringify({
+          id: deleted.id,
+          classId: deleted.classId,
+          title: deleted.title,
+          filePath: deleted.filePath,
+          fileType: deleted.fileType,
+        }),
+      },
+    })
+
+    return deleted
   }
 }

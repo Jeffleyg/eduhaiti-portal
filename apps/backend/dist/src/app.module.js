@@ -20,6 +20,17 @@ const attendance_module_1 = require("./attendance/attendance.module");
 const messages_module_1 = require("./messages/messages.module");
 const resources_module_1 = require("./resources/resources.module");
 const assignments_module_1 = require("./assignments/assignments.module");
+const announcements_module_1 = require("./announcements/announcements.module");
+const sync_module_1 = require("./sync/sync.module");
+const hybrid_gateway_module_1 = require("./hybrid-gateway/hybrid-gateway.module");
+const health_module_1 = require("./health/health.module");
+const finance_integration_module_1 = require("./finance-integration/finance-integration.module");
+const content_delivery_module_1 = require("./content-delivery/content-delivery.module");
+const analytics_module_1 = require("./analytics/analytics.module");
+const academic_periods_module_1 = require("./academic-periods/academic-periods.module");
+const academic_settings_module_1 = require("./academic-settings/academic-settings.module");
+const academic_requests_module_1 = require("./academic-requests/academic-requests.module");
+const disciplines_module_1 = require("./disciplines/disciplines.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,6 +49,17 @@ exports.AppModule = AppModule = __decorate([
             messages_module_1.MessagesModule,
             resources_module_1.ResourcesModule,
             assignments_module_1.AssignmentsModule,
+            announcements_module_1.AnnouncementsModule,
+            sync_module_1.SyncModule,
+            hybrid_gateway_module_1.HybridGatewayModule,
+            health_module_1.HealthModule,
+            finance_integration_module_1.FinanceIntegrationModule,
+            content_delivery_module_1.ContentDeliveryModule,
+            analytics_module_1.AnalyticsModule,
+            academic_periods_module_1.AcademicPeriodsModule,
+            academic_settings_module_1.AcademicSettingsModule,
+            academic_requests_module_1.AcademicRequestsModule,
+            disciplines_module_1.DisciplinesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

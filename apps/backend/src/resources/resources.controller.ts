@@ -6,6 +6,7 @@ import { Roles } from "../auth/decorators/roles.decorator"
 import { RolesGuard } from "../auth/guards/roles.guard"
 import { ResourcesService } from "./resources.service"
 import { Role } from "@prisma/client"
+import { AssetOptimizationService } from "../content-delivery/services/asset-optimization.service"
 import * as path from "path"
 import * as fs from "fs"
 
@@ -18,7 +19,10 @@ if (!fs.existsSync(uploadDir)) {
 
 @Controller("resources")
 export class ResourcesController {
-  constructor(private readonly resourcesService: ResourcesService) {}
+  constructor(
+    private readonly resourcesService: ResourcesService,
+    private readonly assetOptimizationService: AssetOptimizationService,
+  ) {}
 
   @Get("class/:classId")
   @UseGuards(JwtAuthGuard)
@@ -50,10 +54,28 @@ export class ResourcesController {
       throw new BadRequestException("No file uploaded")
     }
 
-    const fileType = path.extname(file.originalname).toLowerCase().replace(".", "")
     const filePath = `uploads/${file.filename}`
+    const optimized = await this.assetOptimizationService.optimizeUploadedAsset(filePath)
 
-    return this.resourcesService.create(classId, body.title, body.description, filePath, fileType, req.user.sub)
+    const fileType =
+      optimized.fileType || path.extname(file.originalname).toLowerCase().replace(".", "")
+
+    const resource = await this.resourcesService.create(
+      classId,
+      body.title,
+      body.description,
+      optimized.optimizedPath,
+      fileType,
+      req.user.sub,
+    )
+
+    return {
+      ...resource,
+      optimization: {
+        contentHash: optimized.contentHash,
+        sizeBytes: optimized.sizeBytes,
+      },
+    }
   }
 
   @Delete(":resourceId")

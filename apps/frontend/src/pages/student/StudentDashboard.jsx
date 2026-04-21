@@ -4,16 +4,28 @@ import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import StatCard from "../../components/StatCard.jsx"
 import { useTranslation } from "react-i18next"
+import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/sqliteCache"
+import { useSurvivalMode } from "../../context/useSurvivalMode.js"
+import { useSyncControl } from "../../context/useSyncControl.js"
 
 function StudentDashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { token } = useAuth()
-  const [stats, setStats] = useState({})
-  const [recentMessages, setRecentMessages] = useState([])
-  const [classes, setClasses] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { disableBackgroundSync } = useSurvivalMode()
+  const { syncRevision } = useSyncControl()
+  const cached = readHomeCache("student")
+  const [stats, setStats] = useState(cached.data?.stats ?? {})
+  const [recentMessages, setRecentMessages] = useState(cached.data?.recentMessages ?? [])
+  const [classes, setClasses] = useState(cached.data?.classes ?? [])
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(cached.lastUpdatedAt)
+  const [loading, setLoading] = useState(!cached.data)
 
   useEffect(() => {
+    if (!token || disableBackgroundSync) {
+      setLoading(false)
+      return
+    }
+
     const fetchData = async () => {
       try {
         const [classesRes, gradesRes, attendanceRes, messagesRes] = await Promise.all([
@@ -34,12 +46,21 @@ function StudentDashboard() {
           ? Math.round((attendanceRes.filter(a => a.status === "present").length / attendanceRes.length) * 100)
           : "0"
 
-        setStats({
+        const computedStats = {
           grades: avgGrade,
           attendance: `${attendanceRate}%`,
           messages: (messagesRes ?? []).length,
           classes: classesRes?.length ?? "0",
+        }
+
+        setStats(computedStats)
+
+        const updatedAt = writeHomeCache("student", {
+          classes: classesRes ?? [],
+          recentMessages: (messagesRes ?? []).slice(0, 3),
+          stats: computedStats,
         })
+        setLastUpdatedAt(updatedAt)
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
       } finally {
@@ -48,7 +69,7 @@ function StudentDashboard() {
     }
 
     fetchData()
-  }, [token])
+  }, [token, disableBackgroundSync, syncRevision])
 
   if (loading) {
     return <div className="text-center text-brand-navy">{t("loading")}</div>
@@ -57,6 +78,9 @@ function StudentDashboard() {
   return (
     <div className="space-y-6">
       <SectionHeader title={t("navOverview")} subtitle={t("studentDashboardIntro")} />
+      <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/70">
+        {t("lastUpdatedLabel")} {formatLastUpdated(lastUpdatedAt, i18n.resolvedLanguage || i18n.language)}
+      </div>
 
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard label={t("metricGrades")} value={stats.grades ?? "0"} />

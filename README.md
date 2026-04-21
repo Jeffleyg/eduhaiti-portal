@@ -5,7 +5,7 @@ O **EduHaiti** é uma plataforma digital de gestão escolar focada na eficiênci
 ## 🛠️ Stack Tecnológica
 - **Frontend:** React.js (Vite), Tailwind CSS, Lucide Icons.
 - **Backend:** NestJS, JWT Auth, Prisma ORM.
-- **Database:** PostgreSQL.
+- **Database:** Supabase PostgreSQL.
 
 ## 📋 Funcionalidades Principais
 
@@ -33,6 +33,12 @@ packages/
 ```
 
 ## 🚀 Como Rodar (Dev)
+### 0) Configurar Supabase
+1. Crie um projeto no Supabase.
+2. Copie a connection string direta para `DIRECT_URL`.
+3. Copie a connection string do pooler ou uma URL compatível com Prisma para `DATABASE_URL`.
+4. Ajuste `apps/backend/.env` com essas variáveis antes de rodar as migrations.
+
 ### 1) Banco + Apps com Docker
 ```bash
 docker compose up

@@ -114,11 +114,50 @@ let AuthService = class AuthService {
                 email: true,
                 role: true,
                 name: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                address: true,
+                gender: true,
+                fatherName: true,
+                motherName: true,
                 isActive: true,
                 mustChangePassword: true,
                 enrollmentNumber: true,
+                classesAttending: {
+                    select: { id: true, name: true, level: true },
+                },
+                classesTeaching: {
+                    select: { id: true, name: true, level: true },
+                },
             },
         });
+    }
+    async updateProfile(userId, payload) {
+        const existing = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, firstName: true, lastName: true },
+        });
+        if (!existing) {
+            throw new common_1.UnauthorizedException("Invalid credentials");
+        }
+        const firstName = payload.firstName ?? existing.firstName ?? "";
+        const lastName = payload.lastName ?? existing.lastName ?? "";
+        const fullName = `${firstName} ${lastName}`.trim() || null;
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                firstName: payload.firstName,
+                lastName: payload.lastName,
+                name: fullName,
+                dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : undefined,
+                address: payload.address,
+                gender: payload.gender,
+                fatherName: payload.fatherName,
+                motherName: payload.motherName,
+            },
+        });
+        return this.getProfile(userId);
     }
     async login(email, password) {
         const normalizedEmail = email.trim().toLowerCase();

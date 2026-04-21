@@ -1,7 +1,14 @@
 import { PrismaService } from "../prisma/prisma.service";
+import { Role } from "@prisma/client";
 export declare class MessagesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
+    listRecipients(userId: string, role: Role): Promise<{
+        id: string;
+        email: string;
+        name: string | null;
+        role: import(".prisma/client").$Enums.Role;
+    }[]>;
     findReceivedBy(userId: string): Promise<({
         from: {
             id: string;

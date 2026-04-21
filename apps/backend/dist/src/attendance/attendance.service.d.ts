@@ -1,47 +1,89 @@
 import { PrismaService } from "../prisma/prisma.service";
+import { AttendanceStatus } from "@prisma/client";
 export declare class AttendanceService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    findByStudent(studentId: string): Promise<({
+    markAttendance(payload: {
+        studentId: string;
+        classId: string;
+        date: Date;
+        status: AttendanceStatus;
+        remarks?: string;
+    }): Promise<{
         class: {
             id: string;
             name: string;
-            createdAt: Date;
-            updatedAt: Date;
-            level: string;
-            teacherId: string;
         };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        studentId: string;
-        classId: string;
-        status: string;
-        date: Date;
-    })[]>;
-    findByClass(classId: string): Promise<({
         student: {
             id: string;
-            email: string;
             name: string | null;
         };
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        studentId: string;
-        classId: string;
-        status: string;
         date: Date;
-    })[]>;
-    markAttendance(studentId: string, classId: string, date: Date, status: string): Promise<{
+        classId: string;
+        studentId: string;
+        status: import(".prisma/client").$Enums.AttendanceStatus;
+        remarks: string | null;
+    }>;
+    findByStudent(studentId: string, startDate?: Date, endDate?: Date): Promise<({
+        class: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        studentId: string;
-        classId: string;
-        status: string;
         date: Date;
+        classId: string;
+        studentId: string;
+        status: import(".prisma/client").$Enums.AttendanceStatus;
+        remarks: string | null;
+    })[]>;
+    findByClass(classId: string, date?: Date): Promise<({
+        student: {
+            id: string;
+            email: string;
+            enrollmentNumber: string | null;
+            name: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        date: Date;
+        classId: string;
+        studentId: string;
+        status: import(".prisma/client").$Enums.AttendanceStatus;
+        remarks: string | null;
+    })[]>;
+    getStudentAttendanceStats(studentId: string, classId: string): Promise<{
+        absencePercentage: number;
+        isAtRisk: boolean;
+        total: number;
+        present: number;
+        absent: number;
+        late: number;
+        excused: number;
+    }>;
+    getClassAttendanceReport(classId: string): Promise<{
+        absencePercentage: number;
+        isAtRisk: boolean;
+        total: number;
+        present: number;
+        absent: number;
+        late: number;
+        excused: number;
+        student: {
+            id: string;
+            email: string;
+            name: string | null;
+        };
+    }[]>;
+    delete(attendanceId: string): Promise<{
+        message: string;
     }>;
 }

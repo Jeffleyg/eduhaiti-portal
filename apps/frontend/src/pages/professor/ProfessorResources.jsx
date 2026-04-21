@@ -4,10 +4,12 @@ import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { Upload } from "lucide-react"
+import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 
 function ProfessorResources() {
   const { t } = useTranslation()
   const { token } = useAuth()
+  const { disableImages } = useSurvivalMode()
   const [resources, setResources] = useState([])
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -88,7 +90,14 @@ function ProfessorResources() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Gerenciar Recursos" subtitle="Compartilhe PDFs, slides e documentos com sua turma" />
+      <SectionHeader
+        title="Gerenciar Recursos"
+        subtitle={
+          disableImages
+            ? "Modo texto ativo: interface simplificada para baixo consumo."
+            : "Compartilhe PDFs, slides e documentos com sua turma"
+        }
+      />
 
       <div className="rounded-2xl border border-brand-navy/10 bg-white p-6">
         <h3 className="font-semibold text-brand-navy mb-4">Selecione a Turma</h3>
@@ -140,9 +149,9 @@ function ProfessorResources() {
             accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx"
           />
           <label htmlFor="file-input" className="cursor-pointer flex flex-col items-center gap-2">
-            <Upload className="w-6 h-6 text-brand-navy/60" />
+            {disableImages ? null : <Upload className="w-6 h-6 text-brand-navy/60" />}
             <span className="text-sm font-semibold text-brand-navy">{file ? file.name : t("clickToUpload")}</span>
-            <span className="text-xs text-brand-navy/60">PDF, PowerPoint, Word, Excel</span>
+            {disableImages ? null : <span className="text-xs text-brand-navy/60">PDF, PowerPoint, Word, Excel</span>}
           </label>
         </div>
 
@@ -162,10 +171,10 @@ function ProfessorResources() {
             <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
               <div>
                 <p className="font-semibold text-brand-navy">{resource.title}</p>
-                <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>
+                {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>}
               </div>
               <a href={`/${resource.filePath}`} download className="text-brand-red font-semibold hover:underline">
-                Download
+                {disableImages ? "TXT-DOWNLOAD" : "Download"}
               </a>
             </div>
           ))

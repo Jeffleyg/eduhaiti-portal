@@ -48,7 +48,14 @@ function Login() {
         navigate("/student", { replace: true })
       }
     } catch (err) {
-      setError(err.message)
+      // Show user-friendly error messages
+      if (err.message.includes("Unauthorized") || err.message.includes("401")) {
+        setError(t("invalidCredentials"))
+      } else if (err.message.includes("Request failed") || !err.message) {
+        setError(t("serverError"))
+      } else {
+        setError(t("errorOccurred"))
+      }
     } finally {
       setLoading(false)
     }

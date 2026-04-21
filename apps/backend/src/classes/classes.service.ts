@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
+import { Role } from "@prisma/client"
 
 @Injectable()
 export class ClassesService {
@@ -70,6 +71,38 @@ export class ClassesService {
 
     if (!existing) {
       throw new NotFoundException("Class not found")
+    }
+
+    if (payload.name && payload.name !== existing.name) {
+      const duplicate = await this.prisma.class.findFirst({
+        where: {
+          id: { not: classId },
+          academicYearId: existing.academicYearId,
+          seriesId: existing.seriesId,
+          name: payload.name,
+        },
+      })
+
+      if (duplicate) {
+        throw new BadRequestException(
+          "Class with this name already exists in this series",
+        )
+      }
+    }
+
+    if (payload.teacherId) {
+      const teacher = await this.prisma.user.findUnique({
+        where: { id: payload.teacherId },
+        select: { id: true, role: true },
+      })
+
+      if (!teacher || teacher.role !== Role.TEACHER) {
+        throw new BadRequestException("Teacher not found")
+      }
+    }
+
+    if (payload.maxStudents !== undefined && payload.maxStudents < 1) {
+      throw new BadRequestException("maxStudents must be greater than zero")
     }
 
     return this.prisma.class.update({
@@ -221,6 +254,26 @@ export class ClassesService {
         series: { select: { id: true, name: true } },
       },
       orderBy: { name: "asc" },
+    })
+  }
+
+  async listAcademicYears() {
+    return this.prisma.academicYear.findMany({
+      select: { id: true, year: true, startDate: true, endDate: true, isActive: true },
+      orderBy: { year: "desc" },
+    })
+  }
+
+  async listSeries(academicYearId?: string) {
+    return this.prisma.series.findMany({
+      where: academicYearId ? { academicYearId } : undefined,
+      select: {
+        id: true,
+        name: true,
+        academicYearId: true,
+        academicYear: { select: { id: true, year: true } },
+      },
+      orderBy: [{ academicYear: { year: "desc" } }, { name: "asc" }],
     })
   }
 }

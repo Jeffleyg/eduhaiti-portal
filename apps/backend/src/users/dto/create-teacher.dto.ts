@@ -18,6 +18,14 @@ class NewClassDto {
   @IsOptional()
   @IsString()
   level?: string
+
+  @IsOptional()
+  @IsString()
+  academicYearId?: string
+
+  @IsOptional()
+  @IsString()
+  seriesId?: string
 }
 
 export class CreateTeacherDto {

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common"
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common"
 import { UsersService } from "./users.service"
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 import { RolesGuard } from "../common/guards/roles.guard"
@@ -12,6 +12,16 @@ import { CreateTeacherDto } from "./dto/create-teacher.dto"
 @Roles(Role.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get("students")
+  findAllStudents() {
+    return this.usersService.findAllStudents()
+  }
+
+  @Get("teachers")
+  findAllTeachers() {
+    return this.usersService.findAllTeachers()
+  }
 
   @Post("students")
   createStudent(@Body() body: CreateStudentDto) {

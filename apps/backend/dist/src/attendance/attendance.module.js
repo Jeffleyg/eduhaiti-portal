@@ -10,12 +10,13 @@ exports.AttendanceModule = void 0;
 const common_1 = require("@nestjs/common");
 const attendance_service_1 = require("./attendance.service");
 const attendance_controller_1 = require("./attendance.controller");
+const attendance_public_controller_1 = require("./attendance.public.controller");
 let AttendanceModule = class AttendanceModule {
 };
 exports.AttendanceModule = AttendanceModule;
 exports.AttendanceModule = AttendanceModule = __decorate([
     (0, common_1.Module)({
-        controllers: [attendance_controller_1.AttendanceController],
+        controllers: [attendance_controller_1.AttendanceController, attendance_public_controller_1.AttendancePublicController],
         providers: [attendance_service_1.AttendanceService],
         exports: [attendance_service_1.AttendanceService],
     })

@@ -26,6 +26,12 @@ let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
+    findAllStudents() {
+        return this.usersService.findAllStudents();
+    }
+    findAllTeachers() {
+        return this.usersService.findAllTeachers();
+    }
     createStudent(body) {
         return this.usersService.createStudent(body);
     }
@@ -34,6 +40,18 @@ let UsersController = class UsersController {
     }
 };
 exports.UsersController = UsersController;
+__decorate([
+    (0, common_1.Get)("students"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "findAllStudents", null);
+__decorate([
+    (0, common_1.Get)("teachers"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "findAllTeachers", null);
 __decorate([
     (0, common_1.Post)("students"),
     __param(0, (0, common_1.Body)()),

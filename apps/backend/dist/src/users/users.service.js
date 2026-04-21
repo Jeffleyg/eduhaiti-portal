@@ -54,6 +54,12 @@ let UsersService = class UsersService {
         const enrollmentNumber = await this.generateEnrollmentNumber();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+        if (payload.classId) {
+            const classExists = await this.prisma.class.findUnique({ where: { id: payload.classId } });
+            if (!classExists) {
+                throw new common_1.BadRequestException("Class not found");
+            }
+        }
         const user = await this.prisma.user.create({
             data: {
                 email: normalizedEmail,
@@ -70,7 +76,7 @@ let UsersService = class UsersService {
                 mustChangePassword: true,
                 tempPasswordExpiresAt: expiresAt,
                 role: client_1.Role.STUDENT,
-                classesAttending: { connect: [{ id: payload.classId }] },
+                ...(payload.classId && { classesAttending: { connect: [{ id: payload.classId }] } }),
             },
             select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
         });
@@ -115,18 +121,72 @@ let UsersService = class UsersService {
             });
         }
         if (payload.newClasses && payload.newClasses.length > 0) {
+            const defaultAcademicYear = await this.prisma.academicYear.findFirst();
+            const defaultSeries = await this.prisma.series.findFirst();
+            if (!defaultAcademicYear || !defaultSeries) {
+                throw new common_1.BadRequestException("No academic year or series found in database");
+            }
             for (const newClass of payload.newClasses) {
                 await this.prisma.class.create({
                     data: {
                         name: newClass.name,
                         level: newClass.level ?? "3eme",
                         teacherId: user.id,
+                        academicYearId: newClass.academicYearId ?? defaultAcademicYear.id,
+                        seriesId: newClass.seriesId ?? defaultSeries.id,
                     },
                 });
             }
         }
         await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt);
         return user;
+    }
+    async findAllStudents() {
+        return this.prisma.user.findMany({
+            where: { role: client_1.Role.STUDENT },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                firstName: true,
+                lastName: true,
+                enrollmentNumber: true,
+                classesAttending: {
+                    select: {
+                        id: true,
+                        name: true,
+                        level: true,
+                    },
+                },
+                isActive: true,
+                createdAt: true,
+            },
+            orderBy: { name: "asc" },
+        });
+    }
+    async findAllTeachers() {
+        return this.prisma.user.findMany({
+            where: { role: client_1.Role.TEACHER },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                firstName: true,
+                lastName: true,
+                enrollmentNumber: true,
+                subjects: true,
+                classesTeaching: {
+                    select: {
+                        id: true,
+                        name: true,
+                        level: true,
+                    },
+                },
+                isActive: true,
+                createdAt: true,
+            },
+            orderBy: { name: "asc" },
+        });
     }
 };
 exports.UsersService = UsersService;

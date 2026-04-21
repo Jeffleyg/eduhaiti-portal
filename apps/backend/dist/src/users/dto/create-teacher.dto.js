@@ -16,6 +16,8 @@ const client_1 = require("@prisma/client");
 class NewClassDto {
     name;
     level;
+    academicYearId;
+    seriesId;
 }
 __decorate([
     (0, class_validator_1.IsString)(),
@@ -26,6 +28,16 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], NewClassDto.prototype, "level", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], NewClassDto.prototype, "academicYearId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], NewClassDto.prototype, "seriesId", void 0);
 class CreateTeacherDto {
     email;
     firstName;
