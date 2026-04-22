@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, ServiceUnavailableException } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import nodemailer from "nodemailer"
 
@@ -32,7 +32,7 @@ export class EmailService {
 
   async sendTempPasswordEmail(to: string, tempPassword: string, expiresAt: Date) {
     if (!this.transporter) {
-      throw new Error("SMTP configuration is missing")
+      throw new ServiceUnavailableException("SMTP configuration is missing")
     }
     const expiresAtText = expiresAt.toLocaleString("pt-BR")
 

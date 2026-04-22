@@ -21,6 +21,7 @@ const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const client_1 = require("@prisma/client");
 const create_student_dto_1 = require("./dto/create-student.dto");
 const create_teacher_dto_1 = require("./dto/create-teacher.dto");
+const resend_temp_password_dto_1 = require("./dto/resend-temp-password.dto");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -37,6 +38,9 @@ let UsersController = class UsersController {
     }
     createTeacher(body) {
         return this.usersService.createTeacher(body);
+    }
+    resendTempPassword(body) {
+        return this.usersService.resendTempPassword(body.email);
     }
 };
 exports.UsersController = UsersController;
@@ -66,6 +70,13 @@ __decorate([
     __metadata("design:paramtypes", [create_teacher_dto_1.CreateTeacherDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "createTeacher", null);
+__decorate([
+    (0, common_1.Post)("resend-temp-password"),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [resend_temp_password_dto_1.ResendTempPasswordDto]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "resendTempPassword", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)("admin/users"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

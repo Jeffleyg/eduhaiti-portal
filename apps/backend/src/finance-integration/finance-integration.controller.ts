@@ -1,6 +1,25 @@
-import { Body, Controller, Headers, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { AdminFinanceSummaryQueryDto } from './dto/admin-finance-summary-query.dto';
+import { AdminPaymentsQueryDto } from './dto/admin-payments-query.dto';
+import { CreateTuitionChargeDto } from './dto/create-tuition-charge.dto';
 import { DiasporaRemittanceDto } from './dto/diaspora-remittance.dto';
 import { DidTrustTokenDto } from './dto/did-trust-token.dto';
+import { GuardianTuitionPaymentDto } from './dto/guardian-tuition-payment.dto';
 import { MobileMoneyPaymentDto } from './dto/mobile-money-payment.dto';
 import { FinanceIntegrationService } from './finance-integration.service';
 import { FinanceObservabilityService } from './services/finance-observability.service';
@@ -30,6 +49,27 @@ export class FinanceIntegrationController {
     );
 
     return this.financeService.processMobileMoneyPayment(dto);
+  }
+
+  @Get('tuition/:studentEnrollmentNumber/pending')
+  getPendingTuition(@Param('studentEnrollmentNumber') studentEnrollmentNumber: string) {
+    return this.financeService.listPendingTuitionByEnrollment(studentEnrollmentNumber);
+  }
+
+  @Post('tuition/pay')
+  async payTuitionAsGuardian(@Body() dto: GuardianTuitionPaymentDto) {
+    await this.observability.logPaymentStage(
+      'REQUEST_RECEIVED',
+      {
+        channel: 'guardian-tuition',
+        provider: dto.provider,
+        idempotencyKey: dto.idempotencyKey,
+        studentEnrollmentNumber: dto.studentEnrollmentNumber,
+      },
+      { persistAudit: true },
+    );
+
+    return this.financeService.processGuardianTuitionPayment(dto);
   }
 
   @Post('diaspora/webhook')
@@ -114,5 +154,26 @@ export class FinanceIntegrationController {
   @Post('did/verify-offline')
   verifyDidToken(@Body() payload: { trustToken: string }) {
     return this.financeService.verifyDidTrustTokenOffline(payload.trustToken);
+  }
+
+  @Post('admin/tuition-charges')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  createTuitionCharge(@Body() dto: CreateTuitionChargeDto, @Req() req: any) {
+    return this.financeService.createTuitionCharge(dto, req.user.sub);
+  }
+
+  @Get('admin/payments')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  listPayments(@Query() filters: AdminPaymentsQueryDto) {
+    return this.financeService.listPaymentsForAdmin(filters);
+  }
+
+  @Get('admin/summary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getSummary(@Query() filters: AdminFinanceSummaryQueryDto) {
+    return this.financeService.getAdminFinanceSummary(filters);
   }
 }

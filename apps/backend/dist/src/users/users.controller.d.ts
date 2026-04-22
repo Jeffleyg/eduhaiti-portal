@@ -1,6 +1,7 @@
 import { UsersService } from "./users.service";
 import { CreateStudentDto } from "./dto/create-student.dto";
 import { CreateTeacherDto } from "./dto/create-teacher.dto";
+import { ResendTempPasswordDto } from "./dto/resend-temp-password.dto";
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
@@ -48,5 +49,10 @@ export declare class UsersController {
         enrollmentNumber: string | null;
         name: string | null;
         role: import(".prisma/client").$Enums.Role;
+    }>;
+    resendTempPassword(body: ResendTempPasswordDto): Promise<{
+        success: boolean;
+        email: string;
+        expiresAt: Date;
     }>;
 }

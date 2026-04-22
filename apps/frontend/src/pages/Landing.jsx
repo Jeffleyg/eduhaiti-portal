@@ -83,6 +83,9 @@ function Landing() {
                 <Link className="outline-button" to="/professor">
                   {t("secondaryCta")}
                 </Link>
+                <Link className="outline-button" to="/pagamento-escolaridade">
+                  {t("tuitionPaymentCta")}
+                </Link>
               </div>
               <div className="grid gap-4 md:grid-cols-4">
                 {metrics.map((metric, index) => (

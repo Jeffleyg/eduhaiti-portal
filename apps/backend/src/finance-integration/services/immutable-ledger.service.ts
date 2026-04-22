@@ -6,7 +6,11 @@ import { dirname, join } from 'node:path';
 interface LedgerRecord {
   timestamp: string;
   transactionId: string;
-  category: 'mobile-money' | 'diaspora-remittance' | 'did-key';
+  category:
+    | 'mobile-money'
+    | 'diaspora-remittance'
+    | 'did-key'
+    | 'guardian-tuition';
   payload: Record<string, unknown>;
   previousHash: string;
   hash: string;
@@ -23,7 +27,11 @@ export class ImmutableLedgerService {
 
   async append(
     transactionId: string,
-    category: 'mobile-money' | 'diaspora-remittance' | 'did-key',
+    category:
+      | 'mobile-money'
+      | 'diaspora-remittance'
+      | 'did-key'
+      | 'guardian-tuition',
     payload: Record<string, unknown>,
   ): Promise<LedgerRecord> {
     await mkdir(dirname(this.ledgerPath), { recursive: true });

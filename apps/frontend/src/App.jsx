@@ -22,9 +22,11 @@ import AdminAcademicConfig from "./pages/admin/AdminAcademicConfig.jsx"
 import AdminStudentManagement from "./pages/admin/AdminStudentManagement.jsx"
 import AdminDisciplineManagement from "./pages/admin/AdminDisciplineManagement.jsx"
 import AdminClassManagement from "./pages/admin/AdminClassManagement.jsx"
+import AdminFinanceControl from "./pages/admin/AdminFinanceControl.jsx"
 import UserProfile from "./pages/common/UserProfile.jsx"
 import ProfessorAcademicRequests from "./pages/professor/ProfessorAcademicRequests.jsx"
 import StudentAcademicRequests from "./pages/student/StudentAcademicRequests.jsx"
+import GuardianTuitionPayment from "./pages/GuardianTuitionPayment.jsx"
 import { SurvivalModeProvider } from "./context/SurvivalModeContext.jsx"
 import { SyncControlProvider } from "./context/SyncControlContext.jsx"
 
@@ -37,6 +39,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/pagamento-escolaridade" element={<GuardianTuitionPayment />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/change-password" element={<ChangePassword />} />
               </Route>
@@ -73,6 +76,7 @@ function App() {
                   <Route path="students" element={<AdminStudentManagement />} />
                   <Route path="classes" element={<AdminClassManagement />} />
                   <Route path="disciplines" element={<AdminDisciplineManagement />} />
+                  <Route path="finance" element={<AdminFinanceControl />} />
                   <Route path="profile" element={<UserProfile />} />
                   <Route path="academic" element={<AdminAcademicConfig />} />
                   <Route path="academic-requests" element={<ProfessorAcademicRequests />} />

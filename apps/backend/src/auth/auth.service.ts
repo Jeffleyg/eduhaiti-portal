@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common"
+import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common"
 import { JwtService } from "@nestjs/jwt"
 import { ConfigService } from "@nestjs/config"
 import { PrismaService } from "../prisma/prisma.service"
@@ -250,7 +250,7 @@ export class AuthService {
     })
 
     if (existingUser) {
-      throw new Error("User already exists with this email")
+      throw new ConflictException("User already exists with this email")
     }
 
     const user = await this.prisma.user.create({

@@ -227,7 +227,7 @@ let AuthService = class AuthService {
             where: { email: normalizedEmail },
         });
         if (existingUser) {
-            throw new Error("User already exists with this email");
+            throw new common_1.ConflictException("User already exists with this email");
         }
         const user = await this.prisma.user.create({
             data: {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common"
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
@@ -55,30 +55,32 @@ export class UsersService {
       }
     }
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        name: fullName,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        dateOfBirth: new Date(payload.dateOfBirth),
-        address: payload.address,
-        gender: payload.gender,
-        fatherName: payload.fatherName,
-        motherName: payload.motherName,
-        enrollmentNumber,
-        passwordHash,
-        mustChangePassword: true,
-        tempPasswordExpiresAt: expiresAt,
-        role: Role.STUDENT,
-        ...(payload.classId && { classesAttending: { connect: [{ id: payload.classId }] } }),
-      },
-      select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          name: fullName,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          dateOfBirth: new Date(payload.dateOfBirth),
+          address: payload.address,
+          gender: payload.gender,
+          fatherName: payload.fatherName,
+          motherName: payload.motherName,
+          enrollmentNumber,
+          passwordHash,
+          mustChangePassword: true,
+          tempPasswordExpiresAt: expiresAt,
+          role: Role.STUDENT,
+          ...(payload.classId && { classesAttending: { connect: [{ id: payload.classId }] } }),
+        },
+        select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
+      })
+
+      await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt)
+
+      return user
     })
-
-    await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt)
-
-    return user
   }
 
   async createTeacher(payload: CreateTeacherDto) {
@@ -94,59 +96,104 @@ export class UsersService {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     const fullName = `${payload.firstName} ${payload.lastName}`.trim()
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        name: fullName,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        dateOfBirth: new Date(payload.dateOfBirth),
-        address: payload.address,
-        gender: payload.gender,
-        fatherName: payload.fatherName,
-        motherName: payload.motherName,
-        enrollmentNumber,
-        passwordHash,
-        mustChangePassword: true,
-        tempPasswordExpiresAt: expiresAt,
-        role: Role.TEACHER,
-        subjects: payload.subjects ?? [],
-      },
-      select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
-    })
-
-    if (payload.classIds && payload.classIds.length > 0) {
-      await this.prisma.class.updateMany({
-        where: { id: { in: payload.classIds } },
-        data: { teacherId: user.id },
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          name: fullName,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          dateOfBirth: new Date(payload.dateOfBirth),
+          address: payload.address,
+          gender: payload.gender,
+          fatherName: payload.fatherName,
+          motherName: payload.motherName,
+          enrollmentNumber,
+          passwordHash,
+          mustChangePassword: true,
+          tempPasswordExpiresAt: expiresAt,
+          role: Role.TEACHER,
+          subjects: payload.subjects ?? [],
+        },
+        select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
       })
-    }
 
-    if (payload.newClasses && payload.newClasses.length > 0) {
-      // Fetch defaults if not provided
-      const defaultAcademicYear = await this.prisma.academicYear.findFirst()
-      const defaultSeries = await this.prisma.series.findFirst()
-
-      if (!defaultAcademicYear || !defaultSeries) {
-        throw new BadRequestException("No academic year or series found in database")
-      }
-
-      for (const newClass of payload.newClasses) {
-        await this.prisma.class.create({
-          data: {
-            name: newClass.name,
-            level: newClass.level ?? "3eme",
-            teacherId: user.id,
-            academicYearId: newClass.academicYearId ?? defaultAcademicYear.id,
-            seriesId: newClass.seriesId ?? defaultSeries.id,
-          },
+      if (payload.classIds && payload.classIds.length > 0) {
+        await tx.class.updateMany({
+          where: { id: { in: payload.classIds } },
+          data: { teacherId: user.id },
         })
       }
+
+      if (payload.newClasses && payload.newClasses.length > 0) {
+        // Fetch defaults if not provided
+        const defaultAcademicYear = await tx.academicYear.findFirst()
+        const defaultSeries = await tx.series.findFirst()
+
+        if (!defaultAcademicYear || !defaultSeries) {
+          throw new BadRequestException("No academic year or series found in database")
+        }
+
+        for (const newClass of payload.newClasses) {
+          await tx.class.create({
+            data: {
+              name: newClass.name,
+              level: newClass.level ?? "3eme",
+              teacherId: user.id,
+              academicYearId: newClass.academicYearId ?? defaultAcademicYear.id,
+              seriesId: newClass.seriesId ?? defaultSeries.id,
+            },
+          })
+        }
+      }
+
+      await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt)
+
+      return user
+    })
+  }
+
+  async resendTempPassword(email: string) {
+    const normalizedEmail = email.trim().toLowerCase()
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, email: true, role: true, isActive: true },
+    })
+
+    if (!user) {
+      throw new NotFoundException("User not found")
     }
 
-    await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt)
+    if (!user.isActive) {
+      throw new BadRequestException("User is inactive")
+    }
 
-    return user
+    if (user.role !== Role.STUDENT && user.role !== Role.TEACHER) {
+      throw new BadRequestException("Temporary password can only be resent to students or teachers")
+    }
+
+    const tempPassword = this.generateTempPassword()
+    const passwordHash = await bcrypt.hash(tempPassword, 10)
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash,
+          mustChangePassword: true,
+          tempPasswordExpiresAt: expiresAt,
+        },
+      })
+
+      await this.emailService.sendTempPasswordEmail(user.email, tempPassword, expiresAt)
+    })
+
+    return {
+      success: true,
+      email: user.email,
+      expiresAt,
+    }
   }
 
   async findAllStudents() {

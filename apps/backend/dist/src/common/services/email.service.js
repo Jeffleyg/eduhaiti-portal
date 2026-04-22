@@ -42,7 +42,7 @@ let EmailService = class EmailService {
     }
     async sendTempPasswordEmail(to, tempPassword, expiresAt) {
         if (!this.transporter) {
-            throw new Error("SMTP configuration is missing");
+            throw new common_1.ServiceUnavailableException("SMTP configuration is missing");
         }
         const expiresAtText = expiresAt.toLocaleString("pt-BR");
         await this.transporter.sendMail({

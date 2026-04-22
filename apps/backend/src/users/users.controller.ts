@@ -6,6 +6,7 @@ import { Roles } from "../common/decorators/roles.decorator"
 import { Role } from "@prisma/client"
 import { CreateStudentDto } from "./dto/create-student.dto"
 import { CreateTeacherDto } from "./dto/create-teacher.dto"
+import { ResendTempPasswordDto } from "./dto/resend-temp-password.dto"
 
 @Controller("admin/users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,5 +32,10 @@ export class UsersController {
   @Post("teachers")
   createTeacher(@Body() body: CreateTeacherDto) {
     return this.usersService.createTeacher(body)
+  }
+
+  @Post("resend-temp-password")
+  resendTempPassword(@Body() body: ResendTempPasswordDto) {
+    return this.usersService.resendTempPassword(body.email)
   }
 }

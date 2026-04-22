@@ -15,18 +15,30 @@ export class AcademicRequestsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(studentId: string, dto: CreateAcademicRequestDto) {
+    const normalizedTitle = dto.title.trim()
+    const normalizedDetails = dto.details.trim()
+
+    if (!normalizedTitle || !normalizedDetails) {
+      throw new BadRequestException("title and details must not be blank")
+    }
+
     if (dto.classId) {
-      const enrollment = await this.prisma.class.findFirst({
-        where: {
-          id: dto.classId,
+      const selectedClass = await this.prisma.class.findUnique({
+        where: { id: dto.classId },
+        select: {
+          id: true,
           students: {
-            some: { id: studentId },
+            where: { id: studentId },
+            select: { id: true },
           },
         },
-        select: { id: true },
       })
 
-      if (!enrollment) {
+      if (!selectedClass) {
+        throw new BadRequestException("Selected class was not found")
+      }
+
+      if (selectedClass.students.length === 0) {
         throw new ForbiddenException("Student is not enrolled in the selected class")
       }
     }
@@ -36,8 +48,8 @@ export class AcademicRequestsService {
         studentId,
         classId: dto.classId,
         type: dto.type,
-        title: dto.title,
-        details: dto.details,
+        title: normalizedTitle,
+        details: normalizedDetails,
       },
       include: {
         student: {
@@ -154,6 +166,10 @@ export class AcademicRequestsService {
       throw new NotFoundException("Academic request not found")
     }
 
+    if (request.status !== AcademicRequestStatus.PENDING) {
+      throw new BadRequestException("Request has already been reviewed")
+    }
+
     if (reviewer.role === Role.TEACHER) {
       if (!request.class || request.class.teacherId !== reviewer.id) {
         throw new ForbiddenException("Teacher cannot review this request")
@@ -166,7 +182,9 @@ export class AcademicRequestsService {
       throw new BadRequestException("Cannot move a reviewed request back to PENDING")
     }
 
-    if (dto.status === AcademicRequestStatus.REJECTED && !dto.resolutionComment?.trim()) {
+    const normalizedResolutionComment = dto.resolutionComment?.trim() || null
+
+    if (dto.status === AcademicRequestStatus.REJECTED && !normalizedResolutionComment) {
       throw new BadRequestException("resolutionComment is required when rejecting a request")
     }
 
@@ -175,7 +193,7 @@ export class AcademicRequestsService {
       data: {
         status: dto.status,
         reviewedById: reviewer.id,
-        resolutionComment: dto.resolutionComment,
+        resolutionComment: normalizedResolutionComment,
         resolvedAt:
           dto.status === AcademicRequestStatus.APPROVED || dto.status === AcademicRequestStatus.REJECTED
             ? new Date()
@@ -200,7 +218,7 @@ export class AcademicRequestsService {
         entityId: updated.id,
         action: "REVIEW",
         userId: reviewer.id,
-        changes: JSON.stringify({ status: dto.status, resolutionComment: dto.resolutionComment ?? null }),
+        changes: JSON.stringify({ status: dto.status, resolutionComment: normalizedResolutionComment }),
       },
     })
 

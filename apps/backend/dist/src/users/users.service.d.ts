@@ -29,6 +29,11 @@ export declare class UsersService {
         name: string | null;
         role: import(".prisma/client").$Enums.Role;
     }>;
+    resendTempPassword(email: string): Promise<{
+        success: boolean;
+        email: string;
+        expiresAt: Date;
+    }>;
     findAllStudents(): Promise<{
         id: string;
         email: string;

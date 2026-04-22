@@ -7,6 +7,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Mail,
+  HandCoins,
   Settings,
   UploadCloud,
   Users,
@@ -44,6 +45,7 @@ const adminNav = [
   { to: "/admin/students", icon: GraduationCap, labelKey: "adminStudents" },
   { to: "/admin/classes", icon: CalendarDays, labelKey: "adminClasses" },
   { to: "/admin/disciplines", icon: BookOpen, labelKey: "adminDisciplines" },
+  { to: "/admin/finance", icon: HandCoins, labelKey: "navFinance" },
   { to: "/admin/academic", icon: Settings, labelKey: "navAcademicAdmin" },
   { to: "/admin/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
 ]
