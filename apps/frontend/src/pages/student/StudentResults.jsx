@@ -12,6 +12,7 @@ function StudentResults() {
   const { token, user } = useAuth()
   const [grades, setGrades] = useState([])
   const [academicYears, setAcademicYears] = useState([])
+  const [evolution, setEvolution] = useState({ overallAverage: 0, timeline: [], byDiscipline: [] })
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -27,7 +28,10 @@ function StudentResults() {
         setAcademicYears(years ?? [])
         if (years?.length > 0) {
           const active = years.find((item) => item.isActive)
-          setSelectedAcademicYearId(active?.id ?? years[0].id)
+          const defaultYearId = active?.id ?? years[0].id
+          setSelectedAcademicYearId(defaultYearId)
+          const evolutionData = await apiFetch(`/grades/evolution?academicYearId=${defaultYearId}`, { token })
+          setEvolution(evolutionData)
         }
       } catch (error) {
         setError(error.message)
@@ -54,6 +58,21 @@ function StudentResults() {
     grade: `${grade.score}/${grade.maxScore}`,
     status: grade.status === "DRAFT" ? t("gradeDraft") : t("gradePublished"),
   }))
+
+  const handleAcademicYearChange = async (yearId) => {
+    setSelectedAcademicYearId(yearId)
+    try {
+      const [yearGrades, evolutionData] = await Promise.all([
+        apiFetch(yearId ? `/grades/my-grades?academicYearId=${yearId}` : "/grades/my-grades", { token }),
+        apiFetch(yearId ? `/grades/evolution?academicYearId=${yearId}` : "/grades/evolution", { token }),
+      ])
+      setGrades(yearGrades ?? [])
+      setEvolution(evolutionData ?? { overallAverage: 0, timeline: [], byDiscipline: [] })
+      setError("")
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   const generateTranscriptPdf = async () => {
     if (!selectedAcademicYearId) {
@@ -105,7 +124,7 @@ function StudentResults() {
       <div className="mb-4 flex flex-col gap-2 md:flex-row">
         <select
           value={selectedAcademicYearId}
-          onChange={(event) => setSelectedAcademicYearId(event.target.value)}
+          onChange={(event) => handleAcademicYearChange(event.target.value)}
           className="rounded-2xl border border-brand-navy/10 bg-white px-3 py-2 text-sm"
         >
           <option value="">{t("transcriptSelectYear")}</option>
@@ -125,6 +144,45 @@ function StudentResults() {
         </button>
       </div>
       <DataTable columns={columns} rows={rows.length > 0 ? rows : []} />
+
+      <section className="mt-6 rounded-2xl border border-brand-navy/10 bg-white p-5 space-y-4">
+        <h3 className="text-lg font-semibold text-brand-navy">Evolucao de desempenho</h3>
+        <p className="text-sm text-brand-navy/70">Media geral no periodo: {Number(evolution?.overallAverage ?? 0).toFixed(2)}/20</p>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-brand-navy/10 p-4">
+            <h4 className="font-semibold text-brand-navy mb-2">Linha do tempo mensal</h4>
+            {evolution?.timeline?.length ? (
+              <div className="space-y-2">
+                {evolution.timeline.map((point) => (
+                  <div key={point.period} className="flex items-center justify-between text-sm">
+                    <span className="text-brand-navy/70">{point.period}</span>
+                    <span className="font-semibold text-brand-navy">{point.average.toFixed(2)}/20</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-brand-navy/60">Sem dados suficientes para o periodo selecionado.</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-brand-navy/10 p-4">
+            <h4 className="font-semibold text-brand-navy mb-2">Media por disciplina</h4>
+            {evolution?.byDiscipline?.length ? (
+              <div className="space-y-2">
+                {evolution.byDiscipline.map((item) => (
+                  <div key={item.disciplineId} className="flex items-center justify-between text-sm">
+                    <span className="text-brand-navy/70">{item.disciplineName}</span>
+                    <span className="font-semibold text-brand-navy">{item.average.toFixed(2)}/20</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-brand-navy/60">Sem dados por disciplina no periodo selecionado.</p>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

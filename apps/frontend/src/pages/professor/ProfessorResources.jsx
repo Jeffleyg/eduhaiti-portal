@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
-import { apiFetch } from "../../lib/api.js"
+import { apiAssetUrl, apiFetch, apiUpload } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { Upload } from "lucide-react"
@@ -11,6 +11,7 @@ function ProfessorResources() {
   const { token } = useAuth()
   const { disableImages } = useSurvivalMode()
   const [resources, setResources] = useState([])
+  const [libraryResources, setLibraryResources] = useState([])
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -27,6 +28,14 @@ function ProfessorResources() {
           setSelectedClass(classesRes[0].id)
           const resourcesRes = await apiFetch(`/resources/class/${classesRes[0].id}`, { token })
           setResources(resourcesRes ?? [])
+
+          const uniqueSeriesIds = [...new Set((classesRes ?? []).map((item) => item.series?.id).filter(Boolean))]
+          const libraryResponses = await Promise.all(
+            uniqueSeriesIds.map((seriesId) => apiFetch(`/resources/library/series/${seriesId}`, { token })),
+          )
+          const merged = libraryResponses.flat()
+          const deduped = [...new Map(merged.map((item) => [item.id, item])).values()]
+          setLibraryResources(deduped)
         }
       } catch (error) {
         console.error("Failed to fetch data:", error)
@@ -64,19 +73,14 @@ function ProfessorResources() {
       formDataToSend.append("title", formData.title)
       formDataToSend.append("description", formData.description)
 
-      const response = await fetch(`http://localhost:3000/resources/upload/${selectedClass}`, {
+      await apiUpload(`/resources/upload/${selectedClass}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formDataToSend,
+        token,
+        formData: formDataToSend,
       })
-
-      if (response.ok) {
-        setFormData({ title: "", description: "" })
-        setFile(null)
-        loadResourcesForClass(selectedClass)
-      }
+      setFormData({ title: "", description: "" })
+      setFile(null)
+      loadResourcesForClass(selectedClass)
     } catch (error) {
       console.error("Upload failed:", error)
     } finally {
@@ -173,13 +177,32 @@ function ProfessorResources() {
                 <p className="font-semibold text-brand-navy">{resource.title}</p>
                 {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>}
               </div>
-              <a href={`/${resource.filePath}`} download className="text-brand-red font-semibold hover:underline">
+              <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
                 {disableImages ? "TXT-DOWNLOAD" : "Download"}
               </a>
             </div>
           ))
         ) : (
           <p className="text-center text-brand-navy/60">Nenhum recurso enviado ainda</p>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
+        {libraryResources.length > 0 ? (
+          libraryResources.map((resource) => (
+            <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-brand-navy">{resource.title}</p>
+                <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
+              </div>
+              <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
+                Download
+              </a>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-brand-navy/60">Sem itens na biblioteca da serie.</p>
         )}
       </div>
     </div>

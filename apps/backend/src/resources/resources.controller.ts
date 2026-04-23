@@ -30,6 +30,18 @@ export class ResourcesController {
     return this.resourcesService.findByClass(classId)
   }
 
+  @Get("library/series/:seriesId")
+  @UseGuards(JwtAuthGuard)
+  async getLibraryBySeries(@Param("seriesId") seriesId: string) {
+    return this.resourcesService.findLibraryBySeries(seriesId)
+  }
+
+  @Get("library/school/:schoolId")
+  @UseGuards(JwtAuthGuard)
+  async getLibraryBySchool(@Param("schoolId") schoolId: string) {
+    return this.resourcesService.findLibraryBySchool(schoolId)
+  }
+
   @Post("upload/:classId")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)

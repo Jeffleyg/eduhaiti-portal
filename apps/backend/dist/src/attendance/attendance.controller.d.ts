@@ -1,9 +1,14 @@
 import { AttendanceService } from "./attendance.service";
-import { AttendanceStatus } from "@prisma/client";
+import { Role, AttendanceStatus } from "@prisma/client";
 export declare class AttendanceController {
     private readonly attendanceService;
     constructor(attendanceService: AttendanceService);
-    markAttendance(payload: {
+    markAttendance(req: {
+        user?: {
+            sub?: string;
+            role?: Role;
+        };
+    }, payload: {
         studentId: string;
         classId: string;
         date: Date;

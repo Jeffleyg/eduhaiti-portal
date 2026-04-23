@@ -151,6 +151,10 @@ export declare class ClassesController {
             id: string;
             name: string;
         };
+        academicYear: {
+            id: string;
+            year: string;
+        };
         teacher: {
             id: string;
             name: string | null;

@@ -176,13 +176,39 @@ let AuthService = class AuthService {
             },
         });
         if (!user || !user.isActive || !user.passwordHash) {
+            await this.logAccessEvent({
+                action: "LOGIN_FAILED",
+                entityId: normalizedEmail,
+                details: {
+                    reason: "invalid_credentials_or_inactive",
+                    email: normalizedEmail,
+                },
+            });
             throw new common_1.UnauthorizedException("Invalid credentials");
         }
         if (user.tempPasswordExpiresAt && user.tempPasswordExpiresAt < new Date()) {
+            await this.logAccessEvent({
+                action: "LOGIN_FAILED",
+                entityId: user.id,
+                userId: user.id,
+                details: {
+                    reason: "temporary_password_expired",
+                    email: user.email,
+                },
+            });
             throw new common_1.UnauthorizedException("Temporary password expired");
         }
         const isValid = await bcryptjs_1.default.compare(password, user.passwordHash);
         if (!isValid) {
+            await this.logAccessEvent({
+                action: "LOGIN_FAILED",
+                entityId: user.id,
+                userId: user.id,
+                details: {
+                    reason: "invalid_credentials",
+                    email: user.email,
+                },
+            });
             throw new common_1.UnauthorizedException("Invalid credentials");
         }
         const payload = { sub: user.id, email: user.email, role: user.role };
@@ -196,7 +222,27 @@ let AuthService = class AuthService {
             mustChangePassword: user.mustChangePassword,
             enrollmentNumber: user.enrollmentNumber,
         };
+        await this.logAccessEvent({
+            action: "LOGIN_SUCCESS",
+            entityId: user.id,
+            userId: user.id,
+            details: {
+                email: user.email,
+                role: user.role,
+            },
+        });
         return { token, user: responseUser };
+    }
+    async logout(userId, email) {
+        await this.logAccessEvent({
+            action: "LOGOUT",
+            entityId: userId || email || "unknown",
+            userId: userId || undefined,
+            details: {
+                email: email ?? null,
+            },
+        });
+        return { success: true };
     }
     async changePassword(userId, currentPassword, newPassword) {
         const user = await this.prisma.user.findUnique({
@@ -238,6 +284,47 @@ let AuthService = class AuthService {
             select: { id: true, email: true, role: true, name: true, isActive: true },
         });
         return user;
+    }
+    getTestCredentials() {
+        const isProduction = (this.configService.get("NODE_ENV") ?? "development") === "production";
+        if (isProduction) {
+            throw new common_1.NotFoundException("Not found");
+        }
+        return {
+            admin: {
+                role: client_1.Role.ADMIN,
+                email: "admin@eduhaiti.ht",
+                password: this.configService.get("ADMIN_PASSWORD") ?? "Admin@123",
+            },
+            teacher: {
+                role: client_1.Role.TEACHER,
+                email: "professeur@eduhaiti.ht",
+                password: this.configService.get("TEACHER_PASSWORD") ?? "Teacher@123",
+            },
+            student: {
+                role: client_1.Role.STUDENT,
+                email: "eleve@eduhaiti.ht",
+                password: this.configService.get("STUDENT_PASSWORD") ?? "Student@123",
+            },
+        };
+    }
+    async logAccessEvent(params) {
+        try {
+            await this.prisma.auditLog.create({
+                data: {
+                    entityType: "AUTH_ACCESS",
+                    entityId: params.entityId,
+                    action: params.action,
+                    userId: params.userId,
+                    changes: JSON.stringify({
+                        at: new Date().toISOString(),
+                        ...params.details,
+                    }),
+                },
+            });
+        }
+        catch {
+        }
     }
 };
 exports.AuthService = AuthService;

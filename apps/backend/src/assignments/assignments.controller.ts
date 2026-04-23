@@ -10,6 +10,9 @@ import * as path from "path"
 import * as fs from "fs"
 
 const uploadDir = "uploads"
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true })
+}
 
 @Controller("assignments")
 export class AssignmentsController {
@@ -56,6 +59,10 @@ export class AssignmentsController {
   ) {
     const filePath = file ? `uploads/${file.filename}` : undefined
     const dueDate = new Date(body.dueDate)
+
+    if (Number.isNaN(dueDate.getTime())) {
+      throw new BadRequestException("Invalid dueDate")
+    }
 
     return this.assignmentsService.create(classId, body.title, body.description, dueDate, filePath, req.user.sub)
   }

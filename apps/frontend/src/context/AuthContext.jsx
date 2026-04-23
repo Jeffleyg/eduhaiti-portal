@@ -40,7 +40,15 @@ export function AuthProvider({ children }) {
     setUser(nextUser)
   }
 
-  const logout = () => {
+  const logout = async () => {
+    if (token) {
+      try {
+        await apiFetch("/auth/logout", { method: "POST", token })
+      } catch {
+        // Always clear local session even if remote logout audit fails.
+      }
+    }
+
     localStorage.removeItem(TOKEN_KEY)
     setToken(null)
     setUser(null)

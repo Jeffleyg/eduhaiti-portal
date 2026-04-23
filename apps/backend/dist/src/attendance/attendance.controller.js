@@ -24,8 +24,11 @@ let AttendanceController = class AttendanceController {
     constructor(attendanceService) {
         this.attendanceService = attendanceService;
     }
-    async markAttendance(payload) {
-        return this.attendanceService.markAttendance(payload);
+    async markAttendance(req, payload) {
+        return this.attendanceService.markAttendance(payload, {
+            id: req.user?.sub ?? "",
+            role: req.user?.role ?? client_1.Role.TEACHER,
+        });
     }
     async deleteAttendance(attendanceId) {
         return this.attendanceService.delete(attendanceId);
@@ -50,9 +53,10 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AttendanceController.prototype, "markAttendance", null);
 __decorate([

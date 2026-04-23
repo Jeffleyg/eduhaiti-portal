@@ -1,9 +1,14 @@
 import { GradesService } from "./grades.service";
-import { GradeStatus } from "@prisma/client";
+import { Role, GradeStatus } from "@prisma/client";
 export declare class GradesController {
     private readonly gradesService;
     constructor(gradesService: GradesService);
-    createGrade(payload: {
+    createGrade(req: {
+        user?: {
+            sub?: string;
+            role?: Role;
+        };
+    }, payload: {
         studentId: string;
         classId: string;
         disciplineId: string;

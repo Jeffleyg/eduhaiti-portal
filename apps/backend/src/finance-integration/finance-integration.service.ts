@@ -432,13 +432,8 @@ export class FinanceIntegrationService {
     return payment;
   }
 
-  async listPaymentsForAdmin(filters: AdminPaymentsQueryDto) {
-    const page = filters.page ?? 1;
-    const pageSize = filters.pageSize ?? 20;
-    const skip = (page - 1) * pageSize;
-
+  private buildAdminPaymentsWhere(filters: AdminPaymentsQueryDto): Prisma.PaymentWhereInput {
     const enrollment = filters.studentEnrollmentNumber?.trim();
-
     const startDate = filters.startDate ? new Date(filters.startDate) : null;
     const endDate = filters.endDate ? new Date(filters.endDate) : null;
 
@@ -450,7 +445,7 @@ export class FinanceIntegrationService {
       throw new BadRequestException('Invalid endDate');
     }
 
-    const where: Prisma.PaymentWhereInput = {
+    return {
       status: filters.status,
       ...(startDate || endDate
         ? {
@@ -468,6 +463,20 @@ export class FinanceIntegrationService {
           }
         : {}),
     };
+  }
+
+  private escapeCsvCell(value: unknown): string {
+    const raw = value === null || value === undefined ? '' : String(value);
+    const escaped = raw.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+
+  async listPaymentsForAdmin(filters: AdminPaymentsQueryDto) {
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const where = this.buildAdminPaymentsWhere(filters);
 
     const [total, rows] = await Promise.all([
       this.prisma.payment.count({ where }),
@@ -503,6 +512,64 @@ export class FinanceIntegrationService {
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
       rows,
     };
+  }
+
+  async exportPaymentsCsvForAdmin(filters: AdminPaymentsQueryDto) {
+    const where = this.buildAdminPaymentsWhere(filters);
+
+    const rows = await this.prisma.payment.findMany({
+      where,
+      orderBy: [{ createdAt: 'desc' }],
+      take: 10000,
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        dueDate: true,
+        paidDate: true,
+        description: true,
+        receiptNumber: true,
+        createdAt: true,
+        student: {
+          select: {
+            name: true,
+            enrollmentNumber: true,
+          },
+        },
+      },
+    });
+
+    const header = [
+      'paymentId',
+      'studentName',
+      'studentEnrollmentNumber',
+      'amountHtg',
+      'status',
+      'dueDate',
+      'paidDate',
+      'receiptNumber',
+      'description',
+      'createdAt',
+    ];
+
+    const lines = rows.map((row) => {
+      const cells = [
+        row.id,
+        row.student?.name ?? '',
+        row.student?.enrollmentNumber ?? '',
+        Number(row.amount).toFixed(2),
+        row.status,
+        row.dueDate.toISOString(),
+        row.paidDate ? row.paidDate.toISOString() : '',
+        row.receiptNumber ?? '',
+        row.description ?? '',
+        row.createdAt.toISOString(),
+      ];
+
+      return cells.map((cell) => this.escapeCsvCell(cell)).join(',');
+    });
+
+    return [header.join(','), ...lines].join('\n');
   }
 
   async getAdminFinanceSummary(filters: AdminFinanceSummaryQueryDto) {

@@ -12,12 +12,14 @@ import ProfessorAttendance from "./pages/professor/ProfessorAttendance.jsx"
 import ProfessorResources from "./pages/professor/ProfessorResources.jsx"
 import ProfessorAssignments from "./pages/professor/ProfessorAssignments.jsx"
 import ProfessorMessages from "./pages/professor/ProfessorMessages.jsx"
+import ProfessorForum from "./pages/professor/ProfessorForum.jsx"
 import StudentDashboard from "./pages/student/StudentDashboard.jsx"
 import StudentResults from "./pages/student/StudentResults.jsx"
 import StudentSchedule from "./pages/student/StudentSchedule.jsx"
 import StudentResources from "./pages/student/StudentResources.jsx"
 import StudentAssignments from "./pages/student/StudentAssignments.jsx"
 import StudentMessages from "./pages/student/StudentMessages.jsx"
+import StudentForum from "./pages/student/StudentForum.jsx"
 import AdminAcademicConfig from "./pages/admin/AdminAcademicConfig.jsx"
 import AdminStudentManagement from "./pages/admin/AdminStudentManagement.jsx"
 import AdminDisciplineManagement from "./pages/admin/AdminDisciplineManagement.jsx"
@@ -51,6 +53,7 @@ function App() {
                   <Route path="presence" element={<ProfessorAttendance />} />
                   <Route path="ressources" element={<ProfessorResources />} />
                   <Route path="tarefas" element={<ProfessorAssignments />} />
+                  <Route path="forum" element={<ProfessorForum />} />
                   <Route path="messages" element={<ProfessorMessages />} />
                   <Route path="profile" element={<UserProfile />} />
                   <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
@@ -64,6 +67,7 @@ function App() {
                   <Route path="horaire" element={<StudentSchedule />} />
                   <Route path="ressources" element={<StudentResources />} />
                   <Route path="tarefas" element={<StudentAssignments />} />
+                  <Route path="forum" element={<StudentForum />} />
                   <Route path="messages" element={<StudentMessages />} />
                   <Route path="profile" element={<UserProfile />} />
                   <Route path="academic-requests" element={<StudentAcademicRequests />} />

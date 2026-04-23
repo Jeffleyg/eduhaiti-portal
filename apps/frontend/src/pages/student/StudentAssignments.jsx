@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
-import { apiFetch } from "../../lib/api.js"
+import { apiFetch, apiUpload } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { Upload } from "lucide-react"
@@ -12,6 +12,7 @@ function StudentAssignments() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState({})
   const [selectedFile, setSelectedFile] = useState({})
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -33,26 +34,22 @@ function StudentAssignments() {
     if (!file) return
 
     setSubmitting({ ...submitting, [assignmentId]: true })
+    setError("")
     try {
       const formDataToSend = new FormData()
       formDataToSend.append("file", file)
 
-      const response = await fetch(`http://localhost:3000/assignments/${assignmentId}/submit`, {
+      await apiUpload(`/assignments/${assignmentId}/submit`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formDataToSend,
+        token,
+        formData: formDataToSend,
       })
 
-      if (response.ok) {
-        setSelectedFile({ ...selectedFile, [assignmentId]: null })
-        // Reload assignments
-        const assignmentsRes = await apiFetch("/assignments/my-assignments", { token })
-        setAssignments(assignmentsRes ?? [])
-      }
+      setSelectedFile({ ...selectedFile, [assignmentId]: null })
+      const assignmentsRes = await apiFetch("/assignments/my-assignments", { token })
+      setAssignments(assignmentsRes ?? [])
     } catch (error) {
-      console.error("Submit failed:", error)
+      setError(error.message)
     } finally {
       setSubmitting({ ...submitting, [assignmentId]: false })
     }
@@ -67,6 +64,8 @@ function StudentAssignments() {
   return (
     <div className="space-y-6">
       <SectionHeader title="Tarefas" subtitle="Veja e entregue as tarefas atribuídas" />
+
+      {error ? <p className="text-sm text-brand-red">{error}</p> : null}
 
       <div className="space-y-4">
         {assignments.length > 0 ? (

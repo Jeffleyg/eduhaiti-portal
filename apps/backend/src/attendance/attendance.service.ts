@@ -1,10 +1,11 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
 } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { AttendanceStatus } from "@prisma/client"
+import { AttendanceStatus, Role } from "@prisma/client"
 
 @Injectable()
 export class AttendanceService {
@@ -16,7 +17,7 @@ export class AttendanceService {
     date: Date
     status: AttendanceStatus
     remarks?: string
-  }) {
+  }, requester?: { id: string; role: Role }) {
     const student = await this.prisma.user.findUnique({
       where: { id: payload.studentId },
     })
@@ -27,10 +28,21 @@ export class AttendanceService {
 
     const classData = await this.prisma.class.findUnique({
       where: { id: payload.classId },
+      include: {
+        students: { select: { id: true } },
+      },
     })
 
     if (!classData) {
       throw new NotFoundException("Class not found")
+    }
+
+    if (requester?.role === Role.TEACHER && classData.teacherId !== requester.id) {
+      throw new ForbiddenException("Teacher can only mark attendance for own classes")
+    }
+
+    if (!classData.students.some((item) => item.id === payload.studentId)) {
+      throw new BadRequestException("Student is not enrolled in this class")
     }
 
     // Check if attendance already recorded for this date

@@ -1,5 +1,5 @@
 import { PrismaService } from "../prisma/prisma.service";
-import { AttendanceStatus } from "@prisma/client";
+import { AttendanceStatus, Role } from "@prisma/client";
 export declare class AttendanceService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -9,6 +9,9 @@ export declare class AttendanceService {
         date: Date;
         status: AttendanceStatus;
         remarks?: string;
+    }, requester?: {
+        id: string;
+        role: Role;
     }): Promise<{
         class: {
             id: string;

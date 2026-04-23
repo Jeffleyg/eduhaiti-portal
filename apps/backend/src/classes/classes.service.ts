@@ -193,6 +193,7 @@ export class ClassesService {
         teacher: { select: { id: true, name: true } },
         students: { select: { id: true, email: true, name: true } },
         series: { select: { id: true, name: true } },
+        academicYear: { select: { id: true, year: true } },
       },
       orderBy: { name: "asc" },
     })
@@ -252,6 +253,7 @@ export class ClassesService {
       include: {
         teacher: { select: { id: true, name: true } },
         series: { select: { id: true, name: true } },
+        academicYear: { select: { id: true, year: true } },
       },
       orderBy: { name: "asc" },
     })

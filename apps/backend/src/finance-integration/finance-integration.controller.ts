@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Headers,
   HttpCode,
   Param,
@@ -168,6 +169,15 @@ export class FinanceIntegrationController {
   @Roles(Role.ADMIN)
   listPayments(@Query() filters: AdminPaymentsQueryDto) {
     return this.financeService.listPaymentsForAdmin(filters);
+  }
+
+  @Get('admin/payments/export')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="financial-payments-report.csv"')
+  exportPaymentsCsv(@Query() filters: AdminPaymentsQueryDto) {
+    return this.financeService.exportPaymentsCsvForAdmin(filters);
   }
 
   @Get('admin/summary')

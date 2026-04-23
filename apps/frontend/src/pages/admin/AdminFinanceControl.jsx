@@ -3,6 +3,8 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000"
+
 const initialChargeForm = {
   studentEnrollmentNumber: "",
   amountHtg: "",
@@ -33,7 +35,7 @@ function AdminFinanceControl() {
     [],
   )
 
-  const buildFilterQuery = () => {
+  const buildFilterQuery = (includePagination = true) => {
     const params = new URLSearchParams()
     if (filters.studentEnrollmentNumber.trim()) {
       params.set("studentEnrollmentNumber", filters.studentEnrollmentNumber.trim())
@@ -47,8 +49,10 @@ function AdminFinanceControl() {
     if (filters.endDate) {
       params.set("endDate", filters.endDate)
     }
-    params.set("page", String(filters.page))
-    params.set("pageSize", String(filters.pageSize))
+    if (includePagination) {
+      params.set("page", String(filters.page))
+      params.set("pageSize", String(filters.pageSize))
+    }
     return params.toString()
   }
 
@@ -99,6 +103,44 @@ function AdminFinanceControl() {
       setMessage("Cobranca criada com sucesso.")
       setChargeForm(initialChargeForm)
       await loadDashboard()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const exportCsv = async () => {
+    setLoading(true)
+    setError("")
+    setMessage("")
+
+    try {
+      const query = buildFilterQuery(false)
+      const response = await fetch(`${API_URL}/api/finance/admin/payments/export?${query}`, {
+        method: "GET",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload.message ?? "Falha ao exportar CSV")
+      }
+
+      const csvText = await response.text()
+      const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `financeiro-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setMessage("CSV exportado com sucesso.")
     } catch (err) {
       setError(err.message)
     } finally {
@@ -181,6 +223,9 @@ function AdminFinanceControl() {
           </select>
           <button className="outline-button" type="button" onClick={loadDashboard} disabled={loading}>
             Carregar painel
+          </button>
+          <button className="outline-button" type="button" onClick={exportCsv} disabled={loading}>
+            Exportar CSV
           </button>
           <input
             type="date"

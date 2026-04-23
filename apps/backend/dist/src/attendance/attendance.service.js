@@ -12,12 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttendanceService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 let AttendanceService = class AttendanceService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async markAttendance(payload) {
+    async markAttendance(payload, requester) {
         const student = await this.prisma.user.findUnique({
             where: { id: payload.studentId },
         });
@@ -26,9 +27,18 @@ let AttendanceService = class AttendanceService {
         }
         const classData = await this.prisma.class.findUnique({
             where: { id: payload.classId },
+            include: {
+                students: { select: { id: true } },
+            },
         });
         if (!classData) {
             throw new common_1.NotFoundException("Class not found");
+        }
+        if (requester?.role === client_1.Role.TEACHER && classData.teacherId !== requester.id) {
+            throw new common_1.ForbiddenException("Teacher can only mark attendance for own classes");
+        }
+        if (!classData.students.some((item) => item.id === payload.studentId)) {
+            throw new common_1.BadRequestException("Student is not enrolled in this class");
         }
         const startOfDay = new Date(payload.date);
         startOfDay.setHours(0, 0, 0, 0);

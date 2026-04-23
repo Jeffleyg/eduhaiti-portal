@@ -27,6 +27,12 @@ let AuthController = class AuthController {
     login(body) {
         return this.authService.login(body.email, body.password);
     }
+    getTestCredentials() {
+        return this.authService.getTestCredentials();
+    }
+    logout(req) {
+        return this.authService.logout(req.user?.sub ?? "", req.user?.email);
+    }
     changePassword(req, body) {
         return this.authService.changePassword(req.user?.sub ?? "", body.currentPassword, body.newPassword);
     }
@@ -46,6 +52,20 @@ __decorate([
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Get)("test-credentials"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getTestCredentials", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)("logout"),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)("change-password"),

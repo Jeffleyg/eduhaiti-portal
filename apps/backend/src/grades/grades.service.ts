@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common"
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { GradeStatus } from "@prisma/client"
+import { GradeStatus, Role } from "@prisma/client"
 
 @Injectable()
 export class GradesService {
@@ -14,7 +14,7 @@ export class GradesService {
     score: number
     maxScore?: number
     weight?: number
-  }) {
+  }, requester?: { id: string; role: Role }) {
     // Validate discipline belongs to the class's series
     const classData = await this.prisma.class.findUnique({
       where: { id: payload.classId },
@@ -23,6 +23,22 @@ export class GradesService {
 
     if (!classData) {
       throw new NotFoundException("Class not found")
+    }
+
+    if (requester?.role === Role.TEACHER && classData.teacherId !== requester.id) {
+      throw new ForbiddenException("Teacher can only manage grades for own classes")
+    }
+
+    const studentEnrolled = await this.prisma.class.findFirst({
+      where: {
+        id: payload.classId,
+        students: { some: { id: payload.studentId } },
+      },
+      select: { id: true },
+    })
+
+    if (!studentEnrolled) {
+      throw new BadRequestException("Student is not enrolled in this class")
     }
 
     const discipline = await this.prisma.discipline.findUnique({
@@ -223,5 +239,77 @@ export class GradesService {
     })
 
     return grades.map((item) => item.academicYear)
+  }
+
+  async getStudentEvolution(studentId: string, academicYearId?: string) {
+    const grades = await this.prisma.grade.findMany({
+      where: {
+        studentId,
+        status: "PUBLISHED",
+        ...(academicYearId ? { academicYearId } : {}),
+      },
+      select: {
+        score: true,
+        maxScore: true,
+        createdAt: true,
+        discipline: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    })
+
+    const monthlyMap = new Map<string, { total: number; count: number }>()
+    const disciplineMap = new Map<string, { name: string; total: number; count: number }>()
+
+    for (const grade of grades) {
+      const normalized = grade.maxScore > 0 ? (grade.score / grade.maxScore) * 20 : 0
+      const month = grade.createdAt.toISOString().slice(0, 7)
+      const monthly = monthlyMap.get(month) ?? { total: 0, count: 0 }
+      monthly.total += normalized
+      monthly.count += 1
+      monthlyMap.set(month, monthly)
+
+      const key = grade.discipline.id
+      const byDiscipline = disciplineMap.get(key) ?? {
+        name: grade.discipline.name,
+        total: 0,
+        count: 0,
+      }
+      byDiscipline.total += normalized
+      byDiscipline.count += 1
+      disciplineMap.set(key, byDiscipline)
+    }
+
+    const timeline = [...monthlyMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([period, value]) => ({
+        period,
+        average: value.count > 0 ? Number((value.total / value.count).toFixed(2)) : 0,
+        samples: value.count,
+      }))
+
+    const byDiscipline = [...disciplineMap.entries()]
+      .map(([disciplineId, value]) => ({
+        disciplineId,
+        disciplineName: value.name,
+        average: value.count > 0 ? Number((value.total / value.count).toFixed(2)) : 0,
+        samples: value.count,
+      }))
+      .sort((a, b) => b.average - a.average)
+
+    const total = timeline.reduce((sum, item) => sum + item.average, 0)
+    const overallAverage = timeline.length > 0 ? Number((total / timeline.length).toFixed(2)) : 0
+
+    return {
+      studentId,
+      academicYearId: academicYearId ?? null,
+      overallAverage,
+      timeline,
+      byDiscipline,
+    }
   }
 }

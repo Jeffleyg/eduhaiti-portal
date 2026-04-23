@@ -23,6 +23,7 @@ export class AttendanceController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Post()
   async markAttendance(
+    @Req() req: { user?: { sub?: string; role?: Role } },
     @Body()
     payload: {
       studentId: string
@@ -32,7 +33,10 @@ export class AttendanceController {
       remarks?: string
     },
   ) {
-    return this.attendanceService.markAttendance(payload)
+    return this.attendanceService.markAttendance(payload, {
+      id: req.user?.sub ?? "",
+      role: (req.user?.role as Role) ?? Role.TEACHER,
+    })
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

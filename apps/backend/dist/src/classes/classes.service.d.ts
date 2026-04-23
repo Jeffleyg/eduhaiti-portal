@@ -100,6 +100,10 @@ export declare class ClassesService {
             id: string;
             name: string;
         };
+        academicYear: {
+            id: string;
+            year: string;
+        };
         teacher: {
             id: string;
             name: string | null;
@@ -184,6 +188,10 @@ export declare class ClassesService {
         series: {
             id: string;
             name: string;
+        };
+        academicYear: {
+            id: string;
+            year: string;
         };
         teacher: {
             id: string;

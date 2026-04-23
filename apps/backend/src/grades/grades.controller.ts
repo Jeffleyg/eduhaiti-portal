@@ -24,6 +24,7 @@ export class GradesController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Post()
   async createGrade(
+    @Req() req: { user?: { sub?: string; role?: Role } },
     @Body()
     payload: {
       studentId: string
@@ -35,7 +36,10 @@ export class GradesController {
       weight?: number
     },
   ) {
-    return this.gradesService.create(payload)
+    return this.gradesService.create(payload, {
+      id: req.user?.sub ?? "",
+      role: (req.user?.role as Role) ?? Role.TEACHER,
+    })
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

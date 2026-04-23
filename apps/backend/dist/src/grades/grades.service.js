@@ -12,18 +12,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GradesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 let GradesService = class GradesService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async create(payload) {
+    async create(payload, requester) {
         const classData = await this.prisma.class.findUnique({
             where: { id: payload.classId },
             include: { series: true },
         });
         if (!classData) {
             throw new common_1.NotFoundException("Class not found");
+        }
+        if (requester?.role === client_1.Role.TEACHER && classData.teacherId !== requester.id) {
+            throw new common_1.ForbiddenException("Teacher can only manage grades for own classes");
+        }
+        const studentEnrolled = await this.prisma.class.findFirst({
+            where: {
+                id: payload.classId,
+                students: { some: { id: payload.studentId } },
+            },
+            select: { id: true },
+        });
+        if (!studentEnrolled) {
+            throw new common_1.BadRequestException("Student is not enrolled in this class");
         }
         const discipline = await this.prisma.discipline.findUnique({
             where: { id: payload.disciplineId },
@@ -188,6 +202,70 @@ let GradesService = class GradesService {
             },
         });
         return grades.map((item) => item.academicYear);
+    }
+    async getStudentEvolution(studentId, academicYearId) {
+        const grades = await this.prisma.grade.findMany({
+            where: {
+                studentId,
+                status: "PUBLISHED",
+                ...(academicYearId ? { academicYearId } : {}),
+            },
+            select: {
+                score: true,
+                maxScore: true,
+                createdAt: true,
+                discipline: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "asc" },
+        });
+        const monthlyMap = new Map();
+        const disciplineMap = new Map();
+        for (const grade of grades) {
+            const normalized = grade.maxScore > 0 ? (grade.score / grade.maxScore) * 20 : 0;
+            const month = grade.createdAt.toISOString().slice(0, 7);
+            const monthly = monthlyMap.get(month) ?? { total: 0, count: 0 };
+            monthly.total += normalized;
+            monthly.count += 1;
+            monthlyMap.set(month, monthly);
+            const key = grade.discipline.id;
+            const byDiscipline = disciplineMap.get(key) ?? {
+                name: grade.discipline.name,
+                total: 0,
+                count: 0,
+            };
+            byDiscipline.total += normalized;
+            byDiscipline.count += 1;
+            disciplineMap.set(key, byDiscipline);
+        }
+        const timeline = [...monthlyMap.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([period, value]) => ({
+            period,
+            average: value.count > 0 ? Number((value.total / value.count).toFixed(2)) : 0,
+            samples: value.count,
+        }));
+        const byDiscipline = [...disciplineMap.entries()]
+            .map(([disciplineId, value]) => ({
+            disciplineId,
+            disciplineName: value.name,
+            average: value.count > 0 ? Number((value.total / value.count).toFixed(2)) : 0,
+            samples: value.count,
+        }))
+            .sort((a, b) => b.average - a.average);
+        const total = timeline.reduce((sum, item) => sum + item.average, 0);
+        const overallAverage = timeline.length > 0 ? Number((total / timeline.length).toFixed(2)) : 0;
+        return {
+            studentId,
+            academicYearId: academicYearId ?? null,
+            overallAverage,
+            timeline,
+            byDiscipline,
+        };
     }
 };
 exports.GradesService = GradesService;

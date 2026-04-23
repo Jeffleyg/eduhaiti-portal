@@ -1,5 +1,5 @@
 import { PrismaService } from "../prisma/prisma.service";
-import { GradeStatus } from "@prisma/client";
+import { GradeStatus, Role } from "@prisma/client";
 export declare class GradesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -11,6 +11,9 @@ export declare class GradesService {
         score: number;
         maxScore?: number;
         weight?: number;
+    }, requester?: {
+        id: string;
+        role: Role;
     }): Promise<{
         discipline: {
             id: string;
@@ -146,4 +149,20 @@ export declare class GradesService {
         startDate: Date;
         endDate: Date;
     }[]>;
+    getStudentEvolution(studentId: string, academicYearId?: string): Promise<{
+        studentId: string;
+        academicYearId: string | null;
+        overallAverage: number;
+        timeline: {
+            period: string;
+            average: number;
+            samples: number;
+        }[];
+        byDiscipline: {
+            disciplineId: string;
+            disciplineName: string;
+            average: number;
+            samples: number;
+        }[];
+    }>;
 }

@@ -71,6 +71,12 @@ let ResourcesController = class ResourcesController {
     async getByClass(classId) {
         return this.resourcesService.findByClass(classId);
     }
+    async getLibraryBySeries(seriesId) {
+        return this.resourcesService.findLibraryBySeries(seriesId);
+    }
+    async getLibraryBySchool(schoolId) {
+        return this.resourcesService.findLibraryBySchool(schoolId);
+    }
     async uploadResource(classId, file, body, req) {
         if (!file) {
             throw new common_1.BadRequestException("No file uploaded");
@@ -100,6 +106,22 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ResourcesController.prototype, "getByClass", null);
+__decorate([
+    (0, common_1.Get)("library/series/:seriesId"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)("seriesId")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ResourcesController.prototype, "getLibraryBySeries", null);
+__decorate([
+    (0, common_1.Get)("library/school/:schoolId"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)("schoolId")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ResourcesController.prototype, "getLibraryBySchool", null);
 __decorate([
     (0, common_1.Post)("upload/:classId"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

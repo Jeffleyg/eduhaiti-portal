@@ -1,6 +1,6 @@
 import { Lock, Mail } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { apiFetch } from "../../lib/api.js"
 import { useAuth } from "../../context/AuthContext.jsx"
@@ -13,24 +13,15 @@ function Login() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [testAccounts, setTestAccounts] = useState([])
 
-  const handleLogin = async () => {
-    if (!email) {
-      setError(t("emailRequired"))
-      return
-    }
-
-    if (!password) {
-      setError(t("passwordRequired"))
-      return
-    }
-
+  const runLogin = async (nextEmail, nextPassword) => {
     setLoading(true)
     setError("")
     try {
       const response = await apiFetch("/auth/login", {
         method: "POST",
-        body: { email, password },
+        body: { email: nextEmail, password: nextPassword },
       })
       login(response.token, response.user)
 
@@ -48,7 +39,6 @@ function Login() {
         navigate("/student", { replace: true })
       }
     } catch (err) {
-      // Show user-friendly error messages
       if (err.message.includes("Unauthorized") || err.message.includes("401")) {
         setError(t("invalidCredentials"))
       } else if (err.message.includes("Request failed") || !err.message) {
@@ -59,6 +49,34 @@ function Login() {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    const loadTestAccounts = async () => {
+      try {
+        const payload = await apiFetch("/auth/test-credentials")
+        const accounts = [payload.admin, payload.teacher, payload.student].filter(Boolean)
+        setTestAccounts(accounts)
+      } catch {
+        setTestAccounts([])
+      }
+    }
+
+    loadTestAccounts()
+  }, [])
+
+  const handleLogin = async () => {
+    if (!email) {
+      setError(t("emailRequired"))
+      return
+    }
+
+    if (!password) {
+      setError(t("passwordRequired"))
+      return
+    }
+
+    await runLogin(email, password)
   }
 
   return (
@@ -118,6 +136,27 @@ function Login() {
               <h2 className="mt-3 text-2xl font-semibold">{t("securityCopy")}</h2>
               <p className="mt-2 text-sm text-white/70">{t("communityCopy")}</p>
             </div>
+
+            {testAccounts.length > 0 ? (
+              <div className="rounded-2xl border border-white/20 bg-white/10 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Acesso de teste</p>
+                <div className="mt-3 space-y-2">
+                  {testAccounts.map((account) => (
+                    <button
+                      key={account.role}
+                      type="button"
+                      className="w-full rounded-xl border border-white/20 px-3 py-2 text-left text-sm hover:bg-white/10"
+                      onClick={() => runLogin(account.email, account.password)}
+                      disabled={loading}
+                    >
+                      <p className="font-semibold">{account.role}</p>
+                      <p className="text-xs text-white/80">{account.email}</p>
+                      <p className="text-xs text-white/70">Senha: {account.password}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

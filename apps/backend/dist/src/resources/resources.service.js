@@ -61,6 +61,61 @@ let ResourcesService = class ResourcesService {
             orderBy: { createdAt: "desc" },
         });
     }
+    async findLibraryBySeries(seriesId) {
+        return this.prisma.resource.findMany({
+            where: {
+                class: {
+                    seriesId,
+                },
+            },
+            include: {
+                uploadedBy: {
+                    select: { id: true, name: true, email: true },
+                },
+                class: {
+                    select: {
+                        id: true,
+                        name: true,
+                        level: true,
+                        seriesId: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    }
+    async findLibraryBySchool(schoolId) {
+        return this.prisma.resource.findMany({
+            where: {
+                class: {
+                    academicYear: {
+                        schoolId,
+                    },
+                },
+            },
+            include: {
+                uploadedBy: {
+                    select: { id: true, name: true, email: true },
+                },
+                class: {
+                    select: {
+                        id: true,
+                        name: true,
+                        level: true,
+                        seriesId: true,
+                        academicYear: {
+                            select: {
+                                id: true,
+                                year: true,
+                                schoolId: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    }
     async findById(resourceId) {
         return this.prisma.resource.findUnique({
             where: { id: resourceId },

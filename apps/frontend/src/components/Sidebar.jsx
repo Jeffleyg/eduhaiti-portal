@@ -7,6 +7,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Mail,
+  MessageSquare,
   HandCoins,
   Settings,
   UploadCloud,
@@ -24,6 +25,7 @@ const professorNav = [
   { to: "/professor/presence", icon: ClipboardCheck, labelKey: "navAttendance" },
   { to: "/professor/ressources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/professor/tarefas", icon: BookOpen, labelKey: "Tarefas" },
+  { to: "/professor/forum", icon: MessageSquare, labelKey: "Forum" },
   { to: "/professor/messages", icon: Mail, labelKey: "navMessages" },
   { to: "/professor/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
 ]
@@ -35,6 +37,7 @@ const studentNav = [
   { to: "/student/horaire", icon: CalendarDays, labelKey: "navSchedule" },
   { to: "/student/ressources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/student/tarefas", icon: ClipboardCheck, labelKey: "Tarefas" },
+  { to: "/student/forum", icon: MessageSquare, labelKey: "Forum" },
   { to: "/student/messages", icon: Mail, labelKey: "navMessages" },
   { to: "/student/academic-requests", icon: FileCheck2, labelKey: "navAcademicRequests" },
 ]
@@ -56,8 +59,8 @@ function Sidebar({ role }) {
   const { logout } = useAuth()
   const navItems = role === "admin" ? adminNav : role === "professor" ? professorNav : studentNav
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate("/login", { replace: true })
   }
 

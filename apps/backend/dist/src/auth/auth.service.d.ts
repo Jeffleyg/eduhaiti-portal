@@ -88,6 +88,9 @@ export declare class AuthService {
             enrollmentNumber: string | null;
         };
     }>;
+    logout(userId: string, email?: string): Promise<{
+        success: boolean;
+    }>;
     changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{
         success: boolean;
     }>;
@@ -98,4 +101,22 @@ export declare class AuthService {
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
     }>;
+    getTestCredentials(): {
+        admin: {
+            role: "ADMIN";
+            email: string;
+            password: any;
+        };
+        teacher: {
+            role: "TEACHER";
+            email: string;
+            password: any;
+        };
+        student: {
+            role: "STUDENT";
+            email: string;
+            password: any;
+        };
+    };
+    private logAccessEvent;
 }

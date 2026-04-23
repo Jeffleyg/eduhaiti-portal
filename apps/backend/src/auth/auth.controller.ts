@@ -14,6 +14,17 @@ export class AuthController {
     return this.authService.login(body.email, body.password)
   }
 
+  @Get("test-credentials")
+  getTestCredentials() {
+    return this.authService.getTestCredentials()
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("logout")
+  logout(@Req() req: { user?: { sub?: string; email?: string } }) {
+    return this.authService.logout(req.user?.sub ?? "", req.user?.email)
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post("change-password")
   changePassword(

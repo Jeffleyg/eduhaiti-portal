@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
-import { apiFetch } from "../../lib/api.js"
+import { apiFetch, apiUpload } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 
@@ -18,6 +18,7 @@ function ProfessorAssignments() {
     dueDate: "",
   })
   const [file, setFile] = useState(null)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +45,7 @@ function ProfessorAssignments() {
       const assignmentsRes = await apiFetch(`/assignments/class/${classId}`, { token })
       setAssignments(assignmentsRes ?? [])
     } catch (error) {
-      console.error("Failed to fetch assignments:", error)
+      setError(error.message)
     }
   }
 
@@ -59,6 +60,7 @@ function ProfessorAssignments() {
     if (!selectedClass || !formData.title || !formData.dueDate) return
 
     setCreating(true)
+    setError("")
     try {
       const formDataToSend = new FormData()
       if (file) formDataToSend.append("file", file)
@@ -66,21 +68,17 @@ function ProfessorAssignments() {
       formDataToSend.append("description", formData.description)
       formDataToSend.append("dueDate", formData.dueDate)
 
-      const response = await fetch(`http://localhost:3000/assignments/create/${selectedClass}`, {
+      await apiUpload(`/assignments/create/${selectedClass}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formDataToSend,
+        token,
+        formData: formDataToSend,
       })
 
-      if (response.ok) {
-        setFormData({ title: "", description: "", dueDate: "" })
-        setFile(null)
-        loadAssignmentsForClass(selectedClass)
-      }
+      setFormData({ title: "", description: "", dueDate: "" })
+      setFile(null)
+      await loadAssignmentsForClass(selectedClass)
     } catch (error) {
-      console.error("Create failed:", error)
+      setError(error.message)
     } finally {
       setCreating(false)
     }
@@ -93,6 +91,8 @@ function ProfessorAssignments() {
   return (
     <div className="space-y-6">
       <SectionHeader title="Gerenciar Tarefas" subtitle="Crie e acompanhe tarefas da turma" />
+
+      {error ? <p className="text-sm text-brand-red">{error}</p> : null}
 
       <div className="rounded-2xl border border-brand-navy/10 bg-white p-6">
         <h3 className="font-semibold text-brand-navy mb-4">Selecione a Turma</h3>

@@ -17,6 +17,31 @@ export declare class AuthController {
             enrollmentNumber: string | null;
         };
     }>;
+    getTestCredentials(): {
+        admin: {
+            role: "ADMIN";
+            email: string;
+            password: any;
+        };
+        teacher: {
+            role: "TEACHER";
+            email: string;
+            password: any;
+        };
+        student: {
+            role: "STUDENT";
+            email: string;
+            password: any;
+        };
+    };
+    logout(req: {
+        user?: {
+            sub?: string;
+            email?: string;
+        };
+    }): Promise<{
+        success: boolean;
+    }>;
     changePassword(req: {
         user?: {
             sub?: string;

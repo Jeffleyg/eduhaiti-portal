@@ -22,6 +22,8 @@ import { AcademicPeriodsModule } from "./academic-periods/academic-periods.modul
 import { AcademicSettingsModule } from "./academic-settings/academic-settings.module"
 import { AcademicRequestsModule } from "./academic-requests/academic-requests.module"
 import { DisciplinesModule } from "./disciplines/disciplines.module"
+import { ForumsModule } from "./forums/forums.module"
+import { FamilyAccessModule } from "./family-access/family-access.module"
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { DisciplinesModule } from "./disciplines/disciplines.module"
     AcademicSettingsModule,
     AcademicRequestsModule,
     DisciplinesModule,
+    ForumsModule,
+    FamilyAccessModule,
   ],
   controllers: [AppController],
   providers: [AppService],

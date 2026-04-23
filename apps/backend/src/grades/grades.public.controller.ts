@@ -36,6 +36,16 @@ export class GradesPublicController {
     return this.gradesService.listAcademicYearsForStudent(userId ?? "")
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get("evolution")
+  async getMyEvolution(
+    @Req() req: { user?: { sub?: string } },
+    @Query("academicYearId") academicYearId?: string,
+  ) {
+    const userId = req.user?.sub
+    return this.gradesService.getStudentEvolution(userId ?? "", academicYearId)
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get("class/:classId")
