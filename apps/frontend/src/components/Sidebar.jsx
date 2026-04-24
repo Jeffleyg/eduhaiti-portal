@@ -49,6 +49,7 @@ const adminNav = [
   { to: "/admin/classes", icon: CalendarDays, labelKey: "adminClasses" },
   { to: "/admin/disciplines", icon: BookOpen, labelKey: "adminDisciplines" },
   { to: "/admin/finance", icon: HandCoins, labelKey: "navFinance" },
+  { to: "/admin/family-communication", icon: Mail, labelKey: "navFamilyCommunication" },
   { to: "/admin/academic", icon: Settings, labelKey: "navAcademicAdmin" },
   { to: "/admin/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
 ]
@@ -67,6 +68,11 @@ function Sidebar({ role }) {
   return (
     <aside className="glass-panel hidden w-64 flex-col gap-6 rounded-3xl px-5 py-6 lg:flex">
       <div>
+        <img
+          src="/LogoEdu.png"
+          alt={t("brand")}
+          className="h-12 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1"
+        />
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
           {t("appSubtitle")}
         </p>

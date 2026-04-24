@@ -33,6 +33,11 @@ function TopBar({ role }) {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
+        <img
+          src="/LogoEdu.png"
+          alt={t("brand")}
+          className="h-10 w-auto rounded-lg border border-brand-navy/10 bg-white px-2 py-1"
+        />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
             {t("dashboardTitle")}

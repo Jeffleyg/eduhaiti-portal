@@ -14,25 +14,7 @@ export declare class AttendanceController {
         date: Date;
         status: AttendanceStatus;
         remarks?: string;
-    }): Promise<{
-        class: {
-            id: string;
-            name: string;
-        };
-        student: {
-            id: string;
-            name: string | null;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        classId: string;
-        studentId: string;
-        status: import(".prisma/client").$Enums.AttendanceStatus;
-        remarks: string | null;
-    }>;
+    }): Promise<any>;
     deleteAttendance(attendanceId: string): Promise<{
         message: string;
     }>;
@@ -47,13 +29,13 @@ export declare class AttendanceController {
         };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        classId: string;
         studentId: string;
+        classId: string;
+        date: Date;
         status: import(".prisma/client").$Enums.AttendanceStatus;
         remarks: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     getMyStats(req: {
         user?: {
@@ -71,19 +53,19 @@ export declare class AttendanceController {
     getClassAttendance(classId: string, date?: string): Promise<({
         student: {
             id: string;
+            name: string | null;
             email: string;
             enrollmentNumber: string | null;
-            name: string | null;
         };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        classId: string;
         studentId: string;
+        classId: string;
+        date: Date;
         status: import(".prisma/client").$Enums.AttendanceStatus;
         remarks: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     getClassReport(classId: string): Promise<{
         absencePercentage: number;
@@ -95,8 +77,8 @@ export declare class AttendanceController {
         excused: number;
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
     }[]>;
 }

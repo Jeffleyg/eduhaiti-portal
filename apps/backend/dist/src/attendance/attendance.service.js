@@ -18,6 +18,29 @@ let AttendanceService = class AttendanceService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    buildAttendanceFamilyNotice(params) {
+        const statusTextByCode = {
+            PRESENT: "presente",
+            ABSENT: "ausente",
+            LATE: "atrasado",
+            EXCUSED: "justificado",
+        };
+        const statusText = statusTextByCode[params.status];
+        const dateLabel = params.date.toLocaleDateString("pt-BR");
+        const remarksSuffix = params.remarks?.trim()
+            ? ` Observacao: ${params.remarks.trim()}.`
+            : "";
+        return {
+            title: "Atualizacao de chamada",
+            body: `A chamada de ${dateLabel} na turma ${params.className} foi registrada como ${statusText}.${remarksSuffix}`,
+            severity: params.status === "ABSENT" ? "urgent" : "normal",
+            channel: "IN_APP",
+            attendanceStatus: params.status,
+            attendanceDate: params.date.toISOString(),
+            className: params.className,
+            sourceAttendanceId: params.attendanceId,
+        };
+    }
     async markAttendance(payload, requester) {
         const student = await this.prisma.user.findUnique({
             where: { id: payload.studentId },
@@ -25,19 +48,22 @@ let AttendanceService = class AttendanceService {
         if (!student) {
             throw new common_1.NotFoundException("Student not found");
         }
-        const classData = await this.prisma.class.findUnique({
+        const classSummary = await this.prisma.class.findUnique({
             where: { id: payload.classId },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                teacherId: true,
                 students: { select: { id: true } },
             },
         });
-        if (!classData) {
+        if (!classSummary) {
             throw new common_1.NotFoundException("Class not found");
         }
-        if (requester?.role === client_1.Role.TEACHER && classData.teacherId !== requester.id) {
+        if (requester?.role === client_1.Role.TEACHER && classSummary.teacherId !== requester.id) {
             throw new common_1.ForbiddenException("Teacher can only mark attendance for own classes");
         }
-        if (!classData.students.some((item) => item.id === payload.studentId)) {
+        if (!classSummary.students.some((item) => item.id === payload.studentId)) {
             throw new common_1.BadRequestException("Student is not enrolled in this class");
         }
         const startOfDay = new Date(payload.date);
@@ -54,31 +80,53 @@ let AttendanceService = class AttendanceService {
                 },
             },
         });
-        if (existing) {
-            return this.prisma.attendance.update({
-                where: { id: existing.id },
+        return this.prisma.$transaction(async (tx) => {
+            let attendanceRecord;
+            if (existing) {
+                attendanceRecord = await tx.attendance.update({
+                    where: { id: existing.id },
+                    data: {
+                        status: payload.status,
+                        remarks: payload.remarks,
+                    },
+                    include: {
+                        student: { select: { id: true, name: true } },
+                        class: { select: { id: true, name: true } },
+                    },
+                });
+            }
+            else {
+                attendanceRecord = await tx.attendance.create({
+                    data: {
+                        studentId: payload.studentId,
+                        classId: payload.classId,
+                        date: new Date(payload.date),
+                        status: payload.status,
+                        remarks: payload.remarks,
+                    },
+                    include: {
+                        student: { select: { id: true, name: true } },
+                        class: { select: { id: true, name: true } },
+                    },
+                });
+            }
+            const notice = this.buildAttendanceFamilyNotice({
+                status: payload.status,
+                date: new Date(payload.date),
+                className: classSummary.name,
+                remarks: payload.remarks,
+                attendanceId: attendanceRecord.id,
+            });
+            await tx.auditLog.create({
                 data: {
-                    status: payload.status,
-                    remarks: payload.remarks,
-                },
-                include: {
-                    student: { select: { id: true, name: true } },
-                    class: { select: { id: true, name: true } },
+                    entityType: "FAMILY_NOTICE",
+                    entityId: payload.studentId,
+                    action: "CREATE",
+                    userId: requester?.id,
+                    changes: JSON.stringify(notice),
                 },
             });
-        }
-        return this.prisma.attendance.create({
-            data: {
-                studentId: payload.studentId,
-                classId: payload.classId,
-                date: new Date(payload.date),
-                status: payload.status,
-                remarks: payload.remarks,
-            },
-            include: {
-                student: { select: { id: true, name: true } },
-                class: { select: { id: true, name: true } },
-            },
+            return attendanceRecord;
         });
     }
     async findByStudent(studentId, startDate, endDate) {

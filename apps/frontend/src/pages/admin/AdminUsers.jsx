@@ -32,6 +32,8 @@ function AdminUsers() {
   const { t } = useTranslation()
   const { token } = useAuth()
   const [classes, setClasses] = useState([])
+  const [students, setStudents] = useState([])
+  const [teachers, setTeachers] = useState([])
   const [studentData, setStudentData] = useState(emptyStudent)
   const [teacherData, setTeacherData] = useState(emptyTeacher)
   const [newClasses, setNewClasses] = useState([{ name: "", level: "" }])
@@ -40,19 +42,34 @@ function AdminUsers() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const loadClasses = async () => {
+    const loadData = async () => {
       try {
-        const response = await apiFetch("/admin/classes", { token })
-        setClasses(response ?? [])
+        const [classesData, studentsData, teachersData] = await Promise.all([
+          apiFetch("/admin/classes", { token }),
+          apiFetch("/admin/users/students", { token }),
+          apiFetch("/admin/users/teachers", { token }),
+        ])
+        setClasses(classesData ?? [])
+        setStudents(studentsData ?? [])
+        setTeachers(teachersData ?? [])
       } catch (err) {
         setError(err.message)
       }
     }
 
     if (token) {
-      loadClasses()
+      loadData()
     }
   }, [token])
+
+  const refreshUsers = async () => {
+    const [studentsData, teachersData] = await Promise.all([
+      apiFetch("/admin/users/students", { token }),
+      apiFetch("/admin/users/teachers", { token }),
+    ])
+    setStudents(studentsData ?? [])
+    setTeachers(teachersData ?? [])
+  }
 
   const classOptions = useMemo(
     () =>
@@ -102,6 +119,7 @@ function AdminUsers() {
       })
       setMessage(t("studentCreated"))
       setStudentData(emptyStudent)
+      await refreshUsers()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -135,6 +153,7 @@ function AdminUsers() {
       setMessage(t("teacherCreated"))
       setTeacherData(emptyTeacher)
       setNewClasses([{ name: "", level: "" }])
+      await refreshUsers()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -161,6 +180,7 @@ function AdminUsers() {
             onChange={handleStudentChange}
             placeholder={t("email")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             name="firstName"
@@ -168,6 +188,7 @@ function AdminUsers() {
             onChange={handleStudentChange}
             placeholder={t("firstName")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             name="lastName"
@@ -175,6 +196,7 @@ function AdminUsers() {
             onChange={handleStudentChange}
             placeholder={t("lastName")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             type="date"
@@ -182,6 +204,7 @@ function AdminUsers() {
             value={studentData.dateOfBirth}
             onChange={handleStudentChange}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             name="address"
@@ -189,12 +212,14 @@ function AdminUsers() {
             onChange={handleStudentChange}
             placeholder={t("address")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <select
             name="gender"
             value={studentData.gender}
             onChange={handleStudentChange}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           >
             <option value="">{t("gender")}</option>
             <option value="MALE">{t("genderMale")}</option>
@@ -243,6 +268,7 @@ function AdminUsers() {
             onChange={handleTeacherChange}
             placeholder={t("email")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             name="firstName"
@@ -250,6 +276,7 @@ function AdminUsers() {
             onChange={handleTeacherChange}
             placeholder={t("firstName")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             name="lastName"
@@ -257,6 +284,7 @@ function AdminUsers() {
             onChange={handleTeacherChange}
             placeholder={t("lastName")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             type="date"
@@ -264,6 +292,7 @@ function AdminUsers() {
             value={teacherData.dateOfBirth}
             onChange={handleTeacherChange}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <input
             name="address"
@@ -271,12 +300,14 @@ function AdminUsers() {
             onChange={handleTeacherChange}
             placeholder={t("address")}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           />
           <select
             name="gender"
             value={teacherData.gender}
             onChange={handleTeacherChange}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+            required
           >
             <option value="">{t("gender")}</option>
             <option value="MALE">{t("genderMale")}</option>
@@ -348,6 +379,48 @@ function AdminUsers() {
             {loading ? t("loading") : t("createTeacherAction")}
           </button>
         </form>
+      </section>
+
+      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
+        <h2 className="text-lg font-semibold text-brand-navy">Alunos cadastrados</h2>
+        {students.length === 0 ? (
+          <p className="mt-3 text-sm text-brand-navy/60">Nenhum aluno cadastrado.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {students.map((student) => (
+              <div key={student.id} className="rounded-2xl border border-brand-navy/10 bg-white p-3 text-sm">
+                <p className="font-semibold text-brand-navy">
+                  {student.name} ({student.enrollmentNumber || "-"})
+                </p>
+                <p className="text-brand-navy/70">Email: {student.email}</p>
+                <p className="text-brand-navy/70">
+                  Parentes: {student.fatherName || "-"} / {student.motherName || "-"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
+        <h2 className="text-lg font-semibold text-brand-navy">Professores cadastrados</h2>
+        {teachers.length === 0 ? (
+          <p className="mt-3 text-sm text-brand-navy/60">Nenhum professor cadastrado.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {teachers.map((teacher) => (
+              <div key={teacher.id} className="rounded-2xl border border-brand-navy/10 bg-white p-3 text-sm">
+                <p className="font-semibold text-brand-navy">
+                  {teacher.name} ({teacher.enrollmentNumber || "-"})
+                </p>
+                <p className="text-brand-navy/70">Email: {teacher.email}</p>
+                <p className="text-brand-navy/70">
+                  Disciplinas: {(teacher.subjects ?? []).length ? teacher.subjects.join(", ") : "-"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

@@ -1,9 +1,7 @@
 import { useMemo, useState } from "react"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
-import { apiFetch } from "../../lib/api.js"
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000"
+import { apiFetch, apiFetchRaw } from "../../lib/api.js"
 
 const initialChargeForm = {
   studentEnrollmentNumber: "",
@@ -117,17 +115,9 @@ function AdminFinanceControl() {
 
     try {
       const query = buildFilterQuery(false)
-      const response = await fetch(`${API_URL}/api/finance/admin/payments/export?${query}`, {
-        method: "GET",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+      const response = await apiFetchRaw(`/finance/admin/payments/export?${query}`, {
+        token,
       })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}))
-        throw new Error(payload.message ?? "Falha ao exportar CSV")
-      }
 
       const csvText = await response.text()
       const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" })

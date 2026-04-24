@@ -49,9 +49,11 @@ function Landing() {
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-navy text-sm font-semibold text-white shadow-lg shadow-brand-navy/20">
-              EH
-            </div>
+            <img
+              src="/LogoEdu.png"
+              alt={t("brand")}
+              className="h-11 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 shadow-lg shadow-brand-navy/10"
+            />
             <div>
               <p className="font-display text-2xl text-brand-navy">{t("brand")}</p>
               <p className="text-xs font-medium uppercase tracking-[0.25em] text-brand-red/70">
@@ -85,6 +87,9 @@ function Landing() {
                 </Link>
                 <Link className="outline-button" to="/pagamento-escolaridade">
                   {t("tuitionPaymentCta")}
+                </Link>
+                <Link className="outline-button" to="/familia">
+                  {t("familyPortalCta")}
                 </Link>
               </div>
               <div className="grid gap-4 md:grid-cols-4">

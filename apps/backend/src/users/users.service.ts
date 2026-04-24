@@ -41,6 +41,10 @@ export class UsersService {
       throw new BadRequestException("User already exists with this email")
     }
 
+    if (!payload.fatherName?.trim() && !payload.motherName?.trim()) {
+      throw new BadRequestException("At least one parent/guardian name is required")
+    }
+
     const tempPassword = this.generateTempPassword()
     const passwordHash = await bcrypt.hash(tempPassword, 10)
     const enrollmentNumber = await this.generateEnrollmentNumber()
@@ -205,6 +209,8 @@ export class UsersService {
         name: true,
         firstName: true,
         lastName: true,
+        fatherName: true,
+        motherName: true,
         enrollmentNumber: true,
         classesAttending: {
           select: {

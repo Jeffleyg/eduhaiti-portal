@@ -12,6 +12,8 @@ export declare class UsersController {
         name: string | null;
         firstName: string | null;
         lastName: string | null;
+        fatherName: string | null;
+        motherName: string | null;
         isActive: boolean;
         createdAt: Date;
         classesAttending: {

@@ -5,6 +5,14 @@ import { PrismaService } from "../prisma/prisma.service"
 export class FamilyAccessService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private parseAuditChanges(changes: string) {
+    try {
+      return JSON.parse(changes) as Record<string, unknown>
+    } catch {
+      return null
+    }
+  }
+
   private normalize(value: string) {
     return value.trim().toLowerCase()
   }
@@ -216,6 +224,173 @@ export class FamilyAccessService {
         })),
       })
     }
+
+    return { success: true }
+  }
+
+  async listFamilyContactRequests() {
+    const requests = await this.prisma.auditLog.findMany({
+      where: {
+        entityType: "FAMILY_CONTACT_REQUEST",
+        action: "CREATE",
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    })
+
+    if (requests.length === 0) {
+      return []
+    }
+
+    const studentIds = Array.from(new Set(requests.map((item) => item.entityId)))
+    const requestIds = requests.map((item) => item.id)
+
+    const [students, responses] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { id: { in: studentIds } },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          enrollmentNumber: true,
+        },
+      }),
+      this.prisma.auditLog.findMany({
+        where: {
+          entityType: "FAMILY_CONTACT_REQUEST",
+          action: "RESPOND",
+          entityId: { in: requestIds },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ])
+
+    const studentById = new Map(students.map((student) => [student.id, student]))
+    const latestResponseByRequestId = new Map<string, (typeof responses)[number]>()
+
+    for (const response of responses) {
+      if (!latestResponseByRequestId.has(response.entityId)) {
+        latestResponseByRequestId.set(response.entityId, response)
+      }
+    }
+
+    return requests.map((request) => {
+      const payload = this.parseAuditChanges(request.changes)
+      const response = latestResponseByRequestId.get(request.id)
+      const responsePayload = response
+        ? this.parseAuditChanges(response.changes)
+        : null
+      const student = studentById.get(request.entityId)
+
+      return {
+        requestId: request.id,
+        createdAt: request.createdAt,
+        student: student
+          ? {
+              id: student.id,
+              name: student.name,
+              email: student.email,
+              enrollmentNumber: student.enrollmentNumber,
+            }
+          : null,
+        enrollmentNumber:
+          String(payload?.enrollmentNumber ?? student?.enrollmentNumber ?? ""),
+        guardianName: payload?.guardianName ? String(payload.guardianName) : null,
+        guardianPhone: payload?.guardianPhone ? String(payload.guardianPhone) : null,
+        subject: payload?.subject ? String(payload.subject) : "",
+        body: payload?.body ? String(payload.body) : "",
+        urgent: Boolean(payload?.urgent),
+        status: response ? "RESPONDED" : "PENDING",
+        response: response
+          ? {
+              respondedAt: response.createdAt,
+              responderId: response.userId,
+              responseMessage: responsePayload?.responseMessage
+                ? String(responsePayload.responseMessage)
+                : "",
+            }
+          : null,
+      }
+    })
+  }
+
+  async respondToFamilyContactRequest(payload: {
+    requestId: string
+    responseMessage: string
+    actorId: string
+    notifyFamily?: boolean
+  }) {
+    if (!payload.actorId) {
+      throw new BadRequestException("actorId is required")
+    }
+
+    const responseMessage = payload.responseMessage?.trim()
+    if (!responseMessage) {
+      throw new BadRequestException("responseMessage is required")
+    }
+
+    const request = await this.prisma.auditLog.findUnique({
+      where: { id: payload.requestId },
+    })
+
+    if (
+      !request ||
+      request.entityType !== "FAMILY_CONTACT_REQUEST" ||
+      request.action !== "CREATE"
+    ) {
+      throw new NotFoundException("Family contact request not found")
+    }
+
+    const requestDetails = this.parseAuditChanges(request.changes)
+    const notifyFamily = payload.notifyFamily !== false
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.auditLog.create({
+        data: {
+          entityType: "FAMILY_CONTACT_REQUEST",
+          entityId: request.id,
+          action: "RESPOND",
+          userId: payload.actorId,
+          changes: JSON.stringify({
+            responseMessage,
+            notifyFamily,
+          }),
+        },
+      })
+
+      if (!notifyFamily) {
+        return
+      }
+
+      const titleBase = requestDetails?.subject
+        ? String(requestDetails.subject)
+        : "Solicitacao familiar"
+
+      await tx.auditLog.create({
+        data: {
+          entityType: "FAMILY_NOTICE",
+          entityId: request.entityId,
+          action: "CREATE",
+          userId: payload.actorId,
+          changes: JSON.stringify({
+            title: `Resposta da secretaria: ${titleBase}`,
+            body: responseMessage,
+            severity: requestDetails?.urgent ? "urgent" : "normal",
+            channel: "IN_APP",
+            sourceRequestId: request.id,
+          }),
+        },
+      })
+
+      await tx.message.create({
+        data: {
+          fromId: payload.actorId,
+          toId: request.entityId,
+          subject: `[ESCOLA] Resposta: ${titleBase}`,
+          body: responseMessage,
+        },
+      })
+    })
 
     return { success: true }
   }

@@ -29,6 +29,8 @@ import UserProfile from "./pages/common/UserProfile.jsx"
 import ProfessorAcademicRequests from "./pages/professor/ProfessorAcademicRequests.jsx"
 import StudentAcademicRequests from "./pages/student/StudentAcademicRequests.jsx"
 import GuardianTuitionPayment from "./pages/GuardianTuitionPayment.jsx"
+import FamilyPortal from "./pages/FamilyPortal.jsx"
+import AdminFamilyCommunication from "./pages/admin/AdminFamilyCommunication.jsx"
 import { SurvivalModeProvider } from "./context/SurvivalModeContext.jsx"
 import { SyncControlProvider } from "./context/SyncControlContext.jsx"
 
@@ -42,6 +44,7 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/pagamento-escolaridade" element={<GuardianTuitionPayment />} />
+              <Route path="/familia" element={<FamilyPortal />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/change-password" element={<ChangePassword />} />
               </Route>
@@ -84,6 +87,7 @@ function App() {
                   <Route path="profile" element={<UserProfile />} />
                   <Route path="academic" element={<AdminAcademicConfig />} />
                   <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
+                  <Route path="family-communication" element={<AdminFamilyCommunication />} />
                 </Route>
               </Route>
 

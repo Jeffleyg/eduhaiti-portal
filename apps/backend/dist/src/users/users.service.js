@@ -49,6 +49,9 @@ let UsersService = class UsersService {
         if (existing) {
             throw new common_1.BadRequestException("User already exists with this email");
         }
+        if (!payload.fatherName?.trim() && !payload.motherName?.trim()) {
+            throw new common_1.BadRequestException("At least one parent/guardian name is required");
+        }
         const tempPassword = this.generateTempPassword();
         const passwordHash = await bcryptjs_1.default.hash(tempPassword, 10);
         const enrollmentNumber = await this.generateEnrollmentNumber();
@@ -189,6 +192,8 @@ let UsersService = class UsersService {
                 name: true,
                 firstName: true,
                 lastName: true,
+                fatherName: true,
+                motherName: true,
                 enrollmentNumber: true,
                 classesAttending: {
                     select: {

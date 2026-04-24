@@ -30,6 +30,30 @@ export async function apiFetch(path, options = {}) {
   return response.json()
 }
 
+export async function apiFetchRaw(path, options = {}) {
+  const { method = "GET", body, token, headers } = options
+  const response = await fetch(`${API_URL}/api${path}`, {
+    method,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(headers ?? {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? ""
+    const payload = contentType.includes("application/json")
+      ? await response.json().catch(() => ({}))
+      : await response.text().catch(() => "")
+
+    const fallbackMessage = typeof payload === "string" ? payload : payload.message
+    throw new Error(fallbackMessage || "Request failed")
+  }
+
+  return response
+}
+
 export async function apiUpload(path, options = {}) {
   const { method = "POST", token, formData, headers } = options
   const response = await fetch(`${API_URL}/api${path}`, {

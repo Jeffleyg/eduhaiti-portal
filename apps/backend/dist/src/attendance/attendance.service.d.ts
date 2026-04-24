@@ -3,6 +3,7 @@ import { AttendanceStatus, Role } from "@prisma/client";
 export declare class AttendanceService {
     private readonly prisma;
     constructor(prisma: PrismaService);
+    private buildAttendanceFamilyNotice;
     markAttendance(payload: {
         studentId: string;
         classId: string;
@@ -12,25 +13,7 @@ export declare class AttendanceService {
     }, requester?: {
         id: string;
         role: Role;
-    }): Promise<{
-        class: {
-            id: string;
-            name: string;
-        };
-        student: {
-            id: string;
-            name: string | null;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        classId: string;
-        studentId: string;
-        status: import(".prisma/client").$Enums.AttendanceStatus;
-        remarks: string | null;
-    }>;
+    }): Promise<any>;
     findByStudent(studentId: string, startDate?: Date, endDate?: Date): Promise<({
         class: {
             id: string;
@@ -38,30 +21,30 @@ export declare class AttendanceService {
         };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        classId: string;
         studentId: string;
+        classId: string;
+        date: Date;
         status: import(".prisma/client").$Enums.AttendanceStatus;
         remarks: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     findByClass(classId: string, date?: Date): Promise<({
         student: {
             id: string;
+            name: string | null;
             email: string;
             enrollmentNumber: string | null;
-            name: string | null;
         };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        date: Date;
-        classId: string;
         studentId: string;
+        classId: string;
+        date: Date;
         status: import(".prisma/client").$Enums.AttendanceStatus;
         remarks: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     getStudentAttendanceStats(studentId: string, classId: string): Promise<{
         absencePercentage: number;
@@ -82,8 +65,8 @@ export declare class AttendanceService {
         excused: number;
         student: {
             id: string;
-            email: string;
             name: string | null;
+            email: string;
         };
     }[]>;
     delete(attendanceId: string): Promise<{

@@ -34,6 +34,33 @@ export class FamilyAccessController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.TEACHER)
+  @Get("admin/contact-requests")
+  listFamilyContactRequests() {
+    return this.familyAccessService.listFamilyContactRequests()
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TEACHER)
+  @Post("admin/contact-requests/:requestId/respond")
+  respondFamilyContactRequest(
+    @Param("requestId") requestId: string,
+    @Req() req: { user?: { sub?: string } },
+    @Body()
+    payload: {
+      responseMessage: string
+      notifyFamily?: boolean
+    },
+  ) {
+    return this.familyAccessService.respondToFamilyContactRequest({
+      requestId,
+      responseMessage: payload.responseMessage,
+      notifyFamily: payload.notifyFamily,
+      actorId: req.user?.sub ?? "",
+    })
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.TEACHER)
   @Post("admin/notices")
   createSchoolFamilyNotice(
     @Req() req: { user?: { sub?: string } },

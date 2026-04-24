@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
@@ -10,7 +11,7 @@ import { useSyncControl } from "../../context/useSyncControl.js"
 
 function StudentDashboard() {
   const { t, i18n } = useTranslation()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const { disableBackgroundSync } = useSurvivalMode()
   const { syncRevision } = useSyncControl()
   const cached = readHomeCache("student")
@@ -80,6 +81,16 @@ function StudentDashboard() {
       <SectionHeader title={t("navOverview")} subtitle={t("studentDashboardIntro")} />
       <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/70">
         {t("lastUpdatedLabel")} {formatLastUpdated(lastUpdatedAt, i18n.resolvedLanguage || i18n.language)}
+      </div>
+
+      <div className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <p className="text-xs uppercase tracking-[0.12em] text-brand-navy/50">{t("enrollmentNumber")}</p>
+        <p className="mt-1 text-lg font-semibold text-brand-navy">{user?.enrollmentNumber ?? "-"}</p>
+        <div className="mt-3">
+          <Link to="/student/resultats" className="outline-button inline-flex">
+            {t("downloadTranscriptPdf")}
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
