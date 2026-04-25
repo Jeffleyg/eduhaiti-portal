@@ -12,7 +12,7 @@ export class UssdMenuService {
 
     if (path.length === 0) {
       return {
-        text: "Menu EduHaiti\n1.Notas\n2.Calendario\n3.Avisos",
+        text: "Menu EduHaiti\n1.Notas\n2.Calendario\n3.Avisos\n4.Resumo em audio",
         endSession: false,
       }
     }
@@ -45,8 +45,22 @@ export class UssdMenuService {
       }
     }
 
+    if (path[0] === "4") {
+      if (path.length === 1) {
+        return {
+          text: "Digite: 4*ID_ALUNO para receber resumo em audio (IVR).",
+          endSession: false,
+        }
+      }
+
+      return {
+        text: `Resumo em audio solicitado para ${path[1]}. Aguarde ligacao automatica.`,
+        endSession: true,
+      }
+    }
+
     return {
-      text: "Opcao invalida. Digite 1, 2 ou 3.",
+      text: "Opcao invalida. Digite 1, 2, 3 ou 4.",
       endSession: true,
     }
   }

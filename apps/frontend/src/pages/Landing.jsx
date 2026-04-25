@@ -9,12 +9,15 @@ import {
   Sparkles,
   UploadCloud,
   Users,
+  Globe,
 } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 function Landing() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const currentLanguage = i18n.resolvedLanguage || i18n.language
+  const nextLanguage = currentLanguage === "fr" ? "ht" : "fr"
 
   const professorFeatures = [
     { icon: LayoutDashboard, label: t("professorDashboard") },
@@ -64,6 +67,14 @@ function Landing() {
 
           <div className="flex items-center gap-3">
             <span className="chip">{t("languageLabel")}</span>
+            <button
+              className="outline-button inline-flex items-center gap-2"
+              type="button"
+              onClick={() => i18n.changeLanguage(nextLanguage)}
+            >
+              <Globe className="h-4 w-4" />
+              {t("languageSwitch")}
+            </button>
             <Link className="outline-button" to="/login">
               {t("login")}
             </Link>

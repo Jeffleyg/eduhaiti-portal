@@ -66,8 +66,8 @@ function Sidebar({ role }) {
   }
 
   return (
-    <aside className="glass-panel hidden w-64 flex-col gap-6 rounded-3xl px-5 py-6 lg:flex">
-      <div>
+    <aside className="glass-panel sticky top-6 hidden h-[calc(100vh-3rem)] w-64 flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 lg:flex xl:w-72">
+      <div className="shrink-0">
         <img
           src="/LogoEdu.png"
           alt={t("brand")}
@@ -80,15 +80,15 @@ function Sidebar({ role }) {
         <p className="mt-2 text-sm text-brand-navy/70">{t("role" + role)}</p>
       </div>
 
-      <nav className="flex flex-col gap-2">
+      <nav className="flex flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === "/professor" || item.to === "/student"}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition-colors ${
-                isActive ? "bg-brand-navy text-white" : "text-brand-navy/70 hover:bg-white"
+              `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                isActive ? "bg-brand-navy text-white shadow-md shadow-brand-navy/20" : "text-brand-navy/70 hover:bg-white"
               }`
             }
           >
@@ -100,7 +100,7 @@ function Sidebar({ role }) {
 
       <button
         onClick={handleLogout}
-        className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red mt-auto"
+        className="mt-auto flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red"
       >
         <LogOut className="h-4 w-4" />
         {t("logout")}

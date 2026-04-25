@@ -74,6 +74,14 @@ enum IdempotencyStatus {
   FAILED
 }
 
+enum InventoryItemType {
+  TEXTBOOK
+  UNIFORM
+  MEAL_KIT
+  DEVICE
+  OTHER
+}
+
 // ========== SCHOOL & ORGANIZATION ==========
 model School {
   id        String    @id @default(uuid())
@@ -92,6 +100,7 @@ model School {
   academicYears AcademicYear[]
   announcements Announcement[]
   payments      Payment[]
+  inventoryItems SchoolInventoryItem[]
   events        CalendarEvent[]
   academicPeriods AcademicPeriod[]
   academicSetting AcademicSetting?
@@ -111,6 +120,7 @@ model AcademicYear {
   series     Series[]
   classes    Class[]
   grades     Grade[]
+  gradeHistory GradeHistory[]
   scorecards Scorecard[]
 
   @@index([schoolId, year])
@@ -144,6 +154,7 @@ model Discipline {
   updatedAt DateTime @updatedAt
 
   grades Grade[]
+  gradeHistory GradeHistory[]
 
   @@unique([seriesId, name])
   @@index([seriesId])
@@ -184,6 +195,9 @@ model User {
   announcements         Announcement[]         @relation("CreatedBy")
   payments              Payment[]
   scorecards            Scorecard[]
+  guardianLinks         GuardianStudent[]
+  gradeHistoryRecords   GradeHistory[]
+  guardianOtpChallenges GuardianOtpChallenge[]
   academicRequestsSubmitted AcademicRequest[]  @relation("AcademicRequestStudent")
   academicRequestsReviewed  AcademicRequest[]  @relation("AcademicRequestReviewer")
 }
@@ -218,6 +232,7 @@ model Class {
   maxStudents Int @default(30)
 
   grades      Grade[]
+  gradeHistory GradeHistory[]
   attendance  Attendance[]
   resources   Resource[]
   assignments Assignment[]
@@ -250,8 +265,35 @@ model Grade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  history GradeHistory[]
+
   @@index([studentId, classId, disciplineId])
   @@index([academicYearId])
+}
+
+model GradeHistory {
+  id             String       @id @default(uuid())
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId      String
+  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId        String
+  discipline     Discipline   @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  disciplineId   String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  academicYearId String
+  sourceGrade    Grade?       @relation(fields: [sourceGradeId], references: [id], onDelete: SetNull)
+  sourceGradeId  String?
+
+  score    Float
+  maxScore Float       @default(20)
+  weight   Float       @default(1.0)
+  status   GradeStatus @default(DRAFT)
+  snapshot Json
+
+  createdAt DateTime @default(now())
+
+  @@index([studentId, academicYearId])
+  @@index([sourceGradeId])
 }
 
 model Attendance {
@@ -452,6 +494,56 @@ model Scorecard {
   @@index([studentId, academicYearId])
 }
 
+model Guardian {
+  id            String   @id @default(uuid())
+  fullName      String
+  documentId    String?
+  phoneNumber   String
+  email         String?
+  relationship  String?
+  isVerified    Boolean  @default(false)
+  verifiedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  students      GuardianStudent[]
+  otpChallenges GuardianOtpChallenge[]
+  payments      Payment[]
+
+  @@unique([phoneNumber, documentId])
+  @@index([phoneNumber])
+}
+
+model GuardianStudent {
+  id         String   @id @default(uuid())
+  guardian   Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  guardianId String
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([guardianId, studentId])
+  @@index([studentId])
+}
+
+model GuardianOtpChallenge {
+  id          String   @id @default(uuid())
+  guardian    Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  guardianId  String
+  student     User?    @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  studentId   String?
+  channel     String   @default("SMS")
+  otpHash     String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  attempts    Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([guardianId, expiresAt])
+  @@index([studentId])
+}
+
 // ========== FINANCIAL ==========
 model Payment {
   id        String @id @default(uuid())
@@ -459,6 +551,8 @@ model Payment {
   schoolId  String
   student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
+  guardian   Guardian? @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  guardianId String?
 
   amount        Float
   dueDate       DateTime
@@ -471,7 +565,42 @@ model Payment {
   updatedAt DateTime @updatedAt
 
   @@index([schoolId, studentId, dueDate])
+  @@index([guardianId])
   @@index([status])
+}
+
+model SchoolInventoryItem {
+  id           String            @id @default(uuid())
+  school       School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId     String
+  itemType     InventoryItemType @default(OTHER)
+  name         String
+  sku          String?
+  quantity     Int               @default(0)
+  minThreshold Int               @default(0)
+  unit         String?
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  movements    SchoolInventoryMovement[]
+
+  @@index([schoolId, itemType])
+  @@unique([schoolId, name, sku])
+}
+
+model SchoolInventoryMovement {
+  id          String               @id @default(uuid())
+  item        SchoolInventoryItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId      String
+  delta       Int
+  reason      String
+  referenceId String?
+  actorUserId String?
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+
+  @@index([itemId, createdAt])
 }
 
 model AuditLog {

@@ -1,7 +1,15 @@
 import { useCallback, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api.js"
 import { useAuth } from "./AuthContext.jsx"
-import { appendSyncHistory, readSyncHistory, writeHomeCache } from "../offline/sqliteCache"
+import {
+  appendSyncHistory,
+  mergeSyncPayload,
+  readHomeCache,
+  readSyncConflictStrategy,
+  readSyncHistory,
+  writeHomeCache,
+  writeSyncConflictStrategy,
+} from "../offline/sqliteCache"
 import { SyncControlContext } from "./SyncControlStore.js"
 
 function getRoleTasks(role) {
@@ -38,6 +46,13 @@ export function SyncControlProvider({ children }) {
   const [error, setError] = useState("")
   const [syncRevision, setSyncRevision] = useState(0)
   const [syncHistory, setSyncHistory] = useState(() => readSyncHistory(10))
+  const [conflictStrategy, setConflictStrategyState] = useState(() => readSyncConflictStrategy())
+  const [lastSyncConflicts, setLastSyncConflicts] = useState([])
+
+  const setConflictStrategy = useCallback((strategy) => {
+    const next = writeSyncConflictStrategy(strategy)
+    setConflictStrategyState(next)
+  }, [])
 
   const syncNow = useCallback(
     async (role) => {
@@ -68,7 +83,10 @@ export function SyncControlProvider({ children }) {
         }
 
         if (tasks.length > 0) {
-          writeHomeCache(role, payload)
+          const currentCache = readHomeCache(role).data
+          const merged = mergeSyncPayload(currentCache, payload, conflictStrategy)
+          writeHomeCache(role, merged.payload)
+          setLastSyncConflicts(merged.conflicts)
         }
 
         setLastRunAt(new Date().toISOString())
@@ -81,7 +99,7 @@ export function SyncControlProvider({ children }) {
           status: "success",
           completedTasks: tasks.length,
           totalTasks: tasks.length,
-          message: "ok",
+          message: `ok:${conflictStrategy}`,
         }
         appendSyncHistory(successEntry)
         setSyncHistory(readSyncHistory(10))
@@ -118,9 +136,25 @@ export function SyncControlProvider({ children }) {
       error,
       syncRevision,
       syncHistory,
+      conflictStrategy,
+      lastSyncConflicts,
+      setConflictStrategy,
       syncNow,
     }),
-    [isSyncing, completedTasks, totalTasks, currentTask, lastRunAt, error, syncRevision, syncHistory, syncNow],
+    [
+      isSyncing,
+      completedTasks,
+      totalTasks,
+      currentTask,
+      lastRunAt,
+      error,
+      syncRevision,
+      syncHistory,
+      conflictStrategy,
+      lastSyncConflicts,
+      setConflictStrategy,
+      syncNow,
+    ],
   )
 
   return <SyncControlContext.Provider value={value}>{children}</SyncControlContext.Provider>

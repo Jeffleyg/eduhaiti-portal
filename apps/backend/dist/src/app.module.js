@@ -33,6 +33,8 @@ const academic_requests_module_1 = require("./academic-requests/academic-request
 const disciplines_module_1 = require("./disciplines/disciplines.module");
 const forums_module_1 = require("./forums/forums.module");
 const family_access_module_1 = require("./family-access/family-access.module");
+const scorecards_module_1 = require("./scorecards/scorecards.module");
+const inventory_module_1 = require("./inventory/inventory.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -64,6 +66,8 @@ exports.AppModule = AppModule = __decorate([
             disciplines_module_1.DisciplinesModule,
             forums_module_1.ForumsModule,
             family_access_module_1.FamilyAccessModule,
+            scorecards_module_1.ScorecardsModule,
+            inventory_module_1.InventoryModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

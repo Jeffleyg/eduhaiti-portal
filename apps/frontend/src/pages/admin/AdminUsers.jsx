@@ -171,9 +171,9 @@ function AdminUsers() {
       {error ? <p className="text-sm text-brand-red">{error}</p> : null}
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
+      <section className="surface-panel p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-navy">{t("createStudentTitle")}</h2>
-        <form onSubmit={submitStudent} className="mt-4 grid gap-4 md:grid-cols-2">
+        <form onSubmit={submitStudent} className="mt-4 grid gap-3 md:grid-cols-2">
           <input
             name="email"
             value={studentData.email}
@@ -259,9 +259,9 @@ function AdminUsers() {
         </form>
       </section>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
+      <section className="surface-panel p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-navy">{t("createTeacherTitle")}</h2>
-        <form onSubmit={submitTeacher} className="mt-4 grid gap-4 md:grid-cols-2">
+        <form onSubmit={submitTeacher} className="mt-4 grid gap-3 md:grid-cols-2">
           <input
             name="email"
             value={teacherData.email}
@@ -381,18 +381,19 @@ function AdminUsers() {
         </form>
       </section>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
+      <section className="surface-panel p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-navy">Alunos cadastrados</h2>
         {students.length === 0 ? (
           <p className="mt-3 text-sm text-brand-navy/60">Nenhum aluno cadastrado.</p>
         ) : (
-          <div className="mt-3 space-y-2">
+          <div className="module-grid mt-3">
             {students.map((student) => (
-              <div key={student.id} className="rounded-2xl border border-brand-navy/10 bg-white p-3 text-sm">
-                <p className="font-semibold text-brand-navy">
+              <div key={student.id} className="module-card text-sm">
+                <p className="module-card-title">Aluno</p>
+                <p className="module-card-value">
                   {student.name} ({student.enrollmentNumber || "-"})
                 </p>
-                <p className="text-brand-navy/70">Email: {student.email}</p>
+                <p className="mt-2 text-brand-navy/70">Email: {student.email}</p>
                 <p className="text-brand-navy/70">
                   Parentes: {student.fatherName || "-"} / {student.motherName || "-"}
                 </p>
@@ -402,18 +403,19 @@ function AdminUsers() {
         )}
       </section>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
+      <section className="surface-panel p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-navy">Professores cadastrados</h2>
         {teachers.length === 0 ? (
           <p className="mt-3 text-sm text-brand-navy/60">Nenhum professor cadastrado.</p>
         ) : (
-          <div className="mt-3 space-y-2">
+          <div className="module-grid mt-3">
             {teachers.map((teacher) => (
-              <div key={teacher.id} className="rounded-2xl border border-brand-navy/10 bg-white p-3 text-sm">
-                <p className="font-semibold text-brand-navy">
+              <div key={teacher.id} className="module-card text-sm">
+                <p className="module-card-title">Professor</p>
+                <p className="module-card-value">
                   {teacher.name} ({teacher.enrollmentNumber || "-"})
                 </p>
-                <p className="text-brand-navy/70">Email: {teacher.email}</p>
+                <p className="mt-2 text-brand-navy/70">Email: {teacher.email}</p>
                 <p className="text-brand-navy/70">
                   Disciplinas: {(teacher.subjects ?? []).length ? teacher.subjects.join(", ") : "-"}
                 </p>

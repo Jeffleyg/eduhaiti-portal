@@ -124,7 +124,7 @@ function ProfessorAttendance() {
           }),
         ),
       )
-      setMessage("Presenca registrada com sucesso.")
+      setMessage("Presenca lancada com sucesso.")
       await loadClassAttendance(selectedClassId, selectedDate)
     } catch (err) {
       setError(err.message)
@@ -203,7 +203,7 @@ function ProfessorAttendance() {
         )}
 
         <button type="button" className="primary-button" onClick={submitAttendance} disabled={submitting || !selectedClassId}>
-          {submitting ? "Salvando..." : "Salvar presenca"}
+          {submitting ? "Salvando..." : "Lancar presenca"}
         </button>
       </section>
 

@@ -45,15 +45,58 @@ let GradesService = class GradesService {
         if (!discipline || discipline.seriesId !== classData.seriesId) {
             throw new common_1.BadRequestException("Discipline does not belong to this class's series");
         }
+        const maxScore = payload.maxScore ?? 20;
+        const weight = payload.weight ?? 1.0;
+        if (!Number.isFinite(payload.score) || !Number.isFinite(maxScore) || !Number.isFinite(weight)) {
+            throw new common_1.BadRequestException("Invalid numeric values for score, maxScore or weight");
+        }
+        if (maxScore <= 0) {
+            throw new common_1.BadRequestException("maxScore must be greater than zero");
+        }
+        if (payload.score < 0 || payload.score > maxScore) {
+            throw new common_1.BadRequestException("score must be between 0 and maxScore");
+        }
+        if (weight <= 0) {
+            throw new common_1.BadRequestException("weight must be greater than zero");
+        }
+        const resolvedAcademicYearId = payload.academicYearId || classData.academicYearId;
+        if (payload.academicYearId && payload.academicYearId !== classData.academicYearId) {
+            throw new common_1.BadRequestException("Academic year does not match the selected class");
+        }
+        const existingGrade = await this.prisma.grade.findFirst({
+            where: {
+                studentId: payload.studentId,
+                classId: payload.classId,
+                disciplineId: payload.disciplineId,
+                academicYearId: resolvedAcademicYearId,
+            },
+            orderBy: { createdAt: "desc" },
+            select: { id: true },
+        });
+        if (existingGrade) {
+            return this.prisma.grade.update({
+                where: { id: existingGrade.id },
+                data: {
+                    score: payload.score,
+                    maxScore,
+                    weight,
+                    status: "DRAFT",
+                },
+                include: {
+                    student: { select: { id: true, name: true, email: true } },
+                    discipline: { select: { id: true, name: true } },
+                },
+            });
+        }
         return this.prisma.grade.create({
             data: {
                 studentId: payload.studentId,
                 classId: payload.classId,
                 disciplineId: payload.disciplineId,
-                academicYearId: payload.academicYearId,
+                academicYearId: resolvedAcademicYearId,
                 score: payload.score,
-                maxScore: payload.maxScore || 20,
-                weight: payload.weight || 1.0,
+                maxScore,
+                weight,
                 status: "DRAFT",
             },
             include: {

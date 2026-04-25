@@ -6,6 +6,7 @@ export interface ParsedSmsCommand {
   type: SmsCommandType
   studentId?: string
   responsibleDocumentId?: string
+  otpCode?: string
 }
 
 @Injectable()
@@ -25,6 +26,7 @@ export class CommandParserService {
         type: command,
         studentId: parts[1],
         responsibleDocumentId: parts[2],
+        otpCode: parts[3],
       }
     }
 
@@ -33,6 +35,7 @@ export class CommandParserService {
         type: "AVISO",
         studentId: parts[1],
         responsibleDocumentId: parts[2],
+        otpCode: parts[3],
       }
     }
 

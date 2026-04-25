@@ -36,6 +36,22 @@ export class AnalyticsController {
     );
   }
 
+  @Get('dashboard/alerta-precoce')
+  async getEarlyWarning(
+    @Query('schoolId') schoolId?: string,
+    @Query('trigger') trigger?: string,
+  ) {
+    const report = await this.analyticsService.getEarlyWarningReport(schoolId);
+    if (trigger === '1' || trigger === 'true') {
+      const notification = await this.analyticsService.triggerEarlyWarningAlerts(
+        schoolId,
+      );
+      return { report, notification };
+    }
+
+    return { report };
+  }
+
   @Get('reports/:type')
   async getReport(
     @Param('type') type: AnalyticsReportType,

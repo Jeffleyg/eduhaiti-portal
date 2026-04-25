@@ -6,6 +6,7 @@ import { ExportFormat } from './dto/export-report.dto';
 
 export type AnalyticsReportType =
   | 'evasao-escolar'
+  | 'alerta-precoce-evasao'
   | 'media-notas-regiao'
   | 'fluxo-pagamentos-realtime'
   | 'impacto-diaspora-bolsas';
@@ -128,6 +129,208 @@ export class AnalyticsService {
         atRiskDropout,
       };
     });
+  }
+
+  async getEarlyWarningReport(schoolId?: string) {
+    const now = Date.now();
+    const currentStart = new Date(now - 30 * 24 * 60 * 60 * 1000);
+    const previousStart = new Date(now - 60 * 24 * 60 * 60 * 1000);
+
+    const students = await this.prisma.user.findMany({
+      where: {
+        role: Role.STUDENT,
+        ...(schoolId
+          ? {
+              classesAttending: {
+                some: {
+                  academicYear: {
+                    schoolId,
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        enrollmentNumber: true,
+        fatherName: true,
+        motherName: true,
+      },
+      take: 5000,
+    });
+
+    const studentIds = students.map((item) => item.id);
+    if (studentIds.length === 0) {
+      return [];
+    }
+
+    const [attendanceRows, gradeRows] = await Promise.all([
+      this.prisma.attendance.findMany({
+        where: {
+          studentId: { in: studentIds },
+          date: { gte: previousStart },
+        },
+        select: { studentId: true, status: true, date: true },
+      }),
+      this.prisma.grade.findMany({
+        where: {
+          studentId: { in: studentIds },
+          createdAt: { gte: previousStart },
+        },
+        select: { studentId: true, score: true, maxScore: true, createdAt: true },
+      }),
+    ]);
+
+    const attendanceMap = new Map<
+      string,
+      {
+        current: { total: number; absent: number };
+        previous: { total: number; absent: number };
+      }
+    >();
+
+    for (const row of attendanceRows) {
+      const slot = attendanceMap.get(row.studentId) ?? {
+        current: { total: 0, absent: 0 },
+        previous: { total: 0, absent: 0 },
+      };
+      const bucket = row.date >= currentStart ? slot.current : slot.previous;
+      bucket.total += 1;
+      if (row.status === 'ABSENT') {
+        bucket.absent += 1;
+      }
+      attendanceMap.set(row.studentId, slot);
+    }
+
+    const gradeMap = new Map<
+      string,
+      {
+        current: { total: number; count: number };
+        previous: { total: number; count: number };
+      }
+    >();
+
+    for (const row of gradeRows) {
+      const normalized = row.maxScore > 0 ? (row.score / row.maxScore) * 20 : 0;
+      const slot = gradeMap.get(row.studentId) ?? {
+        current: { total: 0, count: 0 },
+        previous: { total: 0, count: 0 },
+      };
+      const bucket = row.createdAt >= currentStart ? slot.current : slot.previous;
+      bucket.total += normalized;
+      bucket.count += 1;
+      gradeMap.set(row.studentId, slot);
+    }
+
+    return students.map((student) => {
+      const attendance = attendanceMap.get(student.id) ?? {
+        current: { total: 0, absent: 0 },
+        previous: { total: 0, absent: 0 },
+      };
+
+      const grades = gradeMap.get(student.id) ?? {
+        current: { total: 0, count: 0 },
+        previous: { total: 0, count: 0 },
+      };
+
+      const currentAbsenceRate =
+        attendance.current.total > 0
+          ? attendance.current.absent / attendance.current.total
+          : 0;
+      const previousAbsenceRate =
+        attendance.previous.total > 0
+          ? attendance.previous.absent / attendance.previous.total
+          : 0;
+
+      const currentAvg =
+        grades.current.count > 0 ? grades.current.total / grades.current.count : 0;
+      const previousAvg =
+        grades.previous.count > 0
+          ? grades.previous.total / grades.previous.count
+          : currentAvg;
+
+      const absenceDelta = currentAbsenceRate - previousAbsenceRate;
+      const gradeDelta = currentAvg - previousAvg;
+      const chronicAbsence = attendance.current.absent >= 5 || currentAbsenceRate >= 0.35;
+      const suddenGradeDrop = gradeDelta <= -3;
+      const atRisk = chronicAbsence || suddenGradeDrop;
+
+      return {
+        studentId: student.id,
+        studentName: student.name,
+        enrollmentNumber: student.enrollmentNumber,
+        guardianFallbackName: student.fatherName ?? student.motherName ?? null,
+        currentAbsenceRate: Number(currentAbsenceRate.toFixed(4)),
+        previousAbsenceRate: Number(previousAbsenceRate.toFixed(4)),
+        currentAverage: Number(currentAvg.toFixed(2)),
+        previousAverage: Number(previousAvg.toFixed(2)),
+        absenceDelta: Number(absenceDelta.toFixed(4)),
+        gradeDelta: Number(gradeDelta.toFixed(2)),
+        chronicAbsence,
+        suddenGradeDrop,
+        atRisk,
+      };
+    });
+  }
+
+  async triggerEarlyWarningAlerts(schoolId?: string) {
+    const rows = await this.getEarlyWarningReport(schoolId);
+    const atRiskRows = rows.filter((item) => item.atRisk);
+
+    if (atRiskRows.length === 0) {
+      return { triggered: 0, recipients: 0 };
+    }
+
+    const admins = await this.prisma.user.findMany({
+      where: {
+        role: Role.ADMIN,
+        isActive: true,
+      },
+      select: { id: true },
+      take: 50,
+    });
+
+    const messages = [] as Array<{ fromId: string; toId: string; subject: string; body: string }>;
+    for (const row of atRiskRows) {
+      const body = [
+        `Aluno: ${row.studentName ?? row.enrollmentNumber ?? row.studentId}`,
+        `Media atual: ${row.currentAverage} | anterior: ${row.previousAverage}`,
+        `Taxa faltas atual: ${row.currentAbsenceRate}`,
+        row.suddenGradeDrop ? 'Queda brusca de media detectada.' : '',
+        row.chronicAbsence ? 'Frequencia critica detectada.' : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      await this.prisma.auditLog.create({
+        data: {
+          entityType: 'EARLY_WARNING_ALERT',
+          entityId: row.studentId,
+          action: 'TRIGGER',
+          changes: JSON.stringify(row),
+        },
+      });
+
+      for (const admin of admins) {
+        messages.push({
+          fromId: row.studentId,
+          toId: admin.id,
+          subject: '[ALERTA PRECOCE] Possivel evasao escolar',
+          body,
+        });
+      }
+    }
+
+    if (messages.length > 0) {
+      await this.prisma.message.createMany({ data: messages });
+    }
+
+    return {
+      triggered: atRiskRows.length,
+      recipients: admins.length,
+    };
   }
 
   async getAverageGradesByRegionReport() {
@@ -326,6 +529,10 @@ export class AnalyticsService {
   async buildReportData(type: AnalyticsReportType, schoolId?: string) {
     if (type === 'evasao-escolar') {
       return this.getDropoutRiskReport(schoolId);
+    }
+
+    if (type === 'alerta-precoce-evasao') {
+      return this.getEarlyWarningReport(schoolId);
     }
 
     if (type === 'media-notas-regiao') {

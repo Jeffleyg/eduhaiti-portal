@@ -24,6 +24,8 @@ import { AcademicRequestsModule } from "./academic-requests/academic-requests.mo
 import { DisciplinesModule } from "./disciplines/disciplines.module"
 import { ForumsModule } from "./forums/forums.module"
 import { FamilyAccessModule } from "./family-access/family-access.module"
+import { ScorecardsModule } from "./scorecards/scorecards.module"
+import { InventoryModule } from "./inventory/inventory.module"
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { FamilyAccessModule } from "./family-access/family-access.module"
     DisciplinesModule,
     ForumsModule,
     FamilyAccessModule,
+    ScorecardsModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

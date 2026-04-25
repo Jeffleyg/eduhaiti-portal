@@ -12,8 +12,7 @@ function ProfessorGrades() {
   const [disciplines, setDisciplines] = useState([])
   const [selectedClassId, setSelectedClassId] = useState("")
   const [selectedDisciplineId, setSelectedDisciplineId] = useState("")
-  const [selectedStudentId, setSelectedStudentId] = useState("")
-  const [score, setScore] = useState("")
+  const [gradeDrafts, setGradeDrafts] = useState({})
   const [maxScore, setMaxScore] = useState("20")
   const [grades, setGrades] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,15 +23,29 @@ function ProfessorGrades() {
 
   const selectedClass = classes.find((item) => item.id === selectedClassId)
 
+  const buildDraftsFromGrades = (classId, records, classList = classes) => {
+    const classStudents = classList.find((item) => item.id === classId)?.students ?? []
+    const byStudent = new Map((records ?? []).map((grade) => [grade.studentId, String(grade.score)]))
+    const drafts = {}
+
+    classStudents.forEach((student) => {
+      drafts[student.id] = byStudent.get(student.id) ?? ""
+    })
+
+    setGradeDrafts(drafts)
+  }
+
   const loadGrades = async (classId, disciplineId) => {
     if (!classId) {
       setGrades([])
-      return
+      setGradeDrafts({})
+      return []
     }
 
     const suffix = disciplineId ? `?disciplineId=${disciplineId}` : ""
     const classGrades = await apiFetch(`/grades/class/${classId}${suffix}`, { token })
     setGrades(classGrades ?? [])
+    return classGrades ?? []
   }
 
   const loadDisciplines = async (seriesId) => {
@@ -49,21 +62,25 @@ function ProfessorGrades() {
     const fetchGrades = async () => {
       setLoading(true)
       setError("")
+
       try {
         const classesData = await apiFetch("/classes/my-classes", { token })
-        setClasses(classesData ?? [])
+        const preparedClasses = classesData ?? []
+        setClasses(preparedClasses)
 
-        if (classesData?.length) {
-          const firstClass = classesData[0]
+        if (preparedClasses.length) {
+          const firstClass = preparedClasses[0]
           setSelectedClassId(firstClass.id)
 
-          await Promise.all([
+          const [, classGrades] = await Promise.all([
             loadDisciplines(firstClass.series?.id),
             loadGrades(firstClass.id),
           ])
+
+          buildDraftsFromGrades(firstClass.id, classGrades, preparedClasses)
         }
-      } catch (error) {
-        setError(error.message)
+      } catch (err) {
+        setError(err.message)
       } finally {
         setLoading(false)
       }
@@ -71,6 +88,143 @@ function ProfessorGrades() {
 
     fetchGrades()
   }, [token])
+
+  const handleClassChange = async (classId) => {
+    setSelectedClassId(classId)
+    setSelectedDisciplineId("")
+    setGradeDrafts({})
+    setError("")
+    setMessage("")
+
+    const nextClass = classes.find((item) => item.id === classId)
+
+    try {
+      const [, classGrades] = await Promise.all([
+        loadDisciplines(nextClass?.series?.id),
+        loadGrades(classId),
+      ])
+
+      buildDraftsFromGrades(classId, classGrades)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleDisciplineChange = async (disciplineId) => {
+    setSelectedDisciplineId(disciplineId)
+    setError("")
+    setMessage("")
+
+    try {
+      const classGrades = await loadGrades(selectedClassId, disciplineId)
+      buildDraftsFromGrades(selectedClassId, classGrades)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleDraftChange = (studentId, value) => {
+    setGradeDrafts((prev) => ({ ...prev, [studentId]: value }))
+  }
+
+  const handleCreateGrade = async (event) => {
+    event.preventDefault()
+
+    if (!selectedClassId || !selectedDisciplineId) {
+      setError("Selecione turma e disciplina.")
+      return
+    }
+
+    const numericMaxScore = Number(maxScore)
+    if (Number.isNaN(numericMaxScore) || numericMaxScore <= 0) {
+      setError("A nota maxima precisa ser maior que zero.")
+      return
+    }
+
+    const students = selectedClass?.students ?? []
+    const entries = students
+      .map((student) => ({
+        studentId: student.id,
+        rawScore: gradeDrafts[student.id],
+      }))
+      .filter((item) => item.rawScore !== "" && item.rawScore !== undefined)
+
+    if (!entries.length) {
+      setError("Informe ao menos uma nota para salvar.")
+      return
+    }
+
+    const parsedEntries = []
+
+    for (const entry of entries) {
+      const numericScore = Number(entry.rawScore)
+      if (Number.isNaN(numericScore) || numericScore < 0 || numericScore > numericMaxScore) {
+        setError("Cada nota precisa estar entre 0 e a nota maxima.")
+        return
+      }
+      parsedEntries.push({ studentId: entry.studentId, score: numericScore })
+    }
+
+    if (!selectedClass?.academicYear?.id) {
+      setError("Nao foi possivel identificar o ano academico da turma.")
+      return
+    }
+
+    setSubmitting(true)
+    setError("")
+    setMessage("")
+
+    try {
+      await Promise.all(
+        parsedEntries.map((entry) =>
+          apiFetch("/admin/grades", {
+            method: "POST",
+            token,
+            body: {
+              studentId: entry.studentId,
+              classId: selectedClassId,
+              disciplineId: selectedDisciplineId,
+              academicYearId: selectedClass.academicYear.id,
+              score: entry.score,
+              maxScore: numericMaxScore,
+            },
+          }),
+        ),
+      )
+
+      const classGrades = await loadGrades(selectedClassId, selectedDisciplineId)
+      buildDraftsFromGrades(selectedClassId, classGrades)
+      setMessage(`${parsedEntries.length} nota(s) salva(s) com sucesso.`)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handlePublish = async () => {
+    if (!selectedClassId || !selectedDisciplineId) {
+      setError("Selecione turma e disciplina para publicar.")
+      return
+    }
+
+    setPublishing(true)
+    setError("")
+    setMessage("")
+
+    try {
+      await apiFetch(`/admin/grades/${selectedClassId}/publish?disciplineId=${selectedDisciplineId}`, {
+        method: "POST",
+        token,
+      })
+      setMessage("Notas publicadas com sucesso.")
+      await loadGrades(selectedClassId, selectedDisciplineId)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setPublishing(false)
+    }
+  }
 
   if (loading) {
     return <div className="text-center text-brand-navy">{t("loading")}</div>
@@ -89,103 +243,6 @@ function ProfessorGrades() {
     score: `${grade.score}/${grade.maxScore}`,
     status: grade.status === "DRAFT" ? t("gradeDraft") : t("gradePublished"),
   }))
-
-  const handleClassChange = async (classId) => {
-    setSelectedClassId(classId)
-    setSelectedDisciplineId("")
-    setSelectedStudentId("")
-    setError("")
-    setMessage("")
-
-    const nextClass = classes.find((item) => item.id === classId)
-    try {
-      await Promise.all([
-        loadDisciplines(nextClass?.series?.id),
-        loadGrades(classId),
-      ])
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
-  const handleDisciplineChange = async (disciplineId) => {
-    setSelectedDisciplineId(disciplineId)
-    setError("")
-    setMessage("")
-
-    try {
-      await loadGrades(selectedClassId, disciplineId)
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
-  const handleCreateGrade = async (event) => {
-    event.preventDefault()
-
-    if (!selectedClassId || !selectedDisciplineId || !selectedStudentId || score === "") {
-      setError("Preencha turma, disciplina, aluno e nota.")
-      return
-    }
-
-    const numericScore = Number(score)
-    const numericMaxScore = Number(maxScore)
-
-    if (Number.isNaN(numericScore) || Number.isNaN(numericMaxScore) || numericMaxScore <= 0 || numericScore < 0 || numericScore > numericMaxScore) {
-      setError("A nota precisa estar entre 0 e a nota maxima.")
-      return
-    }
-
-    setSubmitting(true)
-    setError("")
-    setMessage("")
-
-    try {
-      await apiFetch("/admin/grades", {
-        method: "POST",
-        token,
-        body: {
-          studentId: selectedStudentId,
-          classId: selectedClassId,
-          disciplineId: selectedDisciplineId,
-          academicYearId: selectedClass?.academicYear?.id,
-          score: numericScore,
-          maxScore: numericMaxScore,
-        },
-      })
-
-      setScore("")
-      setMessage("Nota lancada com sucesso.")
-      await loadGrades(selectedClassId, selectedDisciplineId)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handlePublish = async () => {
-    if (!selectedClassId || !selectedDisciplineId) {
-      setError("Selecione turma e disciplina para publicar.")
-      return
-    }
-
-    setPublishing(true)
-    setError("")
-    setMessage("")
-    try {
-      await apiFetch(`/admin/grades/${selectedClassId}/publish?disciplineId=${selectedDisciplineId}`, {
-        method: "POST",
-        token,
-      })
-      setMessage("Notas publicadas com sucesso.")
-      await loadGrades(selectedClassId, selectedDisciplineId)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setPublishing(false)
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -219,29 +276,7 @@ function ProfessorGrades() {
         </select>
       </section>
 
-      <form className="grid gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-5" onSubmit={handleCreateGrade}>
-        <select
-          value={selectedStudentId}
-          onChange={(event) => setSelectedStudentId(event.target.value)}
-          className="rounded-xl border border-brand-navy/20 px-3 py-2 md:col-span-2"
-          disabled={!selectedClassId}
-        >
-          <option value="">Selecione o aluno</option>
-          {(selectedClass?.students ?? []).map((student) => (
-            <option key={student.id} value={student.id}>{student.name ?? student.email}</option>
-          ))}
-        </select>
-
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={score}
-          onChange={(event) => setScore(event.target.value)}
-          placeholder="Nota"
-          className="rounded-xl border border-brand-navy/20 px-3 py-2"
-        />
-
+      <form className="space-y-3 rounded-2xl border border-brand-navy/10 bg-white p-4" onSubmit={handleCreateGrade}>
         <input
           type="number"
           step="0.01"
@@ -249,11 +284,45 @@ function ProfessorGrades() {
           value={maxScore}
           onChange={(event) => setMaxScore(event.target.value)}
           placeholder="Nota maxima"
-          className="rounded-xl border border-brand-navy/20 px-3 py-2"
+          className="w-full rounded-xl border border-brand-navy/20 px-3 py-2 md:w-56"
         />
 
-        <button type="submit" className="primary-button" disabled={submitting}>
-          {submitting ? "Salvando..." : "Lancar nota"}
+        {selectedClass?.students?.length ? (
+          <div className="space-y-2">
+            {selectedClass.students.map((student) => {
+              const existingGrade = grades.find((item) => item.studentId === student.id)
+
+              return (
+                <div key={student.id} className="grid gap-2 rounded-xl border border-brand-navy/10 p-3 md:grid-cols-[1fr_200px] md:items-center">
+                  <div>
+                    <p className="font-semibold text-brand-navy">{student.name ?? student.email}</p>
+                    <p className="text-xs text-brand-navy/60">{student.enrollmentNumber ?? "-"}</p>
+                    <p className="text-xs text-brand-navy/60">
+                      {existingGrade ? `Atual: ${existingGrade.score}/${existingGrade.maxScore} (${existingGrade.status})` : "Sem nota registrada"}
+                    </p>
+                  </div>
+
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={maxScore || undefined}
+                    value={gradeDrafts[student.id] ?? ""}
+                    onChange={(event) => handleDraftChange(student.id, event.target.value)}
+                    placeholder="Nota"
+                    className="rounded-xl border border-brand-navy/20 px-3 py-2"
+                    disabled={!selectedDisciplineId}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-brand-navy/60">{t("noData")}</p>
+        )}
+
+        <button type="submit" className="primary-button" disabled={submitting || !selectedClassId || !selectedDisciplineId}>
+          {submitting ? "Salvando..." : "Salvar notas da turma"}
         </button>
       </form>
 

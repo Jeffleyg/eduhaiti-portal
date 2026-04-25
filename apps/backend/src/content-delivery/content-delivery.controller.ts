@@ -37,6 +37,22 @@ export class ContentDeliveryController {
     });
   }
 
+  @Get('lesson-audio-summary')
+  @UseGuards(JwtAuthGuard)
+  async getLessonAudioSummary(
+    @Req() req: Request & { user?: { sub?: string; role?: Role } },
+    @Query('studentId') studentId?: string,
+  ) {
+    const targetStudentId =
+      req.user?.role === Role.STUDENT ? req.user.sub : studentId ?? req.user?.sub;
+
+    if (!targetStudentId) {
+      throw new BadRequestException('studentId is required');
+    }
+
+    return this.manifestService.buildLessonAudioSummary(targetStudentId);
+  }
+
   @Post('convert-audio')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)

@@ -16,4 +16,28 @@ export class HybridGatewayController {
   async receiveUssd(@Body() dto: HybridUssdDto) {
     return this.hybridGatewayService.handleUssd(dto.operator, dto.payload)
   }
+
+  @Post("ivr/summary")
+  async ivrSummary(
+    @Body()
+    payload: {
+      studentId: string
+      senderPhone: string
+      responsibleDocumentId?: string
+    },
+  ) {
+    return this.hybridGatewayService.buildIvrSummary(payload)
+  }
+
+  @Post("ivr/lesson-summary")
+  async ivrLessonSummary(
+    @Body()
+    payload: {
+      studentId: string
+      senderPhone: string
+      responsibleDocumentId?: string
+    },
+  ) {
+    return this.hybridGatewayService.buildIvrLessonSummary(payload)
+  }
 }

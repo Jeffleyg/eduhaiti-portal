@@ -11,6 +11,112 @@ interface BuildManifestInput {
 export class ManifestService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async buildLessonAudioSummary(studentId: string): Promise<{
+    studentId: string;
+    classId: string | null;
+    className: string | null;
+    resource: {
+      id: string;
+      title: string;
+      description: string | null;
+      fileType: string;
+      filePath: string;
+      updatedAt: string;
+      sizeBytes: number | null;
+    } | null;
+    speechText: string;
+    lowBandwidthHints: {
+      hasAudioFile: boolean;
+      supportsIvr: boolean;
+      supportsUssdTrigger: boolean;
+    };
+  }> {
+    const currentClass = await this.prisma.class.findFirst({
+      where: {
+        students: {
+          some: { id: studentId },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!currentClass) {
+      return {
+        studentId,
+        classId: null,
+        className: null,
+        resource: null,
+        speechText:
+          'Nao encontramos turma ativa para este aluno. Solicite atualizacao junto a escola.',
+        lowBandwidthHints: {
+          hasAudioFile: false,
+          supportsIvr: true,
+          supportsUssdTrigger: true,
+        },
+      };
+    }
+
+    const latestResource = await this.prisma.resource.findFirst({
+      where: {
+        classId: currentClass.id,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fileType: true,
+        filePath: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    if (!latestResource) {
+      return {
+        studentId,
+        classId: currentClass.id,
+        className: currentClass.name,
+        resource: null,
+        speechText:
+          `Nao ha material recente para a turma ${currentClass.name}.`,
+        lowBandwidthHints: {
+          hasAudioFile: false,
+          supportsIvr: true,
+          supportsUssdTrigger: true,
+        },
+      };
+    }
+
+    const sizeBytes = await this.safeStat(latestResource.filePath);
+    const hasAudioFile = latestResource.fileType.toLowerCase() === 'mp3';
+    const summary = latestResource.description?.trim() || 'Sem resumo textual disponivel.';
+
+    return {
+      studentId,
+      classId: currentClass.id,
+      className: currentClass.name,
+      resource: {
+        id: latestResource.id,
+        title: latestResource.title,
+        description: latestResource.description,
+        fileType: latestResource.fileType,
+        filePath: latestResource.filePath,
+        updatedAt: latestResource.updatedAt.toISOString(),
+        sizeBytes,
+      },
+      speechText: `Turma ${currentClass.name}. Aula: ${latestResource.title}. Resumo: ${summary}`,
+      lowBandwidthHints: {
+        hasAudioFile,
+        supportsIvr: true,
+        supportsUssdTrigger: true,
+      },
+    };
+  }
+
   async buildDeltaManifest(input: BuildManifestInput): Promise<{
     serverTime: string;
     since: string | null;

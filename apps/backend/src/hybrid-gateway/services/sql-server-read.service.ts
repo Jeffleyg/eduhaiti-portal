@@ -8,6 +8,17 @@ export interface StudentCriticalSummary {
   latestAnnouncement?: string
 }
 
+export interface StudentLessonAudioSummary {
+  studentId: string
+  className: string | null
+  resourceId: string
+  title: string
+  description?: string | null
+  fileType: string
+  filePath: string
+  hasAudio: boolean
+}
+
 @Injectable()
 export class SqlServerReadService {
   constructor(private readonly prisma: PrismaService) {}
@@ -94,6 +105,62 @@ GROUP BY s.id;`
       globalAverage: Number(gradeAgg._avg.score ?? 0),
       absences: absenceAgg,
       latestAnnouncement: latestAnnouncement?.title,
+    }
+  }
+
+  async getLatestLessonAudioSummary(
+    studentId: string,
+  ): Promise<StudentLessonAudioSummary | null> {
+    if (!studentId) {
+      return null
+    }
+
+    const studentClass = await this.prisma.class.findFirst({
+      where: {
+        students: {
+          some: { id: studentId },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { createdAt: "desc" },
+    })
+
+    if (!studentClass) {
+      return null
+    }
+
+    const latestResource = await this.prisma.resource.findFirst({
+      where: {
+        classId: studentClass.id,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fileType: true,
+        filePath: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    })
+
+    if (!latestResource) {
+      return null
+    }
+
+    const isAudioFile = latestResource.fileType.toLowerCase() === "mp3"
+
+    return {
+      studentId,
+      className: studentClass.name,
+      resourceId: latestResource.id,
+      title: latestResource.title,
+      description: latestResource.description,
+      fileType: latestResource.fileType,
+      filePath: latestResource.filePath,
+      hasAudio: isAudioFile,
     }
   }
 }

@@ -30,7 +30,7 @@ export class GradesController {
       studentId: string
       classId: string
       disciplineId: string
-      academicYearId: string
+      academicYearId?: string
       score: number
       maxScore?: number
       weight?: number
