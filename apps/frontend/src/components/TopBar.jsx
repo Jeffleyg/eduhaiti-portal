@@ -1,15 +1,15 @@
-import { Globe, ArrowLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { useSurvivalMode } from "../context/useSurvivalMode.js"
 import { useSyncControl } from "../context/useSyncControl.js"
 import { formatLastUpdated } from "../offline/sqliteCache"
+import LanguageSelector from "./LanguageSelector"
 
 function TopBar({ role }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const currentLanguage = i18n.resolvedLanguage || i18n.language
-  const nextLanguage = currentLanguage === "fr" ? "ht" : "fr"
   const { isSurvivalMode, isLowBattery, is2G } = useSurvivalMode()
   const {
     isSyncing,
@@ -80,14 +80,7 @@ function TopBar({ role }) {
           {syncLabel}
         </button>
 
-        <button
-          className="inline-flex items-center gap-2 rounded-full border border-brand-navy/20 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy"
-          type="button"
-          onClick={() => i18n.changeLanguage(nextLanguage)}
-        >
-          <Globe className="h-4 w-4" />
-          {t("languageSwitch")}
-        </button>
+        <LanguageSelector />
 
         <label className="inline-flex items-center gap-2 rounded-full border border-brand-navy/20 bg-white px-3 py-2 text-xs font-semibold text-brand-navy">
           Sync

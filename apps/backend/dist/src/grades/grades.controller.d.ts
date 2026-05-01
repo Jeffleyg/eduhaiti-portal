@@ -17,52 +17,52 @@ export declare class GradesController {
         maxScore?: number;
         weight?: number;
     }): Promise<{
-        student: {
-            id: string;
-            name: string | null;
-            email: string;
-        };
         discipline: {
             id: string;
             name: string;
         };
+        student: {
+            id: string;
+            email: string;
+            name: string | null;
+        };
     } & {
         id: string;
-        studentId: string;
-        classId: string;
-        disciplineId: string;
+        createdAt: Date;
+        updatedAt: Date;
         academicYearId: string;
+        classId: string;
+        studentId: string;
+        disciplineId: string;
         score: number;
         maxScore: number;
         weight: number;
         status: import(".prisma/client").$Enums.GradeStatus;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     updateGrade(gradeId: string, payload: {
         score?: number;
         status?: GradeStatus;
     }): Promise<{
-        student: {
-            id: string;
-            name: string | null;
-        };
         discipline: {
             id: string;
             name: string;
         };
+        student: {
+            id: string;
+            name: string | null;
+        };
     } & {
         id: string;
-        studentId: string;
-        classId: string;
-        disciplineId: string;
+        createdAt: Date;
+        updatedAt: Date;
         academicYearId: string;
+        classId: string;
+        studentId: string;
+        disciplineId: string;
         score: number;
         maxScore: number;
         weight: number;
         status: import(".prisma/client").$Enums.GradeStatus;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     deleteGrade(gradeId: string): Promise<{
         message: string;
@@ -73,26 +73,26 @@ export declare class GradesController {
             sub?: string;
         };
     }, academicYearId?: string): Promise<({
-        class: {
+        discipline: {
             id: string;
             name: string;
         };
-        discipline: {
+        class: {
             id: string;
             name: string;
         };
     } & {
         id: string;
-        studentId: string;
-        classId: string;
-        disciplineId: string;
+        createdAt: Date;
+        updatedAt: Date;
         academicYearId: string;
+        classId: string;
+        studentId: string;
+        disciplineId: string;
         score: number;
         maxScore: number;
         weight: number;
         status: import(".prisma/client").$Enums.GradeStatus;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     getStudentReport(req: {
         user?: {
@@ -102,51 +102,51 @@ export declare class GradesController {
         studentId: string;
         academicYearId: string;
         grades: ({
-            class: {
+            discipline: {
                 id: string;
                 name: string;
             };
-            discipline: {
+            class: {
                 id: string;
                 name: string;
             };
         } & {
             id: string;
-            studentId: string;
-            classId: string;
-            disciplineId: string;
+            createdAt: Date;
+            updatedAt: Date;
             academicYearId: string;
+            classId: string;
+            studentId: string;
+            disciplineId: string;
             score: number;
             maxScore: number;
             weight: number;
             status: import(".prisma/client").$Enums.GradeStatus;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         summary: {};
     }>;
     getClassGrades(classId: string, disciplineId?: string): Promise<({
-        student: {
-            id: string;
-            name: string | null;
-            email: string;
-        };
         discipline: {
             id: string;
             name: string;
         };
+        student: {
+            id: string;
+            email: string;
+            name: string | null;
+        };
     } & {
         id: string;
-        studentId: string;
-        classId: string;
-        disciplineId: string;
+        createdAt: Date;
+        updatedAt: Date;
         academicYearId: string;
+        classId: string;
+        studentId: string;
+        disciplineId: string;
         score: number;
         maxScore: number;
         weight: number;
         status: import(".prisma/client").$Enums.GradeStatus;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     getClassAverage(classId: string, disciplineId: string): Promise<{
         average: number;

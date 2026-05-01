@@ -4,6 +4,8 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import StatCard from "../../components/StatCard.jsx"
+import SkeletonLoader from "../../components/SkeletonLoader.jsx"
+import LoadingState from "../../components/LoadingState.jsx"
 import { useTranslation } from "react-i18next"
 import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/sqliteCache"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
@@ -20,6 +22,7 @@ function StudentDashboard() {
   const [classes, setClasses] = useState(cached.data?.classes ?? [])
   const [lastUpdatedAt, setLastUpdatedAt] = useState(cached.lastUpdatedAt)
   const [loading, setLoading] = useState(!cached.data)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!token || disableBackgroundSync) {
@@ -62,8 +65,9 @@ function StudentDashboard() {
           stats: computedStats,
         })
         setLastUpdatedAt(updatedAt)
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error)
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err)
+        setError(err.message || "Erro ao carregar dados")
       } finally {
         setLoading(false)
       }
@@ -73,7 +77,26 @@ function StudentDashboard() {
   }, [token, disableBackgroundSync, syncRevision])
 
   if (loading) {
-    return <div className="text-center text-brand-navy">{t("loading")}</div>
+    return (
+      <div className="space-y-6">
+        <SectionHeader title={t("navOverview")} subtitle={t("studentDashboardIntro")} />
+        <SkeletonLoader type="dashboard" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <SectionHeader title={t("navOverview")} subtitle={t("studentDashboardIntro")} />
+        <LoadingState 
+          error={error} 
+          type="inline"
+          fullHeight
+          message={error}
+        />
+      </div>
+    )
   }
 
   return (

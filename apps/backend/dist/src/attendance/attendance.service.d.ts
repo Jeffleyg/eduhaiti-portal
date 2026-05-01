@@ -21,30 +21,30 @@ export declare class AttendanceService {
         };
     } & {
         id: string;
-        studentId: string;
-        classId: string;
-        date: Date;
-        status: import(".prisma/client").$Enums.AttendanceStatus;
-        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
+        date: Date;
+        classId: string;
+        studentId: string;
+        status: import(".prisma/client").$Enums.AttendanceStatus;
+        remarks: string | null;
     })[]>;
     findByClass(classId: string, date?: Date): Promise<({
         student: {
             id: string;
-            name: string | null;
             email: string;
             enrollmentNumber: string | null;
+            name: string | null;
         };
     } & {
         id: string;
-        studentId: string;
-        classId: string;
-        date: Date;
-        status: import(".prisma/client").$Enums.AttendanceStatus;
-        remarks: string | null;
         createdAt: Date;
         updatedAt: Date;
+        date: Date;
+        classId: string;
+        studentId: string;
+        status: import(".prisma/client").$Enums.AttendanceStatus;
+        remarks: string | null;
     })[]>;
     getStudentAttendanceStats(studentId: string, classId: string): Promise<{
         absencePercentage: number;
@@ -65,8 +65,8 @@ export declare class AttendanceService {
         excused: number;
         student: {
             id: string;
-            name: string | null;
             email: string;
+            name: string | null;
         };
     }[]>;
     delete(attendanceId: string): Promise<{

@@ -1,0 +1,146 @@
+/* Skeleton Loader Styles */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1200px 0;
+  }
+  100% {
+    background-position: calc(1200px + 100%) 0;
+  }
+}
+
+/* Base skeleton element */
+.skeleton-base {
+  background: linear-gradient(
+    90deg,
+    rgba(240, 244, 248, 0.5) 0%,
+    rgba(226, 232, 240, 0.5) 20%,
+    rgba(240, 244, 248, 0.5) 40%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 0.5rem;
+}
+
+/* Line skeletons */
+.skeleton-line {
+  @apply skeleton-base h-4 w-full rounded;
+}
+
+.skeleton-line-lg {
+  @apply skeleton-base h-8 w-full rounded;
+}
+
+.skeleton-line-sm {
+  @apply skeleton-base h-3 w-full rounded;
+}
+
+.skeleton-line-xs {
+  @apply skeleton-base h-2 w-full rounded;
+}
+
+/* Circular skeleton */
+.skeleton-circle {
+  @apply skeleton-base h-10 w-10 rounded-full flex-shrink-0;
+}
+
+.skeleton-avatar {
+  @apply skeleton-base h-12 w-12 rounded-full flex-shrink-0;
+}
+
+/* Card skeleton */
+.skeleton-card {
+  @apply rounded-2xl border border-brand-navy/5 bg-white/50 p-4;
+  backdrop-filter: blur(8px);
+}
+
+.skeleton-card-compact {
+  @apply rounded-2xl border border-brand-navy/5 bg-white/50 p-3;
+  backdrop-filter: blur(8px);
+}
+
+/* Card header */
+.skeleton-header {
+  @apply mb-4 flex gap-3;
+}
+
+.skeleton-header .skeleton-text {
+  @apply flex-1 space-y-2;
+}
+
+/* Table row skeleton */
+.skeleton-table-row {
+  @apply flex items-center gap-3 rounded-lg border border-brand-navy/5 bg-white/50 px-4 py-3;
+  backdrop-filter: blur(8px);
+}
+
+/* List item skeleton */
+.skeleton-list-item {
+  @apply flex items-center gap-3 rounded-lg border border-brand-navy/5 bg-white/50 px-3 py-2;
+  backdrop-filter: blur(8px);
+}
+
+/* Section skeleton */
+.skeleton-section {
+  @apply rounded-2xl border border-brand-navy/5 bg-white/50 p-4;
+  backdrop-filter: blur(8px);
+}
+
+/* Loading state container */
+.skeleton-container {
+  @apply space-y-6;
+}
+
+/* Prevent layout shift - use fixed heights where needed */
+.skeleton-fixed-height {
+  min-height: 400px;
+}
+
+/* Smooth transitions for skeleton replacement */
+.skeleton-fade-out {
+  animation: fadeOut 0.3s ease-out;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .skeleton-line-lg {
+    @apply h-6;
+  }
+
+  .skeleton-card {
+    @apply p-3;
+  }
+
+  .skeleton-table-row {
+    @apply gap-2 px-2 py-2;
+  }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .skeleton-base {
+    background: linear-gradient(
+      90deg,
+      rgba(30, 41, 59, 0.5) 0%,
+      rgba(51, 65, 85, 0.5) 20%,
+      rgba(30, 41, 59, 0.5) 40%
+    );
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-base {
+    animation: none;
+    background: rgba(226, 232, 240, 0.3);
+  }
+}

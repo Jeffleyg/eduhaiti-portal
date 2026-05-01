@@ -23,6 +23,9 @@ body {
   background: radial-gradient(circle at top left, #ffffff 0%, #f8f6f1 55%, #f1f4f9 100%);
   color: var(--ink);
   font-family: "Space Grotesk", system-ui, sans-serif;
+  /* Estabilidade visual */
+  scrollbar-gutter: stable;
+  contain: layout style paint;
 }
 
 #root {
@@ -68,11 +71,11 @@ body {
   }
 
   .primary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-red px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-red/25 transition-transform duration-200 hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-red px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-red/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0;
   }
 
   .outline-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-navy/20 bg-white px-5 py-3 text-sm font-semibold text-brand-navy transition-colors duration-200 hover:border-brand-navy/40;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-navy/20 bg-white px-5 py-3 text-sm font-semibold text-brand-navy transition-all duration-200 hover:border-brand-navy/40 active:scale-95 disabled:opacity-60 disabled:hover:scale-100;
   }
 
   .surface-panel {

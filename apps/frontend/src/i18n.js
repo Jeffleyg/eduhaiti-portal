@@ -1,5 +1,7 @@
 import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
+import LanguageDetector from "i18next-browser-languagedetector"
+import ptTranslation from "./lib/ptTranslations"
 
 const resources = {
   fr: {
@@ -622,15 +624,24 @@ const resources = {
       teacherAssigned: "Pwofese a atribiye ak sikse.",
     }
   },
+  pt: {
+    translation: ptTranslation,
+  },
 }
 
-i18n.use(initReactI18next).init({
-  resources,
-  lng: "fr",
-  fallbackLng: "fr",
-  interpolation: {
-    escapeValue: false,
-  },
-})
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: "fr",
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
+    },
+  })
 
 export default i18n

@@ -1,0 +1,186 @@
+/* Loading State Styles */
+
+/* Inline Loading */
+.loading-state-inline {
+  @apply min-h-24 flex items-center justify-center rounded-2xl border border-brand-navy/10 bg-white/50;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.loading-state-inline.full-height {
+  @apply min-h-96;
+}
+
+.loading-state-inline.active {
+  @apply bg-white/80;
+}
+
+.loading-content {
+  @apply flex flex-col items-center gap-3 py-6 px-4;
+}
+
+.loading-spinner {
+  @apply h-8 w-8 animate-spin text-brand-navy;
+}
+
+.loading-text {
+  @apply text-sm font-medium text-brand-navy/70;
+}
+
+/* Error State */
+.error-state {
+  @apply flex flex-col items-center gap-2 py-6 px-4;
+}
+
+.error-icon {
+  @apply h-8 w-8 text-brand-red;
+}
+
+.error-text {
+  @apply text-sm font-medium text-brand-red;
+}
+
+/* Success State */
+.success-state {
+  @apply flex flex-col items-center gap-2 py-6 px-4;
+}
+
+.success-icon {
+  @apply h-8 w-8 text-emerald-500;
+}
+
+.success-text {
+  @apply text-sm font-medium text-emerald-700;
+}
+
+/* Overlay Loading */
+.loading-state-overlay {
+  @apply fixed inset-0 z-50 hidden items-center justify-center;
+  backdrop-filter: blur(4px);
+}
+
+.loading-state-overlay.active {
+  @apply flex;
+}
+
+.loading-backdrop {
+  @apply absolute inset-0 bg-black/20;
+}
+
+.loading-content-overlay {
+  @apply relative flex flex-col items-center gap-4 rounded-2xl bg-white px-8 py-8 shadow-2xl;
+}
+
+.loading-spinner-lg {
+  @apply h-12 w-12 animate-spin text-brand-navy;
+}
+
+.loading-text-overlay {
+  @apply text-base font-medium text-brand-navy;
+}
+
+/* Minimal Loading */
+.loading-state-minimal {
+  @apply inline-flex items-center;
+}
+
+.loading-spinner-sm {
+  @apply h-4 w-4 animate-spin text-brand-navy;
+}
+
+.error-icon-sm {
+  @apply h-4 w-4 text-brand-red;
+}
+
+.success-icon-sm {
+  @apply h-4 w-4 text-emerald-500;
+}
+
+/* Banner Loading */
+.loading-state-banner {
+  @apply fixed top-0 left-0 right-0 z-40 hidden h-auto;
+}
+
+.loading-state-banner.active {
+  @apply flex;
+}
+
+.banner-content {
+  @apply flex items-center justify-center gap-2 bg-gradient-to-r from-brand-sky to-brand-navy/10 px-4 py-3 text-sm font-medium text-brand-navy shadow-md;
+}
+
+.banner-spinner {
+  @apply h-4 w-4 animate-spin;
+}
+
+.banner-error-icon {
+  @apply h-4 w-4 text-brand-red;
+}
+
+.banner-success-icon {
+  @apply h-4 w-4 text-emerald-500;
+}
+
+/* Animations */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(15, 23, 42, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(15, 23, 42, 0);
+  }
+}
+
+.loading-pulse {
+  animation: pulse-ring 2s infinite;
+}
+
+/* Transitions */
+.loading-state-inline {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner,
+  .loading-spinner-lg,
+  .loading-spinner-sm,
+  .banner-spinner {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .loading-content-overlay {
+    @apply px-6 py-6;
+  }
+
+  .banner-content {
+    @apply gap-1 text-xs px-3 py-2;
+  }
+
+  .loading-spinner-lg {
+    @apply h-10 w-10;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .loading-state-inline {
+    @apply border-brand-navy/20 bg-slate-900/50;
+  }
+
+  .loading-content-overlay {
+    @apply bg-slate-900 shadow-2xl shadow-black/50;
+  }
+
+  .loading-spinner,
+  .loading-spinner-lg {
+    @apply text-brand-sky;
+  }
+}
