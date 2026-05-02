@@ -1,28 +1,32 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common"
-import { PrismaService } from "../prisma/prisma.service"
-import { Role } from "@prisma/client"
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class ClassesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(payload: {
-    name: string
-    level?: string
-    academicYearId: string
-    seriesId: string
-    teacherId?: string
-    maxStudents?: number
+    name: string;
+    level?: string;
+    academicYearId: string;
+    seriesId: string;
+    teacherId?: string;
+    maxStudents?: number;
   }) {
     // Validate that the series belongs to the academic year
     const series = await this.prisma.series.findUnique({
       where: { id: payload.seriesId },
-    })
+    });
 
     if (!series || series.academicYearId !== payload.academicYearId) {
       throw new BadRequestException(
-        "Series does not belong to the specified academic year",
-      )
+        'Series does not belong to the specified academic year',
+      );
     }
 
     // Check for duplicate class name
@@ -32,12 +36,12 @@ export class ClassesService {
         seriesId: payload.seriesId,
         name: payload.name,
       },
-    })
+    });
 
     if (existing) {
       throw new BadRequestException(
-        "Class with this name already exists in this series",
-      )
+        'Class with this name already exists in this series',
+      );
     }
 
     return this.prisma.class.create({
@@ -54,23 +58,23 @@ export class ClassesService {
         series: { select: { id: true, name: true } },
         students: { select: { id: true, name: true } },
       },
-    })
+    });
   }
 
   async update(
     classId: string,
     payload: {
-      name?: string
-      teacherId?: string
-      maxStudents?: number
+      name?: string;
+      teacherId?: string;
+      maxStudents?: number;
     },
   ) {
     const existing = await this.prisma.class.findUnique({
       where: { id: classId },
-    })
+    });
 
     if (!existing) {
-      throw new NotFoundException("Class not found")
+      throw new NotFoundException('Class not found');
     }
 
     if (payload.name && payload.name !== existing.name) {
@@ -81,12 +85,12 @@ export class ClassesService {
           seriesId: existing.seriesId,
           name: payload.name,
         },
-      })
+      });
 
       if (duplicate) {
         throw new BadRequestException(
-          "Class with this name already exists in this series",
-        )
+          'Class with this name already exists in this series',
+        );
       }
     }
 
@@ -94,15 +98,15 @@ export class ClassesService {
       const teacher = await this.prisma.user.findUnique({
         where: { id: payload.teacherId },
         select: { id: true, role: true },
-      })
+      });
 
       if (!teacher || teacher.role !== Role.TEACHER) {
-        throw new BadRequestException("Teacher not found")
+        throw new BadRequestException('Teacher not found');
       }
     }
 
     if (payload.maxStudents !== undefined && payload.maxStudents < 1) {
-      throw new BadRequestException("maxStudents must be greater than zero")
+      throw new BadRequestException('maxStudents must be greater than zero');
     }
 
     return this.prisma.class.update({
@@ -112,51 +116,51 @@ export class ClassesService {
         teacher: { select: { id: true, name: true, email: true } },
         students: { select: { id: true, name: true } },
       },
-    })
+    });
   }
 
   async delete(classId: string) {
     const existing = await this.prisma.class.findUnique({
       where: { id: classId },
       include: { students: { select: { id: true } } },
-    })
+    });
 
     if (!existing) {
-      throw new NotFoundException("Class not found")
+      throw new NotFoundException('Class not found');
     }
 
     if (existing.students && existing.students.length > 0) {
       throw new BadRequestException(
-        "Cannot delete class with enrolled students",
-      )
+        'Cannot delete class with enrolled students',
+      );
     }
 
     await this.prisma.class.delete({
       where: { id: classId },
-    })
+    });
 
-    return { message: "Class deleted successfully" }
+    return { message: 'Class deleted successfully' };
   }
 
   async enrollStudent(classId: string, studentId: string) {
     const classExists = await this.prisma.class.findUnique({
       where: { id: classId },
       include: { students: { select: { id: true } } },
-    })
+    });
 
     if (!classExists) {
-      throw new NotFoundException("Class not found")
+      throw new NotFoundException('Class not found');
     }
 
     if (
       classExists.maxStudents &&
       classExists.students.length >= classExists.maxStudents
     ) {
-      throw new BadRequestException("Class is full")
+      throw new BadRequestException('Class is full');
     }
 
     if (classExists.students.some((s) => s.id === studentId)) {
-      throw new BadRequestException("Student already enrolled in this class")
+      throw new BadRequestException('Student already enrolled in this class');
     }
 
     return this.prisma.class.update({
@@ -169,7 +173,7 @@ export class ClassesService {
       include: {
         students: { select: { id: true, name: true, email: true } },
       },
-    })
+    });
   }
 
   async removeStudent(classId: string, studentId: string) {
@@ -183,7 +187,7 @@ export class ClassesService {
       include: {
         students: { select: { id: true, name: true } },
       },
-    })
+    });
   }
 
   async findByTeacher(teacherId: string) {
@@ -195,19 +199,19 @@ export class ClassesService {
         series: { select: { id: true, name: true } },
         academicYear: { select: { id: true, year: true } },
       },
-      orderBy: { name: "asc" },
-    })
+      orderBy: { name: 'asc' },
+    });
   }
 
   async findAll(academicYearId?: string, seriesId?: string) {
-    const where: any = {}
+    const where: any = {};
 
     if (academicYearId) {
-      where.academicYearId = academicYearId
+      where.academicYearId = academicYearId;
     }
 
     if (seriesId) {
-      where.seriesId = seriesId
+      where.seriesId = seriesId;
     }
 
     return this.prisma.class.findMany({
@@ -218,8 +222,8 @@ export class ClassesService {
         series: { select: { id: true, name: true } },
         academicYear: { select: { year: true } },
       },
-      orderBy: [{ academicYear: { year: "desc" } }, { name: "asc" }],
-    })
+      orderBy: [{ academicYear: { year: 'desc' } }, { name: 'asc' }],
+    });
   }
 
   async findById(classId: string) {
@@ -238,13 +242,13 @@ export class ClassesService {
           },
         },
       },
-    })
+    });
 
     if (!classData) {
-      throw new NotFoundException("Class not found")
+      throw new NotFoundException('Class not found');
     }
 
-    return classData
+    return classData;
   }
 
   async findByStudent(studentId: string) {
@@ -255,15 +259,21 @@ export class ClassesService {
         series: { select: { id: true, name: true } },
         academicYear: { select: { id: true, year: true } },
       },
-      orderBy: { name: "asc" },
-    })
+      orderBy: { name: 'asc' },
+    });
   }
 
   async listAcademicYears() {
     return this.prisma.academicYear.findMany({
-      select: { id: true, year: true, startDate: true, endDate: true, isActive: true },
-      orderBy: { year: "desc" },
-    })
+      select: {
+        id: true,
+        year: true,
+        startDate: true,
+        endDate: true,
+        isActive: true,
+      },
+      orderBy: { year: 'desc' },
+    });
   }
 
   async listSeries(academicYearId?: string) {
@@ -275,7 +285,7 @@ export class ClassesService {
         academicYearId: true,
         academicYear: { select: { id: true, year: true } },
       },
-      orderBy: [{ academicYear: { year: "desc" } }, { name: "asc" }],
-    })
+      orderBy: [{ academicYear: { year: 'desc' } }, { name: 'asc' }],
+    });
   }
 }

@@ -1,25 +1,30 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common"
-import { AcademicRequestStatus, Role } from "@prisma/client"
-import { PrismaService } from "../prisma/prisma.service"
-import { CreateAcademicRequestDto } from "./dto/create-academic-request.dto"
-import { ListAcademicRequestsDto } from "./dto/list-academic-requests.dto"
-import { ReviewAcademicRequestDto } from "./dto/review-academic-request.dto"
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AcademicRequestStatus, Role } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateAcademicRequestDto } from './dto/create-academic-request.dto';
+import { ListAcademicRequestsDto } from './dto/list-academic-requests.dto';
+import { ReviewAcademicRequestDto } from './dto/review-academic-request.dto';
 
 type Reviewer = {
-  id: string
-  role: Role
-}
+  id: string;
+  role: Role;
+};
 
 @Injectable()
 export class AcademicRequestsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(studentId: string, dto: CreateAcademicRequestDto) {
-    const normalizedTitle = dto.title.trim()
-    const normalizedDetails = dto.details.trim()
+    const normalizedTitle = dto.title.trim();
+    const normalizedDetails = dto.details.trim();
 
     if (!normalizedTitle || !normalizedDetails) {
-      throw new BadRequestException("title and details must not be blank")
+      throw new BadRequestException('title and details must not be blank');
     }
 
     if (dto.classId) {
@@ -32,14 +37,16 @@ export class AcademicRequestsService {
             select: { id: true },
           },
         },
-      })
+      });
 
       if (!selectedClass) {
-        throw new BadRequestException("Selected class was not found")
+        throw new BadRequestException('Selected class was not found');
       }
 
       if (selectedClass.students.length === 0) {
-        throw new ForbiddenException("Student is not enrolled in the selected class")
+        throw new ForbiddenException(
+          'Student is not enrolled in the selected class',
+        );
       }
     }
 
@@ -59,19 +66,22 @@ export class AcademicRequestsService {
           select: { id: true, name: true, level: true, teacherId: true },
         },
       },
-    })
+    });
 
     await this.prisma.auditLog.create({
       data: {
-        entityType: "AcademicRequest",
+        entityType: 'AcademicRequest',
         entityId: request.id,
-        action: "CREATE",
+        action: 'CREATE',
         userId: studentId,
-        changes: JSON.stringify({ type: dto.type, classId: dto.classId ?? null }),
+        changes: JSON.stringify({
+          type: dto.type,
+          classId: dto.classId ?? null,
+        }),
       },
-    })
+    });
 
-    return request
+    return request;
   }
 
   async listMine(studentId: string) {
@@ -85,8 +95,8 @@ export class AcademicRequestsService {
           select: { id: true, name: true, email: true },
         },
       },
-      orderBy: { createdAt: "desc" },
-    })
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async listForReview(reviewer: Reviewer, filters: ListAcademicRequestsDto) {
@@ -107,12 +117,14 @@ export class AcademicRequestsService {
             select: { id: true, name: true, email: true },
           },
         },
-        orderBy: { createdAt: "desc" },
-      })
+        orderBy: { createdAt: 'desc' },
+      });
     }
 
     if (reviewer.role !== Role.TEACHER) {
-      throw new ForbiddenException("Only teachers or admins can review requests")
+      throw new ForbiddenException(
+        'Only teachers or admins can review requests',
+      );
     }
 
     if (filters.classId) {
@@ -122,10 +134,10 @@ export class AcademicRequestsService {
           teacherId: reviewer.id,
         },
         select: { id: true },
-      })
+      });
 
       if (!teacherClass) {
-        throw new ForbiddenException("Teacher does not manage this class")
+        throw new ForbiddenException('Teacher does not manage this class');
       }
     }
 
@@ -148,11 +160,15 @@ export class AcademicRequestsService {
           select: { id: true, name: true, email: true },
         },
       },
-      orderBy: { createdAt: "desc" },
-    })
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async reviewRequest(requestId: string, reviewer: Reviewer, dto: ReviewAcademicRequestDto) {
+  async reviewRequest(
+    requestId: string,
+    reviewer: Reviewer,
+    dto: ReviewAcademicRequestDto,
+  ) {
     const request = await this.prisma.academicRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -160,32 +176,41 @@ export class AcademicRequestsService {
           select: { id: true, teacherId: true },
         },
       },
-    })
+    });
 
     if (!request) {
-      throw new NotFoundException("Academic request not found")
+      throw new NotFoundException('Academic request not found');
     }
 
     if (request.status !== AcademicRequestStatus.PENDING) {
-      throw new BadRequestException("Request has already been reviewed")
+      throw new BadRequestException('Request has already been reviewed');
     }
 
     if (reviewer.role === Role.TEACHER) {
       if (!request.class || request.class.teacherId !== reviewer.id) {
-        throw new ForbiddenException("Teacher cannot review this request")
+        throw new ForbiddenException('Teacher cannot review this request');
       }
     } else if (reviewer.role !== Role.ADMIN) {
-      throw new ForbiddenException("Only teachers or admins can review requests")
+      throw new ForbiddenException(
+        'Only teachers or admins can review requests',
+      );
     }
 
     if (dto.status === AcademicRequestStatus.PENDING) {
-      throw new BadRequestException("Cannot move a reviewed request back to PENDING")
+      throw new BadRequestException(
+        'Cannot move a reviewed request back to PENDING',
+      );
     }
 
-    const normalizedResolutionComment = dto.resolutionComment?.trim() || null
+    const normalizedResolutionComment = dto.resolutionComment?.trim() || null;
 
-    if (dto.status === AcademicRequestStatus.REJECTED && !normalizedResolutionComment) {
-      throw new BadRequestException("resolutionComment is required when rejecting a request")
+    if (
+      dto.status === AcademicRequestStatus.REJECTED &&
+      !normalizedResolutionComment
+    ) {
+      throw new BadRequestException(
+        'resolutionComment is required when rejecting a request',
+      );
     }
 
     const updated = await this.prisma.academicRequest.update({
@@ -195,7 +220,8 @@ export class AcademicRequestsService {
         reviewedById: reviewer.id,
         resolutionComment: normalizedResolutionComment,
         resolvedAt:
-          dto.status === AcademicRequestStatus.APPROVED || dto.status === AcademicRequestStatus.REJECTED
+          dto.status === AcademicRequestStatus.APPROVED ||
+          dto.status === AcademicRequestStatus.REJECTED
             ? new Date()
             : null,
       },
@@ -210,18 +236,21 @@ export class AcademicRequestsService {
           select: { id: true, name: true, email: true },
         },
       },
-    })
+    });
 
     await this.prisma.auditLog.create({
       data: {
-        entityType: "AcademicRequest",
+        entityType: 'AcademicRequest',
         entityId: updated.id,
-        action: "REVIEW",
+        action: 'REVIEW',
         userId: reviewer.id,
-        changes: JSON.stringify({ status: dto.status, resolutionComment: normalizedResolutionComment }),
+        changes: JSON.stringify({
+          status: dto.status,
+          resolutionComment: normalizedResolutionComment,
+        }),
       },
-    })
+    });
 
-    return updated
+    return updated;
   }
 }

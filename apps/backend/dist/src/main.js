@@ -5,13 +5,13 @@ const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.setGlobalPrefix("api");
+    app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({
         transform: true,
         whitelist: true,
     }));
     app.enableCors({
-        origin: process.env.CORS_ORIGIN ?? "*",
+        origin: process.env.CORS_ORIGIN ?? '*',
     });
     await app.listen(process.env.APP_PORT ?? 3000);
 }

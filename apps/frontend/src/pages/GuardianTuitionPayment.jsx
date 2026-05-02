@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { apiFetch } from "../lib/api.js"
+import LoadMoreList from "../components/LoadMoreList.jsx"
 
 function GuardianTuitionPayment() {
   const [enrollmentNumber, setEnrollmentNumber] = useState("")
@@ -19,6 +20,19 @@ function GuardianTuitionPayment() {
     guardianName: "",
     guardianPhone: "",
   })
+
+  const providers = [
+    { id: "moncash", label: "MonCash" },
+    { id: "natcash", label: "Natcash" },
+    { id: "pix", label: "PIX" },
+    { id: "card", label: "Cartão (Crédito/Débito)" },
+    { id: "zelle", label: "Zelle" },
+    { id: "paypal", label: "PayPal" },
+    { id: "picpay", label: "PicPay" },
+    { id: "tap_tap_send", label: "Tap Tap Send" },
+    { id: "wise", label: "Wise" },
+    { id: "boleto", label: "Boleto" },
+  ]
 
   const totalPending = useMemo(
     () => charges.reduce((sum, item) => sum + Number(item.amount ?? 0), 0),
@@ -123,17 +137,23 @@ function GuardianTuitionPayment() {
           ) : null}
 
           {charges.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {charges.map((charge) => (
-                <div key={charge.id} className="rounded-xl border border-brand-navy/10 bg-white p-3">
-                  <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
-                  <p className="text-xs text-brand-navy/60">Status: {charge.status}</p>
-                  <p className="text-xs text-brand-navy/60">
-                    Vencimento: {new Date(charge.dueDate).toLocaleDateString()}
-                  </p>
-                  {charge.description ? <p className="text-xs text-brand-navy/60">{charge.description}</p> : null}
-                </div>
-              ))}
+            <div className="mt-3">
+              <LoadMoreList
+                items={charges}
+                initialLimit={3}
+                step={3}
+                continueLabel="Continuar"
+                renderItem={(charge) => (
+                  <div key={charge.id} className="rounded-xl border border-brand-navy/10 bg-white p-3">
+                    <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
+                    <p className="text-xs text-brand-navy/60">Status: {charge.status}</p>
+                    <p className="text-xs text-brand-navy/60">
+                      Vencimento: {new Date(charge.dueDate).toLocaleDateString()}
+                    </p>
+                    {charge.description ? <p className="text-xs text-brand-navy/60">{charge.description}</p> : null}
+                  </div>
+                )}
+              />
             </div>
           ) : studentInfo ? (
             <p className="mt-3 text-xs text-brand-navy/60">Sem cobrancas pendentes para este aluno.</p>
@@ -148,8 +168,11 @@ function GuardianTuitionPayment() {
               onChange={(event) => setPaymentForm((prev) => ({ ...prev, provider: event.target.value }))}
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
             >
-              <option value="moncash">MonCash</option>
-              <option value="natcash">NatCash</option>
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
             </select>
 
             <input
@@ -157,7 +180,7 @@ function GuardianTuitionPayment() {
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, accountNumber: event.target.value }))
               }
-              placeholder="Numero da conta/carteira"
+              placeholder="Numero da conta/carteira / chave PIX / email"
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
               required
             />
@@ -172,6 +195,30 @@ function GuardianTuitionPayment() {
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
               required
             />
+
+            {/* Conditional card fields */}
+            {paymentForm.provider === "card" && (
+              <>
+                <input
+                  value={paymentForm.cardNumber || ""}
+                  onChange={(e) => setPaymentForm((prev) => ({ ...prev, cardNumber: e.target.value }))}
+                  placeholder="Numero do cartao"
+                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+                />
+                <input
+                  value={paymentForm.cardExpiry || ""}
+                  onChange={(e) => setPaymentForm((prev) => ({ ...prev, cardExpiry: e.target.value }))}
+                  placeholder="MM/AA"
+                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+                />
+                <input
+                  value={paymentForm.cardCvv || ""}
+                  onChange={(e) => setPaymentForm((prev) => ({ ...prev, cardCvv: e.target.value }))}
+                  placeholder="CVV"
+                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+                />
+              </>
+            )}
 
             <select
               value={paymentForm.tuitionPaymentId}
@@ -208,6 +255,41 @@ function GuardianTuitionPayment() {
 
             <button className="primary-button md:col-span-2" disabled={payLoading || !enrollmentNumber.trim()} type="submit">
               {payLoading ? "Processando..." : "Pagar escolaridade"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                // generate simple invoice client-side and open printable window
+                const invoice = {
+                  id: `INV-${Date.now()}`,
+                  student: studentInfo,
+                  items: charges.length ? charges : [{ description: "Mensalidade", amount: Number(paymentForm.amountHtg || totalPending || 0) }],
+                  total: Number(paymentForm.amountHtg || totalPending || 0),
+                  date: new Date().toLocaleString(),
+                }
+
+                const html = `
+                <html><head><title>Fatura ${invoice.id}</title></head><body>
+                  <h2>Fatura: ${invoice.id}</h2>
+                  <p>Aluno: ${invoice.student?.name || "-"}</p>
+                  <p>Matricula: ${invoice.student?.enrollmentNumber || "-"}</p>
+                  <table border="1" cellpadding="8" cellspacing="0">
+                    <thead><tr><th>Descricao</th><th>Valor</th></tr></thead>
+                    <tbody>
+                      ${invoice.items.map(i => `<tr><td>${i.description || "Item"}</td><td>${Number(i.amount).toFixed(2)} HTG</td></tr>`).join("")}
+                    </tbody>
+                    <tfoot><tr><td><strong>Total</strong></td><td><strong>${Number(invoice.total).toFixed(2)} HTG</strong></td></tr></tfoot>
+                  </table>
+                  <p>Gerado em: ${invoice.date}</p>
+                </body></html>`
+
+                const w = window.open("", "_blank")
+                w.document.write(html)
+                w.document.close()
+              }}
+              className="outline-button md:col-span-2"
+            >
+              Gerar fatura / emitir recibo
             </button>
           </form>
         </section>

@@ -53,8 +53,12 @@ export class FinanceIntegrationController {
   }
 
   @Get('tuition/:studentEnrollmentNumber/pending')
-  getPendingTuition(@Param('studentEnrollmentNumber') studentEnrollmentNumber: string) {
-    return this.financeService.listPendingTuitionByEnrollment(studentEnrollmentNumber);
+  getPendingTuition(
+    @Param('studentEnrollmentNumber') studentEnrollmentNumber: string,
+  ) {
+    return this.financeService.listPendingTuitionByEnrollment(
+      studentEnrollmentNumber,
+    );
   }
 
   @Post('tuition/pay')
@@ -175,7 +179,10 @@ export class FinanceIntegrationController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Header('Content-Type', 'text/csv; charset=utf-8')
-  @Header('Content-Disposition', 'attachment; filename="financial-payments-report.csv"')
+  @Header(
+    'Content-Disposition',
+    'attachment; filename="financial-payments-report.csv"',
+  )
   exportPaymentsCsv(@Query() filters: AdminPaymentsQueryDto) {
     return this.financeService.exportPaymentsCsvForAdmin(filters);
   }

@@ -1,4 +1,4 @@
-import { Gender } from "@prisma/client";
+import { Gender } from '@prisma/client';
 export declare class CreateStudentDto {
     email: string;
     firstName: string;

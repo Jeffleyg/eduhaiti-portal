@@ -11,8 +11,8 @@ const common_1 = require("@nestjs/common");
 let AppService = class AppService {
     getHealth() {
         return {
-            status: "ok",
-            service: "backend-api",
+            status: 'ok',
+            service: 'backend-api',
             timestamp: new Date().toISOString(),
         };
     }

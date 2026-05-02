@@ -1,11 +1,11 @@
-import { IsNotEmpty, IsString } from "class-validator"
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class DidTrustTokenDto {
   @IsString()
   @IsNotEmpty()
-  deviceId!: string
+  deviceId!: string;
 
   @IsString()
   @IsNotEmpty()
-  studentEnrollmentNumber!: string
+  studentEnrollmentNumber!: string;
 }

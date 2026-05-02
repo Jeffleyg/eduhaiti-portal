@@ -1,6 +1,6 @@
-import { IsEmail } from "class-validator"
+import { IsEmail } from 'class-validator';
 
 export class RequestCodeDto {
   @IsEmail()
-  email: string
+  email: string;
 }

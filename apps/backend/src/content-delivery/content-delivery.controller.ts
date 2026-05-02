@@ -44,7 +44,9 @@ export class ContentDeliveryController {
     @Query('studentId') studentId?: string,
   ) {
     const targetStudentId =
-      req.user?.role === Role.STUDENT ? req.user.sub : studentId ?? req.user?.sub;
+      req.user?.role === Role.STUDENT
+        ? req.user.sub
+        : (studentId ?? req.user?.sub);
 
     if (!targetStudentId) {
       throw new BadRequestException('studentId is required');

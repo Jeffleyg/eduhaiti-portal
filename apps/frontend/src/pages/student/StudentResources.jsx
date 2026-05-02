@@ -4,6 +4,7 @@ import { apiAssetUrl, apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentResources() {
   const { t } = useTranslation()
@@ -11,14 +12,12 @@ function StudentResources() {
   const { disableImages } = useSurvivalMode()
   const [resources, setResources] = useState([])
   const [libraryResources, setLibraryResources] = useState([])
-  const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const classesRes = await apiFetch("/classes/my-classes", { token })
-        setClasses(classesRes ?? [])
 
         if (classesRes && classesRes.length > 0) {
           const allResources = []
@@ -63,18 +62,24 @@ function StudentResources() {
 
       <div className="space-y-3">
         {resources.length > 0 ? (
-          resources.map((resource) => (
-            <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-brand-navy">{resource.title}</p>
-                {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.description}</p>}
-                <p className="text-xs text-brand-navy/50 mt-1">Por: {resource.uploadedBy?.name}</p>
+          <LoadMoreList
+            items={resources}
+            initialLimit={4}
+            step={4}
+            continueLabel={t("continue")}
+            renderItem={(resource) => (
+              <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-brand-navy">{resource.title}</p>
+                  {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.description}</p>}
+                  <p className="text-xs text-brand-navy/50 mt-1">Por: {resource.uploadedBy?.name}</p>
+                </div>
+                <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
+                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
+                </a>
               </div>
-              <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
-                {disableImages ? "TXT-DOWNLOAD" : "Download"}
-              </a>
-            </div>
-          ))
+            )}
+          />
         ) : (
           <p className="text-center text-brand-navy/60">Nenhum recurso disponível</p>
         )}
@@ -83,17 +88,23 @@ function StudentResources() {
       <div className="space-y-3">
         <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
         {libraryResources.length > 0 ? (
-          libraryResources.map((resource) => (
-            <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-brand-navy">{resource.title}</p>
-                <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
+          <LoadMoreList
+            items={libraryResources}
+            initialLimit={4}
+            step={4}
+            continueLabel={t("continue")}
+            renderItem={(resource) => (
+              <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-brand-navy">{resource.title}</p>
+                  <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
+                </div>
+                <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
+                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
+                </a>
               </div>
-              <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
-                {disableImages ? "TXT-DOWNLOAD" : "Download"}
-              </a>
-            </div>
-          ))
+            )}
+          />
         ) : (
           <p className="text-center text-brand-navy/60">Sem itens na biblioteca da serie.</p>
         )}

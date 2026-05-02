@@ -81,8 +81,7 @@ export class ManifestService {
         classId: currentClass.id,
         className: currentClass.name,
         resource: null,
-        speechText:
-          `Nao ha material recente para a turma ${currentClass.name}.`,
+        speechText: `Nao ha material recente para a turma ${currentClass.name}.`,
         lowBandwidthHints: {
           hasAudioFile: false,
           supportsIvr: true,
@@ -93,7 +92,8 @@ export class ManifestService {
 
     const sizeBytes = await this.safeStat(latestResource.filePath);
     const hasAudioFile = latestResource.fileType.toLowerCase() === 'mp3';
-    const summary = latestResource.description?.trim() || 'Sem resumo textual disponivel.';
+    const summary =
+      latestResource.description?.trim() || 'Sem resumo textual disponivel.';
 
     return {
       studentId,

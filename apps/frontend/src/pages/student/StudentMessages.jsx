@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentMessages() {
   const { t } = useTranslation()
@@ -150,22 +151,25 @@ function StudentMessages() {
 
       <div className="space-y-3">
         {(tab === "inbox" ? messages : sentMessages).length > 0 ? (
-          (tab === "inbox" ? messages : sentMessages).map((message) => (
-            <div
-              key={message.id}
-              className="rounded-2xl border border-brand-navy/10 bg-white px-4 py-4"
-            >
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-brand-navy">
-                  {tab === "inbox"
-                    ? message.from?.name ?? message.from?.email
-                    : message.to?.name ?? message.to?.email}
-                </p>
+          <LoadMoreList
+            items={tab === "inbox" ? messages : sentMessages}
+            initialLimit={5}
+            step={5}
+            continueLabel={t("continue")}
+            renderItem={(message) => (
+              <div key={message.id} className="rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-brand-navy">
+                    {tab === "inbox"
+                      ? message.from?.name ?? message.from?.email
+                      : message.to?.name ?? message.to?.email}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm text-brand-navy/70">{message.subject}</p>
+                <p className="mt-1 text-xs text-brand-navy/50">{message.body}</p>
               </div>
-              <p className="mt-2 text-sm text-brand-navy/70">{message.subject}</p>
-              <p className="mt-1 text-xs text-brand-navy/50">{message.body}</p>
-            </div>
-          ))
+            )}
+          />
         ) : (
           <p className="text-sm text-brand-navy/60">{t("noData")}</p>
         )}

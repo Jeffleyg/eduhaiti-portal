@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { apiFetch } from "../lib/api.js"
+import LoadMoreList from "../components/LoadMoreList.jsx"
 
 function FamilyPortal() {
   const [enrollmentNumber, setEnrollmentNumber] = useState("")
@@ -132,19 +133,52 @@ function FamilyPortal() {
 
               <div className="rounded-2xl border border-brand-navy/10 bg-white p-4">
                 <h3 className="font-semibold text-brand-navy">Assiduidade</h3>
-                <div className="mt-3 space-y-2">
-                  {(overview.attendance ?? []).length ? (
-                    overview.attendance.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-brand-navy/10 p-3 text-sm">
-                        <p className="font-semibold text-brand-navy">{new Date(item.date).toLocaleDateString("pt-BR")} - {item.class?.name}</p>
-                        <p className="text-brand-navy/70">Status: {item.status}</p>
-                        {item.remarks ? <p className="text-brand-navy/60">Obs: {item.remarks}</p> : null}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-brand-navy/60">Sem dados de presenca.</p>
-                  )}
-                </div>
+                  <div className="mt-3 space-y-2">
+                    {(() => {
+                      const atts = overview.attendance ?? []
+                      if (!atts.length) return <p className="text-sm text-brand-navy/60">Sem dados de presenca.</p>
+
+                      const presentCount = atts.filter((a) => String(a.status).toLowerCase() === "present" || String(a.status).toLowerCase() === "presente").length
+                      const absentCount = atts.filter((a) => String(a.status).toLowerCase() === "absent" || String(a.status).toLowerCase() === "ausente").length
+                      const lastRecord = atts.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+
+                      return (
+                        <>
+                          <div className="flex gap-3">
+                            <div className="rounded-xl border border-brand-navy/10 bg-sand p-3 text-sm">
+                              <p className="font-semibold text-brand-navy">Presente</p>
+                              <p className="text-brand-navy/70">{presentCount}</p>
+                            </div>
+                            <div className="rounded-xl border border-brand-navy/10 bg-sand p-3 text-sm">
+                              <p className="font-semibold text-brand-navy">Ausente</p>
+                              <p className="text-brand-navy/70">{absentCount}</p>
+                            </div>
+                            <div className="rounded-xl border border-brand-navy/10 bg-sand p-3 text-sm">
+                              <p className="font-semibold text-brand-navy">Último registro</p>
+                              <p className="text-brand-navy/70">{lastRecord ? new Date(lastRecord.date).toLocaleString("pt-BR") : "-"}</p>
+                            </div>
+                          </div>
+
+                          <div className="mt-3">
+                            {/* Use LoadMoreList to paginate long attendance lists */}
+                            <LoadMoreList
+                              items={atts}
+                              initialLimit={4}
+                              step={4}
+                              continueLabel="Continuar"
+                              renderItem={(item) => (
+                                <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
+                                  <p className="font-semibold text-brand-navy">{new Date(item.date).toLocaleDateString("pt-BR")} - {item.class?.name}</p>
+                                  <p className="text-brand-navy/70">Status: {item.status}</p>
+                                  {item.remarks ? <p className="text-brand-navy/60">Obs: {item.remarks}</p> : null}
+                                </div>
+                              )}
+                            />
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </div>
               </div>
             </section>
 
@@ -153,12 +187,18 @@ function FamilyPortal() {
                 <h3 className="font-semibold text-brand-navy">Avisos da escola</h3>
                 <div className="mt-3 space-y-2">
                   {(overview.announcements ?? []).length ? (
-                    overview.announcements.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-brand-navy/10 p-3 text-sm">
-                        <p className="font-semibold text-brand-navy">{item.title}</p>
-                        <p className="text-brand-navy/70">{item.content}</p>
-                      </div>
-                    ))
+                    <LoadMoreList
+                      items={overview.announcements ?? []}
+                      initialLimit={3}
+                      step={3}
+                      continueLabel="Continuar"
+                      renderItem={(item) => (
+                        <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
+                          <p className="font-semibold text-brand-navy">{item.title}</p>
+                          <p className="text-brand-navy/70">{item.content}</p>
+                        </div>
+                      )}
+                    />
                   ) : (
                     <p className="text-sm text-brand-navy/60">Sem avisos recentes.</p>
                   )}
@@ -169,13 +209,19 @@ function FamilyPortal() {
                 <h3 className="font-semibold text-brand-navy">Ocorrencias e urgencias</h3>
                 <div className="mt-3 space-y-2">
                   {(overview.familyNotices ?? []).length ? (
-                    overview.familyNotices.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-brand-navy/10 p-3 text-sm">
-                        <p className="font-semibold text-brand-navy">{String(item.title ?? "Recado")}</p>
-                        <p className="text-brand-navy/70">{String(item.body ?? "")}</p>
-                        <p className="text-xs text-brand-navy/60">{new Date(item.createdAt).toLocaleString("pt-BR")}</p>
-                      </div>
-                    ))
+                    <LoadMoreList
+                      items={overview.familyNotices ?? []}
+                      initialLimit={3}
+                      step={3}
+                      continueLabel="Continuar"
+                      renderItem={(item) => (
+                        <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
+                          <p className="font-semibold text-brand-navy">{String(item.title ?? "Recado")}</p>
+                          <p className="text-brand-navy/70">{String(item.body ?? "")}</p>
+                          <p className="text-xs text-brand-navy/60">{new Date(item.createdAt).toLocaleString("pt-BR")}</p>
+                        </div>
+                      )}
+                    />
                   ) : (
                     <p className="text-sm text-brand-navy/60">Sem recados especiais.</p>
                   )}

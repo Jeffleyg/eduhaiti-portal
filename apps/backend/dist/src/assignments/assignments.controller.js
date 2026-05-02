@@ -55,7 +55,7 @@ const roles_guard_1 = require("../auth/guards/roles.guard");
 const assignments_service_1 = require("./assignments.service");
 const client_1 = require("@prisma/client");
 const fs = __importStar(require("fs"));
-const uploadDir = "uploads";
+const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -74,13 +74,13 @@ let AssignmentsController = class AssignmentsController {
         const filePath = file ? `uploads/${file.filename}` : undefined;
         const dueDate = new Date(body.dueDate);
         if (Number.isNaN(dueDate.getTime())) {
-            throw new common_1.BadRequestException("Invalid dueDate");
+            throw new common_1.BadRequestException('Invalid dueDate');
         }
         return this.assignmentsService.create(classId, body.title, body.description, dueDate, filePath, req.user.sub);
     }
     async submitAssignment(assignmentId, file, req) {
         if (!file) {
-            throw new common_1.BadRequestException("No file uploaded");
+            throw new common_1.BadRequestException('No file uploaded');
         }
         const filePath = `uploads/${file.filename}`;
         return this.assignmentsService.submitAssignment(assignmentId, req.user.sub, filePath);
@@ -94,15 +94,15 @@ let AssignmentsController = class AssignmentsController {
 };
 exports.AssignmentsController = AssignmentsController;
 __decorate([
-    (0, common_1.Get)("class/:classId"),
+    (0, common_1.Get)('class/:classId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)("classId")),
+    __param(0, (0, common_1.Param)('classId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AssignmentsController.prototype, "getByClass", null);
 __decorate([
-    (0, common_1.Get)("my-assignments"),
+    (0, common_1.Get)('my-assignments'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -110,14 +110,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AssignmentsController.prototype, "getMyAssignments", null);
 __decorate([
-    (0, common_1.Post)("create/:classId"),
+    (0, common_1.Post)('create/:classId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("file", {
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
         storage: (0, multer_1.diskStorage)({
             destination: uploadDir,
             filename: (req, file, cb) => {
-                const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
                 cb(null, `${uniqueSuffix}-${file.originalname}`);
             },
         }),
@@ -130,7 +130,7 @@ __decorate([
             }
         },
     })),
-    __param(0, (0, common_1.Param)("classId")),
+    __param(0, (0, common_1.Param)('classId')),
     __param(1, (0, common_1.UploadedFile)()),
     __param(2, (0, common_1.Body)()),
     __param(3, (0, common_1.Req)()),
@@ -139,18 +139,18 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AssignmentsController.prototype, "createAssignment", null);
 __decorate([
-    (0, common_1.Post)(":assignmentId/submit"),
+    (0, common_1.Post)(':assignmentId/submit'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("file", {
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
         storage: (0, multer_1.diskStorage)({
             destination: uploadDir,
             filename: (req, file, cb) => {
-                const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
                 cb(null, `submission-${uniqueSuffix}-${file.originalname}`);
             },
         }),
     })),
-    __param(0, (0, common_1.Param)("assignmentId")),
+    __param(0, (0, common_1.Param)('assignmentId')),
     __param(1, (0, common_1.UploadedFile)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -158,26 +158,26 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AssignmentsController.prototype, "submitAssignment", null);
 __decorate([
-    (0, common_1.Put)(":assignmentId/grade/:submissionId"),
+    (0, common_1.Put)(':assignmentId/grade/:submissionId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    __param(0, (0, common_1.Param)("submissionId")),
+    __param(0, (0, common_1.Param)('submissionId')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AssignmentsController.prototype, "gradeSubmission", null);
 __decorate([
-    (0, common_1.Delete)(":assignmentId"),
+    (0, common_1.Delete)(':assignmentId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    __param(0, (0, common_1.Param)("assignmentId")),
+    __param(0, (0, common_1.Param)('assignmentId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AssignmentsController.prototype, "deleteAssignment", null);
 exports.AssignmentsController = AssignmentsController = __decorate([
-    (0, common_1.Controller)("assignments"),
+    (0, common_1.Controller)('assignments'),
     __metadata("design:paramtypes", [assignments_service_1.AssignmentsService])
 ], AssignmentsController);
 //# sourceMappingURL=assignments.controller.js.map

@@ -1,23 +1,23 @@
-import { IsBoolean, IsDateString, IsOptional, IsString } from "class-validator"
+import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class UpdateAcademicPeriodDto {
   @IsOptional()
   @IsString()
-  name?: string
+  name?: string;
 
   @IsOptional()
   @IsDateString()
-  startDate?: string
+  startDate?: string;
 
   @IsOptional()
   @IsDateString()
-  endDate?: string
+  endDate?: string;
 
   @IsOptional()
   @IsBoolean()
-  isOpen?: boolean
+  isOpen?: boolean;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 }

@@ -1,8 +1,8 @@
-import { Camera, Mail, User } from "lucide-react"
+import { Camera, Mail, User, Settings, Edit3 } from "lucide-react"
 import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
 
-function ProfileCard({ user, onPhotoUpload, loading }) {
+function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClick }) {
   const { t } = useTranslation()
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const fileInputRef = useRef(null)
@@ -32,14 +32,27 @@ function ProfileCard({ user, onPhotoUpload, loading }) {
     }
   }
 
+  const getRoleLabel = () => {
+    switch (user?.role) {
+      case "ADMIN":
+        return t("roleadmin")
+      case "TEACHER":
+        return t("roleprofessor")
+      case "STUDENT":
+        return t("rolestudent")
+      default:
+        return user?.role || "-"
+    }
+  }
+
   return (
     <div className="space-y-4">
-      {/* Card com Foto */}
-      <div className="rounded-3xl border border-brand-navy/10 bg-gradient-to-br from-brand-navy/5 to-transparent p-6">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          {/* Foto de Perfil */}
-          <div className="relative">
-            <div className="h-24 w-24 rounded-full border-4 border-brand-navy/10 bg-gradient-to-br from-brand-navy to-brand-sky overflow-hidden shadow-lg">
+      {/* Cartão Principal com Foto e Dados */}
+      <div className="rounded-[2rem] border border-brand-navy/10 bg-gradient-to-br from-white via-white to-brand-navy/5 p-6 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.45)]">
+        {/* Foto de Perfil */}
+        <div className="flex items-center gap-4">
+          <div className="relative shrink-0">
+            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-brand-navy to-brand-sky shadow-lg ring-1 ring-brand-navy/10">
               {previewPhoto ? (
                 <img src={previewPhoto} alt={user?.name} className="h-full w-full object-cover" />
               ) : user?.profilePhoto ? (
@@ -51,11 +64,10 @@ function ProfileCard({ user, onPhotoUpload, loading }) {
               )}
             </div>
 
-            {/* Botão de Upload */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-brand-navy p-2 text-white hover:bg-brand-navy/90 transition-colors disabled:opacity-50"
+              className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-brand-navy p-2 text-white transition-colors hover:bg-brand-navy/90 disabled:opacity-50"
               title={t("uploadPhoto")}
             >
               <Camera className="h-4 w-4" />
@@ -70,48 +82,79 @@ function ProfileCard({ user, onPhotoUpload, loading }) {
             />
           </div>
 
-          {/* Informações do Usuário */}
+          {/* Info ao lado da foto */}
           <div className="flex-1 space-y-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
+            {/* Role Badge */}
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeColor()}`}>
+              {getRoleLabel()}
+            </span>
+
+            {/* Nome em Caixa */}
+            <div className="rounded-xl border border-brand-navy/10 bg-white/60 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1">
                 {t("name")}
               </p>
-              <h2 className="text-2xl font-bold text-brand-navy">{user?.name}</h2>
+              <p className="text-lg font-bold text-brand-navy break-words">
+                {user?.name || "-"}
+              </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeColor()}`}>
-                {t("role" + user?.role)}
-              </span>
-              {user?.enrollmentNumber && (
-                <span className="inline-block rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
-                  {user.enrollmentNumber}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-brand-navy/70">
-              <Mail className="h-4 w-4" />
-              {user?.email}
+            {/* Email em Caixa */}
+            <div className="rounded-xl border border-brand-navy/10 bg-white/60 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1 flex items-center gap-1">
+                <Mail className="h-3 w-3" />
+                {t("email")}
+              </p>
+              <p className="text-sm font-semibold text-brand-navy break-words">
+                {user?.email || "-"}
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Matrícula se for estudante */}
+        {user?.role === "STUDENT" && user?.enrollmentNumber ? (
+          <div className="mt-4 rounded-xl border border-brand-navy/10 bg-white/60 px-3 py-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1">
+              {t("enrollmentNumber")}
+            </p>
+            <p className="font-semibold text-brand-navy">{user.enrollmentNumber}</p>
+          </div>
+        ) : null}
+
+        {/* Botões de Ação */}
+        <div className="mt-6 flex gap-2 border-t border-brand-navy/10 pt-4">
+          <button
+            onClick={onEditClick}
+            type="button"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5"
+            title={t("editProfile")}
+          >
+            <Edit3 className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("edit")}</span>
+          </button>
+          <button
+            onClick={onSettingsClick}
+            type="button"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5"
+            title={t("settings")}
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("settings")}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Dados Institucionais */}
+      {/* Dados Institucionais - Estudante */}
       {user?.role === "STUDENT" && (
-        <div className="rounded-2xl border border-brand-navy/10 bg-white/50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50 mb-3">
+        <div className="rounded-2xl border border-brand-navy/10 bg-white/60 p-4 shadow-sm">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45">
             {t("institutionalData")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-xs text-brand-navy/60">{t("enrollmentNumber")}</p>
-              <p className="font-semibold text-brand-navy">{user?.enrollmentNumber || "-"}</p>
-            </div>
-            <div>
               <p className="text-xs text-brand-navy/60">{t("status")}</p>
-              <p className="font-semibold text-emerald-700">Ativo</p>
+              <p className="font-semibold text-emerald-700">{t("active")}</p>
             </div>
             <div>
               <p className="text-xs text-brand-navy/60">{t("registrationDate")}</p>
@@ -121,7 +164,7 @@ function ProfileCard({ user, onPhotoUpload, loading }) {
             </div>
             <div>
               <p className="text-xs text-brand-navy/60">{t("academicStatus")}</p>
-              <p className="font-semibold text-brand-navy">Regular</p>
+              <p className="font-semibold text-brand-navy">{t("regular")}</p>
             </div>
           </div>
         </div>

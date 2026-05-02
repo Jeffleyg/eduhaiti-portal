@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common"
-import { PrismaService } from "../prisma/prisma.service"
-import { UpsertAcademicSettingDto } from "./dto/upsert-academic-setting.dto"
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { UpsertAcademicSettingDto } from './dto/upsert-academic-setting.dto';
 
 @Injectable()
 export class AcademicSettingsService {
@@ -9,10 +9,10 @@ export class AcademicSettingsService {
   async getBySchool(schoolId: string) {
     const setting = await this.prisma.academicSetting.findUnique({
       where: { schoolId },
-    })
+    });
 
     if (setting) {
-      return setting
+      return setting;
     }
 
     return {
@@ -23,7 +23,7 @@ export class AcademicSettingsService {
       gradeReviewWindowDays: 7,
       createdAt: null,
       updatedAt: null,
-    }
+    };
   }
 
   async upsertBySchool(schoolId: string, dto: UpsertAcademicSettingDto) {
@@ -42,6 +42,6 @@ export class AcademicSettingsService {
         assignmentLateDaysLimit: dto.assignmentLateDaysLimit ?? 2,
         gradeReviewWindowDays: dto.gradeReviewWindowDays ?? 7,
       },
-    })
+    });
   }
 }

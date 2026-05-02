@@ -6,6 +6,7 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentResults() {
   const { t } = useTranslation()
@@ -153,14 +154,18 @@ function StudentResults() {
           <div className="rounded-xl border border-brand-navy/10 p-4">
             <h4 className="font-semibold text-brand-navy mb-2">Linha do tempo mensal</h4>
             {evolution?.timeline?.length ? (
-              <div className="space-y-2">
-                {evolution.timeline.map((point) => (
+              <LoadMoreList
+                items={evolution.timeline}
+                initialLimit={4}
+                step={4}
+                continueLabel={t("continue")}
+                renderItem={(point) => (
                   <div key={point.period} className="flex items-center justify-between text-sm">
                     <span className="text-brand-navy/70">{point.period}</span>
                     <span className="font-semibold text-brand-navy">{point.average.toFixed(2)}/20</span>
                   </div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <p className="text-sm text-brand-navy/60">Sem dados suficientes para o periodo selecionado.</p>
             )}
@@ -169,14 +174,18 @@ function StudentResults() {
           <div className="rounded-xl border border-brand-navy/10 p-4">
             <h4 className="font-semibold text-brand-navy mb-2">Media por disciplina</h4>
             {evolution?.byDiscipline?.length ? (
-              <div className="space-y-2">
-                {evolution.byDiscipline.map((item) => (
+              <LoadMoreList
+                items={evolution.byDiscipline}
+                initialLimit={4}
+                step={4}
+                continueLabel={t("continue")}
+                renderItem={(item) => (
                   <div key={item.disciplineId} className="flex items-center justify-between text-sm">
                     <span className="text-brand-navy/70">{item.disciplineName}</span>
                     <span className="font-semibold text-brand-navy">{item.average.toFixed(2)}/20</span>
                   </div>
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <p className="text-sm text-brand-navy/60">Sem dados por disciplina no periodo selecionado.</p>
             )}

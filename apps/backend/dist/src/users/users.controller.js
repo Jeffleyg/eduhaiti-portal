@@ -45,40 +45,40 @@ let UsersController = class UsersController {
 };
 exports.UsersController = UsersController;
 __decorate([
-    (0, common_1.Get)("students"),
+    (0, common_1.Get)('students'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAllStudents", null);
 __decorate([
-    (0, common_1.Get)("teachers"),
+    (0, common_1.Get)('teachers'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAllTeachers", null);
 __decorate([
-    (0, common_1.Post)("students"),
+    (0, common_1.Post)('students'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_student_dto_1.CreateStudentDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "createStudent", null);
 __decorate([
-    (0, common_1.Post)("teachers"),
+    (0, common_1.Post)('teachers'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_teacher_dto_1.CreateTeacherDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "createTeacher", null);
 __decorate([
-    (0, common_1.Post)("resend-temp-password"),
+    (0, common_1.Post)('resend-temp-password'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [resend_temp_password_dto_1.ResendTempPasswordDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "resendTempPassword", null);
 exports.UsersController = UsersController = __decorate([
-    (0, common_1.Controller)("admin/users"),
+    (0, common_1.Controller)('admin/users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     __metadata("design:paramtypes", [users_service_1.UsersService])

@@ -1,21 +1,29 @@
-import { Type } from "class-transformer"
-import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator"
+import { Type } from 'class-transformer';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateTuitionChargeDto {
   @IsString()
   @IsNotEmpty()
-  studentEnrollmentNumber!: string
+  studentEnrollmentNumber!: string;
 
   @Type(() => Number)
   @IsNumber()
   @Min(1)
   @Max(1_000_000)
-  amountHtg!: number
+  amountHtg!: number;
 
   @IsDateString()
-  dueDate!: string
+  dueDate!: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 }

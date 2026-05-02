@@ -26,7 +26,7 @@ let GradesController = class GradesController {
     }
     async createGrade(req, payload) {
         return this.gradesService.create(payload, {
-            id: req.user?.sub ?? "",
+            id: req.user?.sub ?? '',
             role: req.user?.role ?? client_1.Role.TEACHER,
         });
     }
@@ -41,11 +41,11 @@ let GradesController = class GradesController {
     }
     async getMyGrades(req, academicYearId) {
         const userId = req.user?.sub;
-        return this.gradesService.findByStudent(userId ?? "", academicYearId);
+        return this.gradesService.findByStudent(userId ?? '', academicYearId);
     }
     async getStudentReport(req, academicYearId) {
         const userId = req.user?.sub;
-        return this.gradesService.getStudentReport(userId ?? "", academicYearId);
+        return this.gradesService.getStudentReport(userId ?? '', academicYearId);
     }
     async getClassGrades(classId, disciplineId) {
         return this.gradesService.findByClass(classId, disciplineId);
@@ -68,8 +68,8 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.Put)(":id"),
-    __param(0, (0, common_1.Param)("id")),
+    (0, common_1.Put)(':id'),
+    __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
@@ -78,8 +78,8 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
-    (0, common_1.Delete)(":id"),
-    __param(0, (0, common_1.Param)("id")),
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
@@ -87,27 +87,27 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.Post)(":classId/publish"),
-    __param(0, (0, common_1.Param)("classId")),
-    __param(1, (0, common_1.Query)("disciplineId")),
+    (0, common_1.Post)(':classId/publish'),
+    __param(0, (0, common_1.Param)('classId')),
+    __param(1, (0, common_1.Query)('disciplineId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], GradesController.prototype, "publishGrades", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("my-grades"),
+    (0, common_1.Get)('my-grades'),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)("academicYearId")),
+    __param(1, (0, common_1.Query)('academicYearId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], GradesController.prototype, "getMyGrades", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("report/:academicYearId"),
+    (0, common_1.Get)('report/:academicYearId'),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)("academicYearId")),
+    __param(1, (0, common_1.Param)('academicYearId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
@@ -115,9 +115,9 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.Get)("class/:classId"),
-    __param(0, (0, common_1.Param)("classId")),
-    __param(1, (0, common_1.Query)("disciplineId")),
+    (0, common_1.Get)('class/:classId'),
+    __param(0, (0, common_1.Param)('classId')),
+    __param(1, (0, common_1.Query)('disciplineId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
@@ -125,15 +125,15 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.Get)("class/:classId/average"),
-    __param(0, (0, common_1.Param)("classId")),
-    __param(1, (0, common_1.Query)("disciplineId")),
+    (0, common_1.Get)('class/:classId/average'),
+    __param(0, (0, common_1.Param)('classId')),
+    __param(1, (0, common_1.Query)('disciplineId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], GradesController.prototype, "getClassAverage", null);
 exports.GradesController = GradesController = __decorate([
-    (0, common_1.Controller)("admin/grades"),
+    (0, common_1.Controller)('admin/grades'),
     __metadata("design:paramtypes", [grades_service_1.GradesService])
 ], GradesController);
 //# sourceMappingURL=grades.controller.js.map

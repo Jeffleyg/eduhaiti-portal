@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react"
-import { useAuth } from "../context/AuthContext"
-import { apiFetch } from "../utils/api"
+import { useAuth } from "../../context/AuthContext.jsx"
+import { apiFetch } from "../../lib/api.js"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 import "../styles/AdminClasses.css"
 
 export default function AdminClasses() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [classes, setClasses] = useState([])
-  const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [academicYears, setAcademicYears] = useState([])
-  const [series, setSeries] = useState([])
-  const [teachers, setTeachers] = useState([])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,31 +19,27 @@ export default function AdminClasses() {
 
   useEffect(() => {
     if (user?.role === "ADMIN") {
-      loadData()
+      void (async () => {
+        try {
+          const classesRes = await apiFetch("/admin/classes", { token })
+          setClasses(classesRes || [])
+        } catch (error) {
+          console.error("Failed to load classes:", error)
+        }
+      })()
     }
-  }, [user])
-
-  const loadData = async () => {
-    setLoading(true)
-    try {
-      // Load classes
-      const classesRes = await apiFetch("/admin/classes")
-      setClasses(classesRes.data || [])
-    } catch (error) {
-      console.error("Failed to load classes:", error)
-    }
-    setLoading(false)
-  }
+  }, [user, token])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       const response = await apiFetch("/admin/classes", {
         method: "POST",
-        body: JSON.stringify(formData),
+        token,
+        body: formData,
       })
 
-      setClasses([...classes, response.data])
+      setClasses([...classes, response])
       setShowForm(false)
       setFormData({
         name: "",
@@ -64,7 +57,7 @@ export default function AdminClasses() {
   const handleDelete = async (classId) => {
     if (confirm("Tem certeza que deseja deletar esta turma?")) {
       try {
-        await apiFetch(`/admin/classes/${classId}`, { method: "DELETE" })
+        await apiFetch(`/admin/classes/${classId}`, { method: "DELETE", token })
         setClasses(classes.filter((c) => c.id !== classId))
       } catch (error) {
         console.error("Failed to delete class:", error)
@@ -142,13 +135,15 @@ export default function AdminClasses() {
         </form>
       )}
 
-      {loading ? (
-        <p>Carregando...</p>
-      ) : classes.length === 0 ? (
+      {classes.length === 0 ? (
         <p className="no-data">Nenhuma turma cadastrada</p>
       ) : (
-        <div className="classes-grid">
-          {classes.map((cls) => (
+        <LoadMoreList
+          items={classes}
+          initialLimit={6}
+          step={6}
+          continueLabel="Continuar"
+          renderItem={(cls) => (
             <div key={cls.id} className="class-card">
               <h3>{cls.name}</h3>
               <p>
@@ -171,8 +166,8 @@ export default function AdminClasses() {
                 </button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        />
       )}
     </div>
   )

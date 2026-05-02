@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 
@@ -182,8 +183,12 @@ function AdminFamilyCommunication() {
         ) : requests.length === 0 ? (
           <p className="text-sm text-brand-navy/60">Nenhuma solicitacao recebida.</p>
         ) : (
-          <div className="space-y-3">
-            {requests.map((request) => (
+          <LoadMoreList
+            items={requests}
+            initialLimit={4}
+            step={4}
+            continueLabel="Continuar"
+            renderItem={(request) => (
               <article key={request.requestId} className="rounded-xl border border-brand-navy/10 p-4 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -247,8 +252,8 @@ function AdminFamilyCommunication() {
                   </div>
                 )}
               </article>
-            ))}
-          </div>
+            )}
+          />
         )}
       </section>
     </div>

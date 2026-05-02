@@ -1,5 +1,5 @@
-import { AttendanceService } from "./attendance.service";
-import { Role, AttendanceStatus } from "@prisma/client";
+import { AttendanceService } from './attendance.service';
+import { Role, AttendanceStatus } from '@prisma/client';
 export declare class AttendanceController {
     private readonly attendanceService;
     constructor(attendanceService: AttendanceService);

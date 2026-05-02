@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
-import { PrismaService } from "../prisma/prisma.service"
-import { createHash } from "crypto"
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class ScorecardsService {
@@ -30,10 +30,10 @@ export class ScorecardsService {
           },
         },
       },
-    })
+    });
 
     if (!scorecard) {
-      throw new NotFoundException("Scorecard not found")
+      throw new NotFoundException('Scorecard not found');
     }
 
     const verificationSource = [
@@ -41,11 +41,13 @@ export class ScorecardsService {
       scorecard.studentId,
       scorecard.academicYearId,
       scorecard.semester,
-      scorecard.averageScore ?? "-",
-      scorecard.generatedAt?.toISOString() ?? "-",
-    ].join("|")
+      scorecard.averageScore ?? '-',
+      scorecard.generatedAt?.toISOString() ?? '-',
+    ].join('|');
 
-    const digest = createHash("sha256").update(verificationSource).digest("hex")
+    const digest = createHash('sha256')
+      .update(verificationSource)
+      .digest('hex');
 
     return {
       valid: Boolean(scorecard.generatedAt),
@@ -63,6 +65,6 @@ export class ScorecardsService {
       student: scorecard.student,
       academicYear: scorecard.academicYear,
       series: scorecard.series,
-    }
+    };
   }
 }

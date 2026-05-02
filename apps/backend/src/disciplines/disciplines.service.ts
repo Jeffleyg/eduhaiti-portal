@@ -1,7 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common"
-import { PrismaService } from "../prisma/prisma.service"
-import { CreateDisciplineDto } from "./dto/create-discipline.dto"
-import { UpdateDisciplineDto } from "./dto/update-discipline.dto"
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateDisciplineDto } from './dto/create-discipline.dto';
+import { UpdateDisciplineDto } from './dto/update-discipline.dto';
 
 @Injectable()
 export class DisciplinesService {
@@ -10,10 +14,10 @@ export class DisciplinesService {
   async create(dto: CreateDisciplineDto) {
     const series = await this.prisma.series.findUnique({
       where: { id: dto.seriesId },
-    })
+    });
 
     if (!series) {
-      throw new NotFoundException("Series not found")
+      throw new NotFoundException('Series not found');
     }
 
     const existing = await this.prisma.discipline.findFirst({
@@ -21,10 +25,10 @@ export class DisciplinesService {
         seriesId: dto.seriesId,
         name: dto.name,
       },
-    })
+    });
 
     if (existing) {
-      throw new BadRequestException("Discipline already exists in this series")
+      throw new BadRequestException('Discipline already exists in this series');
     }
 
     return this.prisma.discipline.create({
@@ -34,7 +38,7 @@ export class DisciplinesService {
         code: dto.code,
         credits: dto.credits ?? 0,
       },
-    })
+    });
   }
 
   async findBySeries(seriesId?: string) {
@@ -49,29 +53,29 @@ export class DisciplinesService {
           },
         },
       },
-      orderBy: { name: "asc" },
-    })
+      orderBy: { name: 'asc' },
+    });
   }
 
   async findById(disciplineId: string) {
     const discipline = await this.prisma.discipline.findUnique({
       where: { id: disciplineId },
-    })
+    });
 
     if (!discipline) {
-      throw new NotFoundException("Discipline not found")
+      throw new NotFoundException('Discipline not found');
     }
 
-    return discipline
+    return discipline;
   }
 
   async update(disciplineId: string, dto: UpdateDisciplineDto) {
     const existing = await this.prisma.discipline.findUnique({
       where: { id: disciplineId },
-    })
+    });
 
     if (!existing) {
-      throw new NotFoundException("Discipline not found")
+      throw new NotFoundException('Discipline not found');
     }
 
     return this.prisma.discipline.update({
@@ -81,20 +85,20 @@ export class DisciplinesService {
         code: dto.code ?? existing.code,
         credits: dto.credits ?? existing.credits,
       },
-    })
+    });
   }
 
   async delete(disciplineId: string) {
     const existing = await this.prisma.discipline.findUnique({
       where: { id: disciplineId },
-    })
+    });
 
     if (!existing) {
-      throw new NotFoundException("Discipline not found")
+      throw new NotFoundException('Discipline not found');
     }
 
     return this.prisma.discipline.delete({
       where: { id: disciplineId },
-    })
+    });
   }
 }

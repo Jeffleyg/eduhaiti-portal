@@ -28,7 +28,7 @@ __decorate([
     __metadata("design:type", String)
 ], SignupDto.prototype, "name", void 0);
 __decorate([
-    (0, class_validator_1.IsEnum)(["TEACHER", "STUDENT"]),
+    (0, class_validator_1.IsEnum)(['TEACHER', 'STUDENT']),
     __metadata("design:type", String)
 ], SignupDto.prototype, "role", void 0);
 //# sourceMappingURL=signup.dto.js.map

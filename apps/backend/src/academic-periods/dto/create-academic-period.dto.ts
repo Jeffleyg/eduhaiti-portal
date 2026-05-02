@@ -1,21 +1,26 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator"
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateAcademicPeriodDto {
   @IsString()
   @IsNotEmpty()
-  schoolId: string
+  schoolId: string;
 
   @IsString()
   @IsNotEmpty()
-  name: string
+  name: string;
 
   @IsDateString()
-  startDate: string
+  startDate: string;
 
   @IsDateString()
-  endDate: string
+  endDate: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 }

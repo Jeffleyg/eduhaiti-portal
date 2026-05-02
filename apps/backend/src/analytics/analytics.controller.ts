@@ -43,9 +43,8 @@ export class AnalyticsController {
   ) {
     const report = await this.analyticsService.getEarlyWarningReport(schoolId);
     if (trigger === '1' || trigger === 'true') {
-      const notification = await this.analyticsService.triggerEarlyWarningAlerts(
-        schoolId,
-      );
+      const notification =
+        await this.analyticsService.triggerEarlyWarningAlerts(schoolId);
       return { report, notification };
     }
 

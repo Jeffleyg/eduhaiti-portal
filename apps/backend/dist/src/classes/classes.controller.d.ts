@@ -1,4 +1,4 @@
-import { ClassesService } from "./classes.service";
+import { ClassesService } from './classes.service';
 export declare class ClassesController {
     private readonly classesService;
     constructor(classesService: ClassesService);
@@ -28,9 +28,9 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
@@ -53,9 +53,9 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
@@ -75,9 +75,9 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
@@ -91,19 +91,19 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
     getAllClasses(academicYearId?: string, seriesId?: string): Promise<({
+        academicYear: {
+            year: string;
+        };
         series: {
             id: string;
             name: string;
-        };
-        academicYear: {
-            year: string;
         };
         teacher: {
             id: string;
@@ -119,9 +119,9 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     })[]>;
@@ -133,12 +133,12 @@ export declare class ClassesController {
         endDate: Date;
     }[]>;
     getSeries(academicYearId?: string): Promise<{
-        id: string;
-        name: string;
         academicYear: {
             id: string;
             year: string;
         };
+        id: string;
+        name: string;
         academicYearId: string;
     }[]>;
     getMyClasses(req: {
@@ -147,13 +147,13 @@ export declare class ClassesController {
             role?: string;
         };
     }): Promise<({
-        series: {
-            id: string;
-            name: string;
-        };
         academicYear: {
             id: string;
             year: string;
+        };
+        series: {
+            id: string;
+            name: string;
         };
         teacher: {
             id: string;
@@ -164,23 +164,23 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     })[]>;
     getClass(classId: string): Promise<{
+        series: {
+            id: string;
+            name: string;
+        };
         grades: {
             id: string;
             studentId: string;
             disciplineId: string;
             score: number;
         }[];
-        series: {
-            id: string;
-            name: string;
-        };
         teacher: {
             id: string;
             email: string;
@@ -196,9 +196,9 @@ export declare class ClassesController {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;

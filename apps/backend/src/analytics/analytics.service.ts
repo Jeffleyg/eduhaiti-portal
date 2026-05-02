@@ -179,7 +179,12 @@ export class AnalyticsService {
           studentId: { in: studentIds },
           createdAt: { gte: previousStart },
         },
-        select: { studentId: true, score: true, maxScore: true, createdAt: true },
+        select: {
+          studentId: true,
+          score: true,
+          maxScore: true,
+          createdAt: true,
+        },
       }),
     ]);
 
@@ -218,7 +223,8 @@ export class AnalyticsService {
         current: { total: 0, count: 0 },
         previous: { total: 0, count: 0 },
       };
-      const bucket = row.createdAt >= currentStart ? slot.current : slot.previous;
+      const bucket =
+        row.createdAt >= currentStart ? slot.current : slot.previous;
       bucket.total += normalized;
       bucket.count += 1;
       gradeMap.set(row.studentId, slot);
@@ -245,7 +251,9 @@ export class AnalyticsService {
           : 0;
 
       const currentAvg =
-        grades.current.count > 0 ? grades.current.total / grades.current.count : 0;
+        grades.current.count > 0
+          ? grades.current.total / grades.current.count
+          : 0;
       const previousAvg =
         grades.previous.count > 0
           ? grades.previous.total / grades.previous.count
@@ -253,7 +261,8 @@ export class AnalyticsService {
 
       const absenceDelta = currentAbsenceRate - previousAbsenceRate;
       const gradeDelta = currentAvg - previousAvg;
-      const chronicAbsence = attendance.current.absent >= 5 || currentAbsenceRate >= 0.35;
+      const chronicAbsence =
+        attendance.current.absent >= 5 || currentAbsenceRate >= 0.35;
       const suddenGradeDrop = gradeDelta <= -3;
       const atRisk = chronicAbsence || suddenGradeDrop;
 
@@ -292,7 +301,12 @@ export class AnalyticsService {
       take: 50,
     });
 
-    const messages = [] as Array<{ fromId: string; toId: string; subject: string; body: string }>;
+    const messages = [] as Array<{
+      fromId: string;
+      toId: string;
+      subject: string;
+      body: string;
+    }>;
     for (const row of atRiskRows) {
       const body = [
         `Aluno: ${row.studentName ?? row.enrollmentNumber ?? row.studentId}`,

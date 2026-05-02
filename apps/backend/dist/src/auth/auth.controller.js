@@ -31,36 +31,36 @@ let AuthController = class AuthController {
         return this.authService.getTestCredentials();
     }
     logout(req) {
-        return this.authService.logout(req.user?.sub ?? "", req.user?.email);
+        return this.authService.logout(req.user?.sub ?? '', req.user?.email);
     }
     changePassword(req, body) {
-        return this.authService.changePassword(req.user?.sub ?? "", body.currentPassword, body.newPassword);
+        return this.authService.changePassword(req.user?.sub ?? '', body.currentPassword, body.newPassword);
     }
     getProfile(req) {
         const userId = req.user?.sub;
-        return this.authService.getProfile(userId ?? "");
+        return this.authService.getProfile(userId ?? '');
     }
     updateProfile(req, body) {
-        return this.authService.updateProfile(req.user?.sub ?? "", body);
+        return this.authService.updateProfile(req.user?.sub ?? '', body);
     }
 };
 exports.AuthController = AuthController;
 __decorate([
-    (0, common_1.Post)("login"),
+    (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
 __decorate([
-    (0, common_1.Get)("test-credentials"),
+    (0, common_1.Get)('test-credentials'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "getTestCredentials", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Post)("logout"),
+    (0, common_1.Post)('logout'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -68,7 +68,7 @@ __decorate([
 ], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Post)("change-password"),
+    (0, common_1.Post)('change-password'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -77,7 +77,7 @@ __decorate([
 ], AuthController.prototype, "changePassword", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("me"),
+    (0, common_1.Get)('me'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -85,7 +85,7 @@ __decorate([
 ], AuthController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Put)("me"),
+    (0, common_1.Put)('me'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -93,7 +93,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "updateProfile", null);
 exports.AuthController = AuthController = __decorate([
-    (0, common_1.Controller)("auth"),
+    (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

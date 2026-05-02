@@ -1,19 +1,19 @@
-import { IsOptional, IsString, IsNumber, IsNotEmpty } from "class-validator"
+import { IsOptional, IsString, IsNumber, IsNotEmpty } from 'class-validator';
 
 export class CreateDisciplineDto {
   @IsString()
   @IsNotEmpty()
-  seriesId: string
+  seriesId: string;
 
   @IsString()
   @IsNotEmpty()
-  name: string
+  name: string;
 
   @IsOptional()
   @IsString()
-  code?: string
+  code?: string;
 
   @IsOptional()
   @IsNumber()
-  credits?: number
+  credits?: number;
 }

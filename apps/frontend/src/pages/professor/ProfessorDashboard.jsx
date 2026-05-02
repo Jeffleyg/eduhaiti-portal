@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/sqliteCache"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import { useSyncControl } from "../../context/useSyncControl.js"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function ProfessorDashboard() {
   const { t, i18n } = useTranslation()
@@ -83,12 +84,18 @@ function ProfessorDashboard() {
           <SectionHeader title={t("myClasses")} />
           <div className="space-y-3">
             {classes.length > 0 ? (
-              classes.map((cls) => (
-                <div key={cls.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
-                  <span className="font-semibold text-brand-navy">{cls.name}</span>
-                  <span className="text-brand-navy/70">{cls.students?.length ?? 0} {t("students")}</span>
-                </div>
-              ))
+              <LoadMoreList
+                items={classes}
+                initialLimit={4}
+                step={4}
+                continueLabel={t("continue") || "Continuar"}
+                renderItem={(cls) => (
+                  <div key={cls.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
+                    <span className="font-semibold text-brand-navy">{cls.name}</span>
+                    <span className="text-brand-navy/70">{cls.students?.length ?? 0} {t("students")}</span>
+                  </div>
+                )}
+              />
             ) : (
               <p className="text-sm text-brand-navy/60">{t("noData")}</p>
             )}

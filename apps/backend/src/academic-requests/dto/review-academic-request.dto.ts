@@ -1,11 +1,11 @@
-import { AcademicRequestStatus } from "@prisma/client"
-import { IsEnum, IsOptional, IsString } from "class-validator"
+import { AcademicRequestStatus } from '@prisma/client';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ReviewAcademicRequestDto {
   @IsEnum(AcademicRequestStatus)
-  status: AcademicRequestStatus
+  status: AcademicRequestStatus;
 
   @IsOptional()
   @IsString()
-  resolutionComment?: string
+  resolutionComment?: string;
 }

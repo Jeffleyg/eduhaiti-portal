@@ -22,17 +22,17 @@ let EmailService = class EmailService {
     fromAddress;
     constructor(configService) {
         this.configService = configService;
-        const host = this.configService.get("SMTP_HOST");
-        const port = Number(this.configService.get("SMTP_PORT") ?? 587);
-        const secure = (this.configService.get("SMTP_SECURE") ?? "false").toLowerCase() === "true";
-        const user = this.configService.get("SMTP_USER");
-        const pass = this.configService.get("SMTP_PASS");
+        const host = this.configService.get('SMTP_HOST');
+        const port = Number(this.configService.get('SMTP_PORT') ?? 587);
+        const secure = (this.configService.get('SMTP_SECURE') ?? 'false').toLowerCase() === 'true';
+        const user = this.configService.get('SMTP_USER');
+        const pass = this.configService.get('SMTP_PASS');
         if (!host || !user || !pass) {
-            this.fromAddress = this.configService.get("MAIL_FROM") ?? "";
+            this.fromAddress = this.configService.get('MAIL_FROM') ?? '';
             this.transporter = null;
             return;
         }
-        this.fromAddress = this.configService.get("MAIL_FROM") ?? user;
+        this.fromAddress = this.configService.get('MAIL_FROM') ?? user;
         this.transporter = nodemailer_1.default.createTransport({
             host,
             port,
@@ -42,13 +42,13 @@ let EmailService = class EmailService {
     }
     async sendTempPasswordEmail(to, tempPassword, expiresAt) {
         if (!this.transporter) {
-            throw new common_1.ServiceUnavailableException("SMTP configuration is missing");
+            throw new common_1.ServiceUnavailableException('SMTP configuration is missing');
         }
-        const expiresAtText = expiresAt.toLocaleString("pt-BR");
+        const expiresAtText = expiresAt.toLocaleString('pt-BR');
         await this.transporter.sendMail({
             from: this.fromAddress,
             to,
-            subject: "Sua senha temporaria - EduHaiti",
+            subject: 'Sua senha temporaria - EduHaiti',
             text: `Sua senha temporaria e: ${tempPassword}\n\nEla expira em: ${expiresAtText}\n\nNo primeiro acesso, voce devera alterar a senha.`,
         });
     }

@@ -1,27 +1,27 @@
-import { IsNumber, IsOptional, Max, Min } from "class-validator"
+import { IsNumber, IsOptional, Max, Min } from 'class-validator';
 
 export class UpsertAcademicSettingDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(20)
-  passAverage?: number
+  passAverage?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(100)
-  maxAbsencesPerCourse?: number
+  maxAbsencesPerCourse?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(30)
-  assignmentLateDaysLimit?: number
+  assignmentLateDaysLimit?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(60)
-  gradeReviewWindowDays?: number
+  gradeReviewWindowDays?: number;
 }

@@ -1,11 +1,11 @@
-import { IsNotEmpty, IsObject, IsOptional, IsString } from "class-validator"
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class HybridUssdDto {
   @IsOptional()
   @IsString()
-  operator?: string
+  operator?: string;
 
   @IsObject()
   @IsNotEmpty()
-  payload!: Record<string, unknown>
+  payload!: Record<string, unknown>;
 }

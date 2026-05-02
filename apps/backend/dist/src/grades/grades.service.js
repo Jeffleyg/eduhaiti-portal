@@ -24,10 +24,11 @@ let GradesService = class GradesService {
             include: { series: true },
         });
         if (!classData) {
-            throw new common_1.NotFoundException("Class not found");
+            throw new common_1.NotFoundException('Class not found');
         }
-        if (requester?.role === client_1.Role.TEACHER && classData.teacherId !== requester.id) {
-            throw new common_1.ForbiddenException("Teacher can only manage grades for own classes");
+        if (requester?.role === client_1.Role.TEACHER &&
+            classData.teacherId !== requester.id) {
+            throw new common_1.ForbiddenException('Teacher can only manage grades for own classes');
         }
         const studentEnrolled = await this.prisma.class.findFirst({
             where: {
@@ -37,7 +38,7 @@ let GradesService = class GradesService {
             select: { id: true },
         });
         if (!studentEnrolled) {
-            throw new common_1.BadRequestException("Student is not enrolled in this class");
+            throw new common_1.BadRequestException('Student is not enrolled in this class');
         }
         const discipline = await this.prisma.discipline.findUnique({
             where: { id: payload.disciplineId },
@@ -47,21 +48,24 @@ let GradesService = class GradesService {
         }
         const maxScore = payload.maxScore ?? 20;
         const weight = payload.weight ?? 1.0;
-        if (!Number.isFinite(payload.score) || !Number.isFinite(maxScore) || !Number.isFinite(weight)) {
-            throw new common_1.BadRequestException("Invalid numeric values for score, maxScore or weight");
+        if (!Number.isFinite(payload.score) ||
+            !Number.isFinite(maxScore) ||
+            !Number.isFinite(weight)) {
+            throw new common_1.BadRequestException('Invalid numeric values for score, maxScore or weight');
         }
         if (maxScore <= 0) {
-            throw new common_1.BadRequestException("maxScore must be greater than zero");
+            throw new common_1.BadRequestException('maxScore must be greater than zero');
         }
         if (payload.score < 0 || payload.score > maxScore) {
-            throw new common_1.BadRequestException("score must be between 0 and maxScore");
+            throw new common_1.BadRequestException('score must be between 0 and maxScore');
         }
         if (weight <= 0) {
-            throw new common_1.BadRequestException("weight must be greater than zero");
+            throw new common_1.BadRequestException('weight must be greater than zero');
         }
         const resolvedAcademicYearId = payload.academicYearId || classData.academicYearId;
-        if (payload.academicYearId && payload.academicYearId !== classData.academicYearId) {
-            throw new common_1.BadRequestException("Academic year does not match the selected class");
+        if (payload.academicYearId &&
+            payload.academicYearId !== classData.academicYearId) {
+            throw new common_1.BadRequestException('Academic year does not match the selected class');
         }
         const existingGrade = await this.prisma.grade.findFirst({
             where: {
@@ -70,7 +74,7 @@ let GradesService = class GradesService {
                 disciplineId: payload.disciplineId,
                 academicYearId: resolvedAcademicYearId,
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
             select: { id: true },
         });
         if (existingGrade) {
@@ -80,7 +84,7 @@ let GradesService = class GradesService {
                     score: payload.score,
                     maxScore,
                     weight,
-                    status: "DRAFT",
+                    status: 'DRAFT',
                 },
                 include: {
                     student: { select: { id: true, name: true, email: true } },
@@ -97,7 +101,7 @@ let GradesService = class GradesService {
                 score: payload.score,
                 maxScore,
                 weight,
-                status: "DRAFT",
+                status: 'DRAFT',
             },
             include: {
                 student: { select: { id: true, name: true, email: true } },
@@ -110,7 +114,7 @@ let GradesService = class GradesService {
             where: { id: gradeId },
         });
         if (!existing) {
-            throw new common_1.NotFoundException("Grade not found");
+            throw new common_1.NotFoundException('Grade not found');
         }
         return this.prisma.grade.update({
             where: { id: gradeId },
@@ -126,19 +130,19 @@ let GradesService = class GradesService {
             where: { id: gradeId },
         });
         if (!existing) {
-            throw new common_1.NotFoundException("Grade not found");
+            throw new common_1.NotFoundException('Grade not found');
         }
         await this.prisma.grade.delete({ where: { id: gradeId } });
-        return { message: "Grade deleted successfully" };
+        return { message: 'Grade deleted successfully' };
     }
     async publishGrades(classId, disciplineId) {
         return this.prisma.grade.updateMany({
             where: {
                 classId,
                 disciplineId,
-                status: "DRAFT",
+                status: 'DRAFT',
             },
-            data: { status: "PUBLISHED" },
+            data: { status: 'PUBLISHED' },
         });
     }
     async findByStudent(studentId, academicYearId) {
@@ -152,7 +156,7 @@ let GradesService = class GradesService {
                 class: { select: { id: true, name: true } },
                 discipline: { select: { id: true, name: true } },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findByClass(classId, disciplineId) {
@@ -166,7 +170,7 @@ let GradesService = class GradesService {
                 student: { select: { id: true, email: true, name: true } },
                 discipline: { select: { id: true, name: true } },
             },
-            orderBy: [{ discipline: { name: "asc" } }, { student: { name: "asc" } }],
+            orderBy: [{ discipline: { name: 'asc' } }, { student: { name: 'asc' } }],
         });
     }
     async calculateClassAverage(classId, disciplineId) {
@@ -174,7 +178,7 @@ let GradesService = class GradesService {
             where: {
                 classId,
                 disciplineId,
-                status: "PUBLISHED",
+                status: 'PUBLISHED',
             },
             select: { score: true, maxScore: true, weight: true },
         });
@@ -193,13 +197,13 @@ let GradesService = class GradesService {
             where: {
                 studentId,
                 academicYearId,
-                status: "PUBLISHED",
+                status: 'PUBLISHED',
             },
             include: {
                 discipline: { select: { id: true, name: true } },
                 class: { select: { id: true, name: true } },
             },
-            orderBy: { discipline: { name: "asc" } },
+            orderBy: { discipline: { name: 'asc' } },
         });
         const summary = {};
         grades.forEach((grade) => {
@@ -224,7 +228,7 @@ let GradesService = class GradesService {
         const grades = await this.prisma.grade.findMany({
             where: {
                 studentId,
-                status: "PUBLISHED",
+                status: 'PUBLISHED',
             },
             select: {
                 academicYear: {
@@ -237,10 +241,10 @@ let GradesService = class GradesService {
                     },
                 },
             },
-            distinct: ["academicYearId"],
+            distinct: ['academicYearId'],
             orderBy: {
                 academicYear: {
-                    year: "desc",
+                    year: 'desc',
                 },
             },
         });
@@ -250,7 +254,7 @@ let GradesService = class GradesService {
         const grades = await this.prisma.grade.findMany({
             where: {
                 studentId,
-                status: "PUBLISHED",
+                status: 'PUBLISHED',
                 ...(academicYearId ? { academicYearId } : {}),
             },
             select: {
@@ -264,7 +268,7 @@ let GradesService = class GradesService {
                     },
                 },
             },
-            orderBy: { createdAt: "asc" },
+            orderBy: { createdAt: 'asc' },
         });
         const monthlyMap = new Map();
         const disciplineMap = new Map();

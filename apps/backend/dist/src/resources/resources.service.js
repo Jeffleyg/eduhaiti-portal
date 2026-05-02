@@ -35,9 +35,9 @@ let ResourcesService = class ResourcesService {
         });
         await this.prisma.auditLog.create({
             data: {
-                entityType: "RESOURCE",
+                entityType: 'RESOURCE',
                 entityId: resource.id,
-                action: "CREATE",
+                action: 'CREATE',
                 userId: uploadedById,
                 changes: JSON.stringify({
                     id: resource.id,
@@ -58,7 +58,7 @@ let ResourcesService = class ResourcesService {
                     select: { id: true, name: true, email: true },
                 },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findLibraryBySeries(seriesId) {
@@ -81,7 +81,7 @@ let ResourcesService = class ResourcesService {
                     },
                 },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findLibraryBySchool(schoolId) {
@@ -113,7 +113,7 @@ let ResourcesService = class ResourcesService {
                     },
                 },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findById(resourceId) {
@@ -132,9 +132,9 @@ let ResourcesService = class ResourcesService {
         });
         await this.prisma.auditLog.create({
             data: {
-                entityType: "RESOURCE",
+                entityType: 'RESOURCE',
                 entityId: deleted.id,
-                action: "DELETE",
+                action: 'DELETE',
                 changes: JSON.stringify({
                     id: deleted.id,
                     classId: deleted.classId,

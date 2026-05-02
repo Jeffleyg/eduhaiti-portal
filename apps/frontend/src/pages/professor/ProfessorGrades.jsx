@@ -4,6 +4,7 @@ import { apiFetch } from "../../lib/api.js"
 import DataTable from "../../components/DataTable.jsx"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function ProfessorGrades() {
   const { t } = useTranslation()
@@ -288,8 +289,12 @@ function ProfessorGrades() {
         />
 
         {selectedClass?.students?.length ? (
-          <div className="space-y-2">
-            {selectedClass.students.map((student) => {
+          <LoadMoreList
+            items={selectedClass.students}
+            initialLimit={6}
+            step={6}
+            continueLabel={t("continue")}
+            renderItem={(student) => {
               const existingGrade = grades.find((item) => item.studentId === student.id)
 
               return (
@@ -315,8 +320,8 @@ function ProfessorGrades() {
                   />
                 </div>
               )
-            })}
-          </div>
+            }}
+          />
         ) : (
           <p className="text-sm text-brand-navy/60">{t("noData")}</p>
         )}

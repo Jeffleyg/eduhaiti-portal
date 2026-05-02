@@ -1,19 +1,19 @@
-import { AcademicRequestType } from "@prisma/client"
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator"
+import { AcademicRequestType } from '@prisma/client';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateAcademicRequestDto {
   @IsOptional()
   @IsString()
-  classId?: string
+  classId?: string;
 
   @IsEnum(AcademicRequestType)
-  type: AcademicRequestType
+  type: AcademicRequestType;
 
   @IsString()
   @IsNotEmpty()
-  title: string
+  title: string;
 
   @IsString()
   @IsNotEmpty()
-  details: string
+  details: string;
 }

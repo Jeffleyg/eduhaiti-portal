@@ -1,4 +1,4 @@
-import { AssignmentsService } from "./assignments.service";
+import { AssignmentsService } from './assignments.service';
 export declare class AssignmentsController {
     private readonly assignmentsService;
     constructor(assignmentsService: AssignmentsService);
@@ -15,9 +15,9 @@ export declare class AssignmentsController {
                 name: string | null;
             };
         } & {
+            grade: number | null;
             id: string;
             updatedAt: Date;
-            grade: number | null;
             studentId: string;
             status: import(".prisma/client").$Enums.AssignmentStatus;
             filePath: string;
@@ -29,8 +29,8 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
@@ -51,9 +51,9 @@ export declare class AssignmentsController {
                 name: string | null;
             };
         } & {
+            grade: number | null;
             id: string;
             updatedAt: Date;
-            grade: number | null;
             studentId: string;
             status: import(".prisma/client").$Enums.AssignmentStatus;
             filePath: string;
@@ -65,8 +65,8 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
@@ -91,9 +91,9 @@ export declare class AssignmentsController {
                 name: string | null;
             };
         } & {
+            grade: number | null;
             id: string;
             updatedAt: Date;
-            grade: number | null;
             studentId: string;
             status: import(".prisma/client").$Enums.AssignmentStatus;
             filePath: string;
@@ -105,8 +105,8 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
@@ -121,9 +121,9 @@ export declare class AssignmentsController {
             name: string | null;
         };
     } & {
+        grade: number | null;
         id: string;
         updatedAt: Date;
-        grade: number | null;
         studentId: string;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         filePath: string;
@@ -135,9 +135,9 @@ export declare class AssignmentsController {
         grade: number;
         feedback?: string;
     }): Promise<{
+        grade: number | null;
         id: string;
         updatedAt: Date;
-        grade: number | null;
         studentId: string;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         filePath: string;
@@ -149,8 +149,8 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;

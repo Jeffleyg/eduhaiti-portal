@@ -5,7 +5,7 @@ import { getSupportedLanguages, LANGUAGE_MAP } from "../lib/translationService"
 import "../styles/LanguageSelector.css"
 
 function LanguageSelector({ onLanguageChange }) {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [languages] = useState(getSupportedLanguages())
@@ -70,7 +70,7 @@ function LanguageSelector({ onLanguageChange }) {
         onClick={() => setIsOpen(!isOpen)}
         type="button"
         disabled={isLoading}
-        title={`Idioma atual: ${currentLanguageName}`}
+        title={`${t("languageLabel")}: ${currentLanguageName}`}
       >
         {isLoading ? (
           <Loader className="h-4 w-4 animate-spin" />
@@ -87,7 +87,7 @@ function LanguageSelector({ onLanguageChange }) {
         <div className="language-selector-dropdown">
           <div className="language-selector-header">
             <Globe className="h-4 w-4" />
-            <span>Selecionar Idioma</span>
+            <span>{t("selectLanguage")}</span>
           </div>
 
           <div className="language-selector-scroll">

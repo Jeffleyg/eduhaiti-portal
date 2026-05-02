@@ -24,26 +24,26 @@ let MessagesController = class MessagesController {
     }
     async getInbox(req) {
         const userId = req.user?.sub;
-        return this.messagesService.findReceivedBy(userId ?? "");
+        return this.messagesService.findReceivedBy(userId ?? '');
     }
     async getSent(req) {
         const userId = req.user?.sub;
-        return this.messagesService.findSentBy(userId ?? "");
+        return this.messagesService.findSentBy(userId ?? '');
     }
     async getRecipients(req) {
         const userId = req.user?.sub;
         const role = req.user?.role ?? client_1.Role.STUDENT;
-        return this.messagesService.listRecipients(userId ?? "", role);
+        return this.messagesService.listRecipients(userId ?? '', role);
     }
     async sendMessage(body, req) {
         const userId = req.user?.sub;
-        return this.messagesService.send(userId ?? "", body.toId, body.subject, body.body);
+        return this.messagesService.send(userId ?? '', body.toId, body.subject, body.body);
     }
 };
 exports.MessagesController = MessagesController;
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("inbox"),
+    (0, common_1.Get)('inbox'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -51,7 +51,7 @@ __decorate([
 ], MessagesController.prototype, "getInbox", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("sent"),
+    (0, common_1.Get)('sent'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -59,7 +59,7 @@ __decorate([
 ], MessagesController.prototype, "getSent", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("recipients"),
+    (0, common_1.Get)('recipients'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -75,7 +75,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], MessagesController.prototype, "sendMessage", null);
 exports.MessagesController = MessagesController = __decorate([
-    (0, common_1.Controller)("messages"),
+    (0, common_1.Controller)('messages'),
     __metadata("design:paramtypes", [messages_service_1.MessagesService])
 ], MessagesController);
 //# sourceMappingURL=messages.controller.js.map

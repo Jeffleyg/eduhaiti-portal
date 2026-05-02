@@ -1,7 +1,7 @@
-import { PrismaService } from "../prisma/prisma.service";
-import { EmailService } from "../common/services/email.service";
-import { CreateStudentDto } from "./dto/create-student.dto";
-import { CreateTeacherDto } from "./dto/create-teacher.dto";
+import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../common/services/email.service';
+import { CreateStudentDto } from './dto/create-student.dto';
+import { CreateTeacherDto } from './dto/create-teacher.dto';
 export declare class UsersService {
     private readonly prisma;
     private readonly emailService;
@@ -35,14 +35,14 @@ export declare class UsersService {
         expiresAt: Date;
     }>;
     findAllStudents(): Promise<{
-        id: string;
-        email: string;
-        enrollmentNumber: string | null;
-        name: string | null;
         firstName: string | null;
         lastName: string | null;
         fatherName: string | null;
         motherName: string | null;
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
         isActive: boolean;
         createdAt: Date;
         classesAttending: {
@@ -52,12 +52,12 @@ export declare class UsersService {
         }[];
     }[]>;
     findAllTeachers(): Promise<{
+        firstName: string | null;
+        lastName: string | null;
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
-        firstName: string | null;
-        lastName: string | null;
         subjects: string[];
         isActive: boolean;
         createdAt: Date;

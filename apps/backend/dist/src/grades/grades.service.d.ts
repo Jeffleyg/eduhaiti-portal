@@ -1,5 +1,5 @@
-import { PrismaService } from "../prisma/prisma.service";
-import { GradeStatus, Role } from "@prisma/client";
+import { PrismaService } from '../prisma/prisma.service';
+import { GradeStatus, Role } from '@prisma/client';
 export declare class GradesService {
     private readonly prisma;
     constructor(prisma: PrismaService);

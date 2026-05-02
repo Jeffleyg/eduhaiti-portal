@@ -1,12 +1,12 @@
-import { AcademicRequestStatus } from "@prisma/client"
-import { IsEnum, IsOptional, IsString } from "class-validator"
+import { AcademicRequestStatus } from '@prisma/client';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ListAcademicRequestsDto {
   @IsOptional()
   @IsString()
-  classId?: string
+  classId?: string;
 
   @IsOptional()
   @IsEnum(AcademicRequestStatus)
-  status?: AcademicRequestStatus
+  status?: AcademicRequestStatus;
 }

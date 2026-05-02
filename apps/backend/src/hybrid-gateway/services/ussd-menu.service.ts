@@ -1,67 +1,67 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable } from '@nestjs/common';
 
 interface UssdStepResult {
-  text: string
-  endSession: boolean
+  text: string;
+  endSession: boolean;
 }
 
 @Injectable()
 export class UssdMenuService {
   handle(text: string): UssdStepResult {
-    const path = text.trim() ? text.trim().split("*") : []
+    const path = text.trim() ? text.trim().split('*') : [];
 
     if (path.length === 0) {
       return {
-        text: "Menu EduHaiti\n1.Notas\n2.Calendario\n3.Avisos\n4.Resumo em audio",
+        text: 'Menu EduHaiti\n1.Notas\n2.Calendario\n3.Avisos\n4.Resumo em audio',
         endSession: false,
-      }
+      };
     }
 
-    if (path[0] === "1") {
+    if (path[0] === '1') {
       if (path.length === 1) {
         return {
-          text: "Digite: 1*ID_ALUNO\nEx: 1*12345",
+          text: 'Digite: 1*ID_ALUNO\nEx: 1*12345',
           endSession: false,
-        }
+        };
       }
 
       return {
         text: `Consulta de notas enviada para ${path[1]}.`,
         endSession: true,
-      }
+      };
     }
 
-    if (path[0] === "2") {
+    if (path[0] === '2') {
       return {
-        text: "Calendario: Prova 12/04. Reuniao 18/04.",
+        text: 'Calendario: Prova 12/04. Reuniao 18/04.',
         endSession: true,
-      }
+      };
     }
 
-    if (path[0] === "3") {
+    if (path[0] === '3') {
       return {
-        text: "Avisos: Aula normal amanha. Traga caderno.",
+        text: 'Avisos: Aula normal amanha. Traga caderno.',
         endSession: true,
-      }
+      };
     }
 
-    if (path[0] === "4") {
+    if (path[0] === '4') {
       if (path.length === 1) {
         return {
-          text: "Digite: 4*ID_ALUNO para receber resumo em audio (IVR).",
+          text: 'Digite: 4*ID_ALUNO para receber resumo em audio (IVR).',
           endSession: false,
-        }
+        };
       }
 
       return {
         text: `Resumo em audio solicitado para ${path[1]}. Aguarde ligacao automatica.`,
         endSession: true,
-      }
+      };
     }
 
     return {
-      text: "Opcao invalida. Digite 1, 2, 3 ou 4.",
+      text: 'Opcao invalida. Digite 1, 2, 3 ou 4.',
       endSession: true,
-    }
+    };
   }
 }

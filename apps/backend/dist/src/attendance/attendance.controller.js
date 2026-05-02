@@ -26,7 +26,7 @@ let AttendanceController = class AttendanceController {
     }
     async markAttendance(req, payload) {
         return this.attendanceService.markAttendance(payload, {
-            id: req.user?.sub ?? "",
+            id: req.user?.sub ?? '',
             role: req.user?.role ?? client_1.Role.TEACHER,
         });
     }
@@ -35,11 +35,11 @@ let AttendanceController = class AttendanceController {
     }
     async getMyAttendance(req, startDate, endDate) {
         const userId = req.user?.sub;
-        return this.attendanceService.findByStudent(userId ?? "", startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined);
+        return this.attendanceService.findByStudent(userId ?? '', startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined);
     }
     async getMyStats(req, classId) {
         const userId = req.user?.sub;
-        return this.attendanceService.getStudentAttendanceStats(userId ?? "", classId);
+        return this.attendanceService.getStudentAttendanceStats(userId ?? '', classId);
     }
     async getClassAttendance(classId, date) {
         return this.attendanceService.findByClass(classId, date ? new Date(date) : undefined);
@@ -62,27 +62,27 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
-    (0, common_1.Delete)(":id"),
-    __param(0, (0, common_1.Param)("id")),
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AttendanceController.prototype, "deleteAttendance", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("my-attendance"),
+    (0, common_1.Get)('my-attendance'),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)("startDate")),
-    __param(2, (0, common_1.Query)("endDate")),
+    __param(1, (0, common_1.Query)('startDate')),
+    __param(2, (0, common_1.Query)('endDate')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], AttendanceController.prototype, "getMyAttendance", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)("my-stats/:classId"),
+    (0, common_1.Get)('my-stats/:classId'),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)("classId")),
+    __param(1, (0, common_1.Param)('classId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
@@ -90,9 +90,9 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.Get)("class/:classId"),
-    __param(0, (0, common_1.Param)("classId")),
-    __param(1, (0, common_1.Query)("date")),
+    (0, common_1.Get)('class/:classId'),
+    __param(0, (0, common_1.Param)('classId')),
+    __param(1, (0, common_1.Query)('date')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
@@ -100,14 +100,14 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.TEACHER, client_1.Role.ADMIN),
-    (0, common_1.Get)("class/:classId/report"),
-    __param(0, (0, common_1.Param)("classId")),
+    (0, common_1.Get)('class/:classId/report'),
+    __param(0, (0, common_1.Param)('classId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AttendanceController.prototype, "getClassReport", null);
 exports.AttendanceController = AttendanceController = __decorate([
-    (0, common_1.Controller)("admin/attendance"),
+    (0, common_1.Controller)('admin/attendance'),
     __metadata("design:paramtypes", [attendance_service_1.AttendanceService])
 ], AttendanceController);
 //# sourceMappingURL=attendance.controller.js.map

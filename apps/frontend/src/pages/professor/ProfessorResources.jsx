@@ -5,6 +5,7 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { Upload } from "lucide-react"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function ProfessorResources() {
   const { t } = useTranslation()
@@ -171,17 +172,23 @@ function ProfessorResources() {
       <div className="space-y-3">
         <h3 className="font-semibold text-brand-navy">Recursos da Turma</h3>
         {resources.length > 0 ? (
-          resources.map((resource) => (
-            <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-brand-navy">{resource.title}</p>
-                {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>}
+          <LoadMoreList
+            items={resources}
+            initialLimit={4}
+            step={4}
+            continueLabel={t("continue")}
+            renderItem={(resource) => (
+              <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-brand-navy">{resource.title}</p>
+                  {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>}
+                </div>
+                <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
+                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
+                </a>
               </div>
-              <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
-                {disableImages ? "TXT-DOWNLOAD" : "Download"}
-              </a>
-            </div>
-          ))
+            )}
+          />
         ) : (
           <p className="text-center text-brand-navy/60">Nenhum recurso enviado ainda</p>
         )}
@@ -190,17 +197,23 @@ function ProfessorResources() {
       <div className="space-y-3">
         <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
         {libraryResources.length > 0 ? (
-          libraryResources.map((resource) => (
-            <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-brand-navy">{resource.title}</p>
-                <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
+          <LoadMoreList
+            items={libraryResources}
+            initialLimit={4}
+            step={4}
+            continueLabel={t("continue")}
+            renderItem={(resource) => (
+              <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-brand-navy">{resource.title}</p>
+                  <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
+                </div>
+                <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
+                  Download
+                </a>
               </div>
-              <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
-                Download
-              </a>
-            </div>
-          ))
+            )}
+          />
         ) : (
           <p className="text-center text-brand-navy/60">Sem itens na biblioteca da serie.</p>
         )}

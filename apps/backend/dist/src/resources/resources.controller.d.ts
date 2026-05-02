@@ -1,5 +1,5 @@
-import { ResourcesService } from "./resources.service";
-import { AssetOptimizationService } from "../content-delivery/services/asset-optimization.service";
+import { ResourcesService } from './resources.service';
+import { AssetOptimizationService } from '../content-delivery/services/asset-optimization.service';
 export declare class ResourcesController {
     private readonly resourcesService;
     private readonly assetOptimizationService;
@@ -14,8 +14,8 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -25,8 +25,8 @@ export declare class ResourcesController {
         class: {
             id: string;
             name: string;
-            seriesId: string;
             level: string;
+            seriesId: string;
         };
         uploadedBy: {
             id: string;
@@ -37,8 +37,8 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -46,15 +46,15 @@ export declare class ResourcesController {
     })[]>;
     getLibraryBySchool(schoolId: string): Promise<({
         class: {
-            id: string;
-            name: string;
             academicYear: {
                 id: string;
                 year: string;
                 schoolId: string;
             };
-            seriesId: string;
+            id: string;
+            name: string;
             level: string;
+            seriesId: string;
         };
         uploadedBy: {
             id: string;
@@ -65,8 +65,8 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -88,8 +88,8 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -99,8 +99,8 @@ export declare class ResourcesController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;

@@ -191,14 +191,12 @@ export class FinanceIntegrationService {
 
     const paidAt = new Date();
 
-    let payment:
-      | {
-          id: string;
-          amount: number;
-          status: PaymentStatus;
-          dueDate: Date;
-        }
-      | null = null;
+    let payment: {
+      id: string;
+      amount: number;
+      status: PaymentStatus;
+      dueDate: Date;
+    } | null = null;
 
     if (dto.tuitionPaymentId) {
       const existing = await db.payment.findFirst({
@@ -216,7 +214,9 @@ export class FinanceIntegrationService {
       });
 
       if (!existing) {
-        throw new NotFoundException('Tuition charge not found for this student');
+        throw new NotFoundException(
+          'Tuition charge not found for this student',
+        );
       }
 
       if (existing.status === PaymentStatus.PAID) {
@@ -289,19 +289,23 @@ export class FinanceIntegrationService {
       },
     });
 
-    const ledgerRecord = await this.ledger.append(payment.id, 'guardian-tuition', {
-      provider: charge.providerName,
-      studentEnrollmentNumber: dto.studentEnrollmentNumber,
-      studentName: student.name,
-      grossAmountHtg: dto.amountHtg,
-      feeAmountHtg: charge.feeAmountHtg,
-      netAmountHtg: charge.netAmountHtg,
-      receiptNumber: charge.providerTransactionId,
-      tuitionPaymentId: dto.tuitionPaymentId ?? null,
-      guardianName: dto.guardianName ?? null,
-      guardianPhone: dto.guardianPhone ?? null,
-      resultingStatus: payment.status,
-    });
+    const ledgerRecord = await this.ledger.append(
+      payment.id,
+      'guardian-tuition',
+      {
+        provider: charge.providerName,
+        studentEnrollmentNumber: dto.studentEnrollmentNumber,
+        studentName: student.name,
+        grossAmountHtg: dto.amountHtg,
+        feeAmountHtg: charge.feeAmountHtg,
+        netAmountHtg: charge.netAmountHtg,
+        receiptNumber: charge.providerTransactionId,
+        tuitionPaymentId: dto.tuitionPaymentId ?? null,
+        guardianName: dto.guardianName ?? null,
+        guardianPhone: dto.guardianPhone ?? null,
+        resultingStatus: payment.status,
+      },
+    );
 
     await this.observability.logPaymentStage(
       'CREDIT_COMPLETED',
@@ -352,7 +356,11 @@ export class FinanceIntegrationService {
       where: {
         studentId: student.id,
         status: {
-          in: [PaymentStatus.PENDING, PaymentStatus.OVERDUE, PaymentStatus.PARTIAL],
+          in: [
+            PaymentStatus.PENDING,
+            PaymentStatus.OVERDUE,
+            PaymentStatus.PARTIAL,
+          ],
         },
       },
       orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
@@ -432,7 +440,9 @@ export class FinanceIntegrationService {
     return payment;
   }
 
-  private buildAdminPaymentsWhere(filters: AdminPaymentsQueryDto): Prisma.PaymentWhereInput {
+  private buildAdminPaymentsWhere(
+    filters: AdminPaymentsQueryDto,
+  ): Prisma.PaymentWhereInput {
     const enrollment = filters.studentEnrollmentNumber?.trim();
     const startDate = filters.startDate ? new Date(filters.startDate) : null;
     const endDate = filters.endDate ? new Date(filters.endDate) : null;
@@ -609,16 +619,15 @@ export class FinanceIntegrationService {
       }),
     ]);
 
-    const byStatus = grouped.reduce<Record<string, { count: number; amountHtg: number }>>(
-      (acc, item) => {
-        acc[item.status] = {
-          count: item._count._all,
-          amountHtg: Number(item._sum.amount ?? 0),
-        };
-        return acc;
-      },
-      {},
-    );
+    const byStatus = grouped.reduce<
+      Record<string, { count: number; amountHtg: number }>
+    >((acc, item) => {
+      acc[item.status] = {
+        count: item._count._all,
+        amountHtg: Number(item._sum.amount ?? 0),
+      };
+      return acc;
+    }, {});
 
     return {
       totalPayments: totals._count._all,

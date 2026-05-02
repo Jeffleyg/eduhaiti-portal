@@ -83,14 +83,14 @@ function TopBar({ role }) {
         <LanguageSelector />
 
         <label className="inline-flex items-center gap-2 rounded-full border border-brand-navy/20 bg-white px-3 py-2 text-xs font-semibold text-brand-navy">
-          Sync
+          {t("syncMode")}
           <select
             value={conflictStrategy}
             onChange={(event) => setConflictStrategy(event.target.value)}
             className="bg-transparent text-xs outline-none"
           >
-            <option value="lww">LWW</option>
-            <option value="manual">Manual</option>
+            <option value="lww">{t("syncStrategyLWW")}</option>
+            <option value="manual">{t("syncStrategyManual")}</option>
           </select>
         </label>
         </div>
@@ -102,7 +102,7 @@ function TopBar({ role }) {
       {error ? <span className="text-xs text-brand-red sm:text-right">{error}</span> : null}
       {lastSyncConflicts.length > 0 ? (
         <span className="text-xs text-amber-700">
-          {lastSyncConflicts.length} conflito(s) detectado(s) no ultimo sync.
+          {t("syncConflictsDetected", { count: lastSyncConflicts.length })}
         </span>
       ) : null}
         {syncHistory.length > 0 ? (

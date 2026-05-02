@@ -38,19 +38,24 @@ let UsersService = class UsersService {
             where: { enrollmentNumber: { startsWith: `${year}-` } },
         });
         const next = count + 1;
-        return `${year}-${String(next).padStart(4, "0")}`;
+        return `${year}-${String(next).padStart(4, '0')}`;
     }
     generateTempPassword() {
-        return (0, crypto_1.randomBytes)(6).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
+        return (0, crypto_1.randomBytes)(6)
+            .toString('base64')
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .slice(0, 8);
     }
     async createStudent(payload) {
         const normalizedEmail = payload.email.trim().toLowerCase();
-        const existing = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+        const existing = await this.prisma.user.findUnique({
+            where: { email: normalizedEmail },
+        });
         if (existing) {
-            throw new common_1.BadRequestException("User already exists with this email");
+            throw new common_1.BadRequestException('User already exists with this email');
         }
         if (!payload.fatherName?.trim() && !payload.motherName?.trim()) {
-            throw new common_1.BadRequestException("At least one parent/guardian name is required");
+            throw new common_1.BadRequestException('At least one parent/guardian name is required');
         }
         const tempPassword = this.generateTempPassword();
         const passwordHash = await bcryptjs_1.default.hash(tempPassword, 10);
@@ -58,9 +63,11 @@ let UsersService = class UsersService {
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         const fullName = `${payload.firstName} ${payload.lastName}`.trim();
         if (payload.classId) {
-            const classExists = await this.prisma.class.findUnique({ where: { id: payload.classId } });
+            const classExists = await this.prisma.class.findUnique({
+                where: { id: payload.classId },
+            });
             if (!classExists) {
-                throw new common_1.BadRequestException("Class not found");
+                throw new common_1.BadRequestException('Class not found');
             }
         }
         return this.prisma.$transaction(async (tx) => {
@@ -80,9 +87,17 @@ let UsersService = class UsersService {
                     mustChangePassword: true,
                     tempPasswordExpiresAt: expiresAt,
                     role: client_1.Role.STUDENT,
-                    ...(payload.classId && { classesAttending: { connect: [{ id: payload.classId }] } }),
+                    ...(payload.classId && {
+                        classesAttending: { connect: [{ id: payload.classId }] },
+                    }),
                 },
-                select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
+                select: {
+                    id: true,
+                    email: true,
+                    role: true,
+                    name: true,
+                    enrollmentNumber: true,
+                },
             });
             await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt);
             return user;
@@ -90,9 +105,11 @@ let UsersService = class UsersService {
     }
     async createTeacher(payload) {
         const normalizedEmail = payload.email.trim().toLowerCase();
-        const existing = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+        const existing = await this.prisma.user.findUnique({
+            where: { email: normalizedEmail },
+        });
         if (existing) {
-            throw new common_1.BadRequestException("User already exists with this email");
+            throw new common_1.BadRequestException('User already exists with this email');
         }
         const tempPassword = this.generateTempPassword();
         const passwordHash = await bcryptjs_1.default.hash(tempPassword, 10);
@@ -118,7 +135,13 @@ let UsersService = class UsersService {
                     role: client_1.Role.TEACHER,
                     subjects: payload.subjects ?? [],
                 },
-                select: { id: true, email: true, role: true, name: true, enrollmentNumber: true },
+                select: {
+                    id: true,
+                    email: true,
+                    role: true,
+                    name: true,
+                    enrollmentNumber: true,
+                },
             });
             if (payload.classIds && payload.classIds.length > 0) {
                 await tx.class.updateMany({
@@ -130,13 +153,13 @@ let UsersService = class UsersService {
                 const defaultAcademicYear = await tx.academicYear.findFirst();
                 const defaultSeries = await tx.series.findFirst();
                 if (!defaultAcademicYear || !defaultSeries) {
-                    throw new common_1.BadRequestException("No academic year or series found in database");
+                    throw new common_1.BadRequestException('No academic year or series found in database');
                 }
                 for (const newClass of payload.newClasses) {
                     await tx.class.create({
                         data: {
                             name: newClass.name,
-                            level: newClass.level ?? "3eme",
+                            level: newClass.level ?? '3eme',
                             teacherId: user.id,
                             academicYearId: newClass.academicYearId ?? defaultAcademicYear.id,
                             seriesId: newClass.seriesId ?? defaultSeries.id,
@@ -155,13 +178,13 @@ let UsersService = class UsersService {
             select: { id: true, email: true, role: true, isActive: true },
         });
         if (!user) {
-            throw new common_1.NotFoundException("User not found");
+            throw new common_1.NotFoundException('User not found');
         }
         if (!user.isActive) {
-            throw new common_1.BadRequestException("User is inactive");
+            throw new common_1.BadRequestException('User is inactive');
         }
         if (user.role !== client_1.Role.STUDENT && user.role !== client_1.Role.TEACHER) {
-            throw new common_1.BadRequestException("Temporary password can only be resent to students or teachers");
+            throw new common_1.BadRequestException('Temporary password can only be resent to students or teachers');
         }
         const tempPassword = this.generateTempPassword();
         const passwordHash = await bcryptjs_1.default.hash(tempPassword, 10);
@@ -205,7 +228,7 @@ let UsersService = class UsersService {
                 isActive: true,
                 createdAt: true,
             },
-            orderBy: { name: "asc" },
+            orderBy: { name: 'asc' },
         });
     }
     async findAllTeachers() {
@@ -229,7 +252,7 @@ let UsersService = class UsersService {
                 isActive: true,
                 createdAt: true,
             },
-            orderBy: { name: "asc" },
+            orderBy: { name: 'asc' },
         });
     }
 };

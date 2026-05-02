@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
-import CorporateHeader from "../../components/CorporateHeader.jsx"
 import ProfileCard from "../../components/ProfileCard.jsx"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
@@ -25,7 +25,8 @@ function formatDateInput(value) {
 
 function UserProfile() {
   const { t } = useTranslation()
-  const { token, user, refreshProfile } = useAuth()
+  const { token, refreshProfile } = useAuth()
+  const navigate = useNavigate()
 
   const [profile, setProfile] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -34,6 +35,37 @@ function UserProfile() {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [editMode, setEditMode] = useState(false)
+
+  const quickActions = [
+    {
+      label: t("profileAcademicHistory"),
+      description: t("profileAcademicHistoryDescription"),
+      onClick: () => navigate("/student/resultats"),
+    },
+    {
+      label: t("profileDocuments"),
+      description: t("profileDocumentsDescription"),
+      onClick: () => navigate("/student/ressources"),
+    },
+    {
+      label: t("profileMessages"),
+      description: t("profileMessagesDescription"),
+      onClick: () => navigate("/student/messages"),
+    },
+  ]
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case "ADMIN":
+        return t("roleadmin")
+      case "TEACHER":
+        return t("roleprofessor")
+      case "STUDENT":
+        return t("rolestudent")
+      default:
+        return role || "-"
+    }
+  }
 
   const loadProfile = async () => {
     setLoading(true)
@@ -62,7 +94,7 @@ function UserProfile() {
     loadProfile()
   }, [token])
 
-  const handlePhotoUpload = async (file, preview) => {
+  const handlePhotoUpload = async (file) => {
     setSaving(true)
     setError("")
     setMessage("")
@@ -123,7 +155,6 @@ function UserProfile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-sand">
-        <CorporateHeader />
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <SkeletonLoader type="dashboard" />
         </div>
@@ -133,8 +164,6 @@ function UserProfile() {
 
   return (
     <div className="min-h-screen bg-sand">
-      <CorporateHeader />
-
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {error ? <LoadingState error={error} type="banner" message={error} /> : null}
         {message ? (
@@ -146,20 +175,38 @@ function UserProfile() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Sidebar com Perfil */}
           <div className="lg:col-span-1">
-            <ProfileCard user={profile} onPhotoUpload={handlePhotoUpload} loading={saving} />
+            <ProfileCard 
+              user={profile} 
+              onPhotoUpload={handlePhotoUpload} 
+              loading={saving}
+              onEditClick={() => setEditMode(!editMode)}
+              onSettingsClick={() => navigate('/student/settings')}
+            />
 
             {/* Quick Links */}
-            <div className="mt-6 space-y-2 rounded-2xl border border-brand-navy/10 bg-white/50 p-4">
-              <button className="block w-full rounded-lg px-4 py-2 text-left text-sm font-semibold text-brand-navy hover:bg-brand-navy/10 transition-colors">
-                📊 {t("academicRecords")}
-              </button>
-              <button className="block w-full rounded-lg px-4 py-2 text-left text-sm font-semibold text-brand-navy hover:bg-brand-navy/10 transition-colors">
-                📝 {t("documents")}
-              </button>
-              <button className="block w-full rounded-lg px-4 py-2 text-left text-sm font-semibold text-brand-navy hover:bg-brand-navy/10 transition-colors">
-                💬 {t("messages")}
-              </button>
-            </div>
+            {profile?.role === "STUDENT" ? (
+              <div className="mt-6 space-y-3 rounded-3xl border border-brand-navy/10 bg-white/70 p-4 shadow-sm">
+                <p className="px-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand-navy/45">
+                  {t("profileQuickAccess")}
+                </p>
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={action.onClick}
+                    className="group w-full rounded-2xl border border-brand-navy/10 bg-sand/60 px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-brand-navy/20 hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-brand-navy group-hover:text-brand-red">{action.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-brand-navy/60">{action.description}</p>
+                      </div>
+                      <span className="mt-0.5 text-brand-navy/30 transition-colors group-hover:text-brand-red">→</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           {/* Conteúdo Principal */}
@@ -167,7 +214,7 @@ function UserProfile() {
             {/* Dados Pessoais */}
             <div className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
               <div className="mb-6 flex items-center justify-between">
-                <SectionHeader title={t("personalData")} />
+                <SectionHeader title={t("profilePersonalData")} subtitle={t("profilePersonalDataSubtitle")} />
                 <button
                   onClick={() => setEditMode(!editMode)}
                   className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
@@ -304,24 +351,31 @@ function UserProfile() {
                 </div>
 
                 {editMode && (
-                  <div className="mt-6 flex gap-2 justify-end border-t border-brand-navy/10 pt-4">
+                  <div className="mt-6 flex gap-3 justify-end border-t border-brand-navy/10 pt-4">
                     <button
                       type="button"
                       onClick={() => {
                         setEditMode(false)
                         loadProfile()
                       }}
-                      className="outline-button"
+                      className="rounded-xl border border-brand-navy/20 bg-white/80 px-6 py-2.5 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40"
                       disabled={saving}
                     >
                       {t("cancel")}
                     </button>
                     <button
                       type="submit"
-                      className="primary-button"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-navy to-brand-navy/80 px-8 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={saving}
                     >
-                      {saving ? t("loading") : t("save")}
+                      {saving ? (
+                        <>
+                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                          {t("loading")}
+                        </>
+                      ) : (
+                        t("save")
+                      )}
                     </button>
                   </div>
                 )}
@@ -330,7 +384,7 @@ function UserProfile() {
 
             {/* Dados Institucionais */}
             <div className="mt-6 rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
-              <SectionHeader title={t("institutionalData")} />
+              <SectionHeader title={t("profileInstitutionalData")} subtitle={t("profileInstitutionalDataSubtitle")} />
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
@@ -344,7 +398,7 @@ function UserProfile() {
                     {t("role")}
                   </p>
                   <p className="mt-1 inline-block rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
-                    {t("role" + profile?.role)}
+                    {getRoleLabel(profile?.role)}
                   </p>
                 </div>
                 <div>
@@ -360,7 +414,7 @@ function UserProfile() {
                     {t("status")}
                   </p>
                   <p className="mt-1 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    Ativo
+                    {t("active")}
                   </p>
                 </div>
               </div>

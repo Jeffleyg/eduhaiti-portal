@@ -1,11 +1,18 @@
-import { Injectable } from "@nestjs/common"
-import { PrismaService } from "../prisma/prisma.service"
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ResourcesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(classId: string, title: string, description: string | undefined, filePath: string, fileType: string, uploadedById: string) {
+  async create(
+    classId: string,
+    title: string,
+    description: string | undefined,
+    filePath: string,
+    fileType: string,
+    uploadedById: string,
+  ) {
     const resource = await this.prisma.resource.create({
       data: {
         classId,
@@ -20,13 +27,13 @@ export class ResourcesService {
           select: { id: true, name: true, email: true },
         },
       },
-    })
+    });
 
     await this.prisma.auditLog.create({
       data: {
-        entityType: "RESOURCE",
+        entityType: 'RESOURCE',
         entityId: resource.id,
-        action: "CREATE",
+        action: 'CREATE',
         userId: uploadedById,
         changes: JSON.stringify({
           id: resource.id,
@@ -36,9 +43,9 @@ export class ResourcesService {
           fileType,
         }),
       },
-    })
+    });
 
-    return resource
+    return resource;
   }
 
   async findByClass(classId: string) {
@@ -49,8 +56,8 @@ export class ResourcesService {
           select: { id: true, name: true, email: true },
         },
       },
-      orderBy: { createdAt: "desc" },
-    })
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findLibraryBySeries(seriesId: string) {
@@ -73,8 +80,8 @@ export class ResourcesService {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
-    })
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findLibraryBySchool(schoolId: string) {
@@ -106,8 +113,8 @@ export class ResourcesService {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
-    })
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findById(resourceId: string) {
@@ -118,19 +125,19 @@ export class ResourcesService {
           select: { id: true, name: true, email: true },
         },
       },
-    })
+    });
   }
 
   async delete(resourceId: string) {
     const deleted = await this.prisma.resource.delete({
       where: { id: resourceId },
-    })
+    });
 
     await this.prisma.auditLog.create({
       data: {
-        entityType: "RESOURCE",
+        entityType: 'RESOURCE',
         entityId: deleted.id,
-        action: "DELETE",
+        action: 'DELETE',
         changes: JSON.stringify({
           id: deleted.id,
           classId: deleted.classId,
@@ -139,8 +146,8 @@ export class ResourcesService {
           fileType: deleted.fileType,
         }),
       },
-    })
+    });
 
-    return deleted
+    return deleted;
   }
 }

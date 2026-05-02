@@ -1,4 +1,4 @@
-import { Gender } from "@prisma/client";
+import { Gender } from '@prisma/client';
 declare class NewClassDto {
     name: string;
     level?: string;

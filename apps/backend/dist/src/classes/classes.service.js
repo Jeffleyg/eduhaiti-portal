@@ -23,7 +23,7 @@ let ClassesService = class ClassesService {
             where: { id: payload.seriesId },
         });
         if (!series || series.academicYearId !== payload.academicYearId) {
-            throw new common_1.BadRequestException("Series does not belong to the specified academic year");
+            throw new common_1.BadRequestException('Series does not belong to the specified academic year');
         }
         const existing = await this.prisma.class.findFirst({
             where: {
@@ -33,7 +33,7 @@ let ClassesService = class ClassesService {
             },
         });
         if (existing) {
-            throw new common_1.BadRequestException("Class with this name already exists in this series");
+            throw new common_1.BadRequestException('Class with this name already exists in this series');
         }
         return this.prisma.class.create({
             data: {
@@ -56,7 +56,7 @@ let ClassesService = class ClassesService {
             where: { id: classId },
         });
         if (!existing) {
-            throw new common_1.NotFoundException("Class not found");
+            throw new common_1.NotFoundException('Class not found');
         }
         if (payload.name && payload.name !== existing.name) {
             const duplicate = await this.prisma.class.findFirst({
@@ -68,7 +68,7 @@ let ClassesService = class ClassesService {
                 },
             });
             if (duplicate) {
-                throw new common_1.BadRequestException("Class with this name already exists in this series");
+                throw new common_1.BadRequestException('Class with this name already exists in this series');
             }
         }
         if (payload.teacherId) {
@@ -77,11 +77,11 @@ let ClassesService = class ClassesService {
                 select: { id: true, role: true },
             });
             if (!teacher || teacher.role !== client_1.Role.TEACHER) {
-                throw new common_1.BadRequestException("Teacher not found");
+                throw new common_1.BadRequestException('Teacher not found');
             }
         }
         if (payload.maxStudents !== undefined && payload.maxStudents < 1) {
-            throw new common_1.BadRequestException("maxStudents must be greater than zero");
+            throw new common_1.BadRequestException('maxStudents must be greater than zero');
         }
         return this.prisma.class.update({
             where: { id: classId },
@@ -98,15 +98,15 @@ let ClassesService = class ClassesService {
             include: { students: { select: { id: true } } },
         });
         if (!existing) {
-            throw new common_1.NotFoundException("Class not found");
+            throw new common_1.NotFoundException('Class not found');
         }
         if (existing.students && existing.students.length > 0) {
-            throw new common_1.BadRequestException("Cannot delete class with enrolled students");
+            throw new common_1.BadRequestException('Cannot delete class with enrolled students');
         }
         await this.prisma.class.delete({
             where: { id: classId },
         });
-        return { message: "Class deleted successfully" };
+        return { message: 'Class deleted successfully' };
     }
     async enrollStudent(classId, studentId) {
         const classExists = await this.prisma.class.findUnique({
@@ -114,14 +114,14 @@ let ClassesService = class ClassesService {
             include: { students: { select: { id: true } } },
         });
         if (!classExists) {
-            throw new common_1.NotFoundException("Class not found");
+            throw new common_1.NotFoundException('Class not found');
         }
         if (classExists.maxStudents &&
             classExists.students.length >= classExists.maxStudents) {
-            throw new common_1.BadRequestException("Class is full");
+            throw new common_1.BadRequestException('Class is full');
         }
         if (classExists.students.some((s) => s.id === studentId)) {
-            throw new common_1.BadRequestException("Student already enrolled in this class");
+            throw new common_1.BadRequestException('Student already enrolled in this class');
         }
         return this.prisma.class.update({
             where: { id: classId },
@@ -157,7 +157,7 @@ let ClassesService = class ClassesService {
                 series: { select: { id: true, name: true } },
                 academicYear: { select: { id: true, year: true } },
             },
-            orderBy: { name: "asc" },
+            orderBy: { name: 'asc' },
         });
     }
     async findAll(academicYearId, seriesId) {
@@ -176,7 +176,7 @@ let ClassesService = class ClassesService {
                 series: { select: { id: true, name: true } },
                 academicYear: { select: { year: true } },
             },
-            orderBy: [{ academicYear: { year: "desc" } }, { name: "asc" }],
+            orderBy: [{ academicYear: { year: 'desc' } }, { name: 'asc' }],
         });
     }
     async findById(classId) {
@@ -197,7 +197,7 @@ let ClassesService = class ClassesService {
             },
         });
         if (!classData) {
-            throw new common_1.NotFoundException("Class not found");
+            throw new common_1.NotFoundException('Class not found');
         }
         return classData;
     }
@@ -209,13 +209,19 @@ let ClassesService = class ClassesService {
                 series: { select: { id: true, name: true } },
                 academicYear: { select: { id: true, year: true } },
             },
-            orderBy: { name: "asc" },
+            orderBy: { name: 'asc' },
         });
     }
     async listAcademicYears() {
         return this.prisma.academicYear.findMany({
-            select: { id: true, year: true, startDate: true, endDate: true, isActive: true },
-            orderBy: { year: "desc" },
+            select: {
+                id: true,
+                year: true,
+                startDate: true,
+                endDate: true,
+                isActive: true,
+            },
+            orderBy: { year: 'desc' },
         });
     }
     async listSeries(academicYearId) {
@@ -227,7 +233,7 @@ let ClassesService = class ClassesService {
                 academicYearId: true,
                 academicYear: { select: { id: true, year: true } },
             },
-            orderBy: [{ academicYear: { year: "desc" } }, { name: "asc" }],
+            orderBy: [{ academicYear: { year: 'desc' } }, { name: 'asc' }],
         });
     }
 };

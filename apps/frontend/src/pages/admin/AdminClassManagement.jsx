@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 const initialForm = {
   name: "",
@@ -289,31 +290,37 @@ function AdminClassManagement() {
           ) : classes.length === 0 ? (
             <p className="text-sm text-brand-navy/60">{t("noData")}</p>
           ) : (
-            classes.map((classItem) => (
-              <div
-                key={classItem.id}
-                className="flex flex-col gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-brand-navy">{classItem.name}</p>
-                  <p className="text-xs text-brand-navy/60">
-                    {classItem.level} • {classItem.series?.name} • {classItem.academicYear?.year}
-                  </p>
-                  <p className="text-xs text-brand-navy/60">
-                    {t("teacher")}: {classItem.teacher?.name ?? t("adminNoTeacher")} • {t("students")}: {classItem.students?.length ?? 0}/{classItem.maxStudents}
-                  </p>
-                </div>
+            <LoadMoreList
+              items={classes}
+              initialLimit={6}
+              step={6}
+              continueLabel={t("continue")}
+              renderItem={(classItem) => (
+                <div
+                  key={classItem.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:flex-row md:items-center md:justify-between"
+                >
+                  <div>
+                    <p className="font-semibold text-brand-navy">{classItem.name}</p>
+                    <p className="text-xs text-brand-navy/60">
+                      {classItem.level} • {classItem.series?.name} • {classItem.academicYear?.year}
+                    </p>
+                    <p className="text-xs text-brand-navy/60">
+                      {t("teacher")}: {classItem.teacher?.name ?? t("adminNoTeacher")} • {t("students")}: {classItem.students?.length ?? 0}/{classItem.maxStudents}
+                    </p>
+                  </div>
 
-                <div className="flex gap-2">
-                  <button className="outline-button" onClick={() => startEdit(classItem)} disabled={loading}>
-                    {t("adminEdit")}
-                  </button>
-                  <button className="outline-button" onClick={() => deleteClass(classItem.id)} disabled={loading}>
-                    {t("adminDelete")}
-                  </button>
+                  <div className="flex gap-2">
+                    <button className="outline-button" onClick={() => startEdit(classItem)} disabled={loading}>
+                      {t("adminEdit")}
+                    </button>
+                    <button className="outline-button" onClick={() => deleteClass(classItem.id)} disabled={loading}>
+                      {t("adminDelete")}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
+              )}
+            />
           )}
         </div>
       </section>

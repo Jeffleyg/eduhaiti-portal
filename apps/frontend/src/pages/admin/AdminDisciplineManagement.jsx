@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 const initialForm = {
   name: "",
@@ -229,37 +230,43 @@ function AdminDisciplineManagement() {
               ) : disciplines.length === 0 ? (
                 <p className="text-sm text-brand-navy/60">{t("noData")}</p>
               ) : (
-                disciplines.map((discipline) => (
-                  <div
-                    key={discipline.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-brand-navy">{discipline.name}</p>
-                      <p className="text-xs text-brand-navy/60">
-                        {discipline.code && `${t("adminDisciplineCode")}: ${discipline.code} | `}
-                        {t("adminDisciplineCredits")}: {discipline.credits}
-                      </p>
-                    </div>
+                <LoadMoreList
+                  items={disciplines}
+                  initialLimit={6}
+                  step={6}
+                  continueLabel={t("continue")}
+                  renderItem={(discipline) => (
+                    <div
+                      key={discipline.id}
+                      className="flex flex-col gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold text-brand-navy">{discipline.name}</p>
+                        <p className="text-xs text-brand-navy/60">
+                          {discipline.code && `${t("adminDisciplineCode")}: ${discipline.code} | `}
+                          {t("adminDisciplineCredits")}: {discipline.credits}
+                        </p>
+                      </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        className="outline-button"
-                        onClick={() => startEdit(discipline)}
-                        disabled={loading}
-                      >
-                        {t("adminEdit")}
-                      </button>
-                      <button
-                        className="outline-button"
-                        onClick={() => deleteDiscipline(discipline.id)}
-                        disabled={loading}
-                      >
-                        {t("adminDelete")}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="outline-button"
+                          onClick={() => startEdit(discipline)}
+                          disabled={loading}
+                        >
+                          {t("adminEdit")}
+                        </button>
+                        <button
+                          className="outline-button"
+                          onClick={() => deleteDiscipline(discipline.id)}
+                          disabled={loading}
+                        >
+                          {t("adminDelete")}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )}
+                />
               )}
             </div>
           </section>

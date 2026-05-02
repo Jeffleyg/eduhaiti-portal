@@ -1,4 +1,4 @@
-import { Type } from "class-transformer"
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -8,68 +8,68 @@ import {
   IsString,
   MinLength,
   ValidateNested,
-} from "class-validator"
-import { Gender } from "@prisma/client"
+} from 'class-validator';
+import { Gender } from '@prisma/client';
 
 class NewClassDto {
   @IsString()
-  name: string
+  name: string;
 
   @IsOptional()
   @IsString()
-  level?: string
+  level?: string;
 
   @IsOptional()
   @IsString()
-  academicYearId?: string
+  academicYearId?: string;
 
   @IsOptional()
   @IsString()
-  seriesId?: string
+  seriesId?: string;
 }
 
 export class CreateTeacherDto {
   @IsEmail()
-  email: string
+  email: string;
 
   @IsString()
   @MinLength(2)
-  firstName: string
+  firstName: string;
 
   @IsString()
   @MinLength(2)
-  lastName: string
+  lastName: string;
 
   @IsDateString()
-  dateOfBirth: string
+  dateOfBirth: string;
 
   @IsString()
-  address: string
+  address: string;
 
   @IsEnum(Gender)
-  gender: Gender
+  gender: Gender;
 
   @IsOptional()
   @IsString()
-  fatherName?: string
+  fatherName?: string;
 
   @IsOptional()
   @IsString()
-  motherName?: string
+  motherName?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  subjects?: string[]
+  subjects?: string[];
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  classIds?: string[]
+  classIds?: string[];
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => NewClassDto)
-  newClasses?: NewClassDto[]
+  newClasses?: NewClassDto[];
 }

@@ -1,36 +1,43 @@
-import { IsDateString, IsEmail, IsEnum, IsOptional, IsString, MinLength } from "class-validator"
-import { Gender } from "@prisma/client"
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
+import { Gender } from '@prisma/client';
 
 export class CreateStudentDto {
   @IsEmail()
-  email: string
+  email: string;
 
   @IsString()
   @MinLength(2)
-  firstName: string
+  firstName: string;
 
   @IsString()
   @MinLength(2)
-  lastName: string
+  lastName: string;
 
   @IsDateString()
-  dateOfBirth: string
+  dateOfBirth: string;
 
   @IsString()
-  address: string
+  address: string;
 
   @IsEnum(Gender)
-  gender: Gender
+  gender: Gender;
 
   @IsOptional()
   @IsString()
-  fatherName?: string
+  fatherName?: string;
 
   @IsOptional()
   @IsString()
-  motherName?: string
+  motherName?: string;
 
   @IsOptional()
   @IsString()
-  classId?: string
+  classId?: string;
 }

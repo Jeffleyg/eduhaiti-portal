@@ -1,11 +1,18 @@
-import { Injectable } from "@nestjs/common"
-import { PrismaService } from "../prisma/prisma.service"
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AssignmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(classId: string, title: string, description: string | undefined, dueDate: Date, filePath: string | undefined, createdById: string) {
+  async create(
+    classId: string,
+    title: string,
+    description: string | undefined,
+    dueDate: Date,
+    filePath: string | undefined,
+    createdById: string,
+  ) {
     return this.prisma.assignment.create({
       data: {
         classId,
@@ -27,7 +34,7 @@ export class AssignmentsService {
           },
         },
       },
-    })
+    });
   }
 
   async findByClass(classId: string) {
@@ -45,8 +52,8 @@ export class AssignmentsService {
           },
         },
       },
-      orderBy: { dueDate: "asc" },
-    })
+      orderBy: { dueDate: 'asc' },
+    });
   }
 
   async findById(assignmentId: string) {
@@ -64,7 +71,7 @@ export class AssignmentsService {
           },
         },
       },
-    })
+    });
   }
 
   async findForStudent(studentId: string) {
@@ -78,9 +85,9 @@ export class AssignmentsService {
         },
       },
       select: { id: true },
-    })
+    });
 
-    const classIds = classes.map((c) => c.id)
+    const classIds = classes.map((c) => c.id);
 
     return this.prisma.assignment.findMany({
       where: {
@@ -99,11 +106,15 @@ export class AssignmentsService {
           },
         },
       },
-      orderBy: { dueDate: "asc" },
-    })
+      orderBy: { dueDate: 'asc' },
+    });
   }
 
-  async submitAssignment(assignmentId: string, studentId: string, filePath: string) {
+  async submitAssignment(
+    assignmentId: string,
+    studentId: string,
+    filePath: string,
+  ) {
     return this.prisma.assignmentSubmission.upsert({
       where: {
         assignmentId_studentId: {
@@ -125,10 +136,15 @@ export class AssignmentsService {
           select: { id: true, name: true, email: true },
         },
       },
-    })
+    });
   }
 
-  async update(assignmentId: string, title: string, description: string | undefined, dueDate: Date) {
+  async update(
+    assignmentId: string,
+    title: string,
+    description: string | undefined,
+    dueDate: Date,
+  ) {
     return this.prisma.assignment.update({
       where: { id: assignmentId },
       data: {
@@ -136,22 +152,26 @@ export class AssignmentsService {
         description,
         dueDate,
       },
-    })
+    });
   }
 
-  async gradeSubmission(submissionId: string, grade: number, feedback: string | undefined) {
+  async gradeSubmission(
+    submissionId: string,
+    grade: number,
+    feedback: string | undefined,
+  ) {
     return this.prisma.assignmentSubmission.update({
       where: { id: submissionId },
       data: {
         grade,
         feedback,
       },
-    })
+    });
   }
 
   async delete(assignmentId: string) {
     return this.prisma.assignment.delete({
       where: { id: assignmentId },
-    })
+    });
   }
 }

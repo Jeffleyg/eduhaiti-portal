@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function AdminStudentManagement() {
   const { t } = useTranslation()
@@ -178,12 +179,13 @@ function AdminStudentManagement() {
         ) : filteredStudents.length === 0 ? (
           <p className="mt-4 text-sm text-brand-navy/60">{t("noData")}</p>
         ) : (
-          <div className="mt-4 space-y-3">
-            {filteredStudents.map((student) => (
-              <div
-                key={student.id}
-                className="rounded-2xl border border-brand-navy/10 bg-white p-4"
-              >
+          <LoadMoreList
+            items={filteredStudents}
+            initialLimit={6}
+            step={6}
+            continueLabel={t("continue")}
+            renderItem={(student) => (
+              <div key={student.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -260,8 +262,8 @@ function AdminStudentManagement() {
                   )}
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          />
         )}
       </section>
     </div>

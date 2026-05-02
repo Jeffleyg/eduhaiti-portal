@@ -34,7 +34,7 @@ let MessagesService = class MessagesService {
                     ],
                 },
                 select: { id: true, name: true, email: true, role: true },
-                orderBy: [{ role: "asc" }, { name: "asc" }],
+                orderBy: [{ role: 'asc' }, { name: 'asc' }],
             });
         }
         if (role === client_1.Role.STUDENT) {
@@ -56,7 +56,7 @@ let MessagesService = class MessagesService {
                     ],
                 },
                 select: { id: true, name: true, email: true, role: true },
-                orderBy: [{ role: "asc" }, { name: "asc" }],
+                orderBy: [{ role: 'asc' }, { name: 'asc' }],
             });
         }
         return this.prisma.user.findMany({
@@ -65,7 +65,7 @@ let MessagesService = class MessagesService {
                 isActive: true,
             },
             select: { id: true, name: true, email: true, role: true },
-            orderBy: [{ role: "asc" }, { name: "asc" }],
+            orderBy: [{ role: 'asc' }, { name: 'asc' }],
             take: 200,
         });
     }
@@ -73,7 +73,7 @@ let MessagesService = class MessagesService {
         return this.prisma.message.findMany({
             where: { toId: userId },
             include: { from: { select: { id: true, email: true, name: true } } },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
             take: 50,
         });
     }
@@ -81,14 +81,17 @@ let MessagesService = class MessagesService {
         return this.prisma.message.findMany({
             where: { fromId: userId },
             include: { to: { select: { id: true, email: true, name: true } } },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
             take: 50,
         });
     }
     async send(fromId, toId, subject, body) {
         return this.prisma.message.create({
             data: { fromId, toId, subject, body },
-            include: { from: { select: { name: true } }, to: { select: { name: true } } },
+            include: {
+                from: { select: { name: true } },
+                to: { select: { name: true } },
+            },
         });
     }
 };

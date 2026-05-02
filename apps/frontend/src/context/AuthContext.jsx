@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api.js"
 
@@ -21,7 +22,7 @@ export function AuthProvider({ children }) {
     try {
       const profile = await apiFetch("/auth/me", { token })
       setUser(profile)
-    } catch (error) {
+    } catch {
       localStorage.removeItem(TOKEN_KEY)
       setToken(null)
       setUser(null)

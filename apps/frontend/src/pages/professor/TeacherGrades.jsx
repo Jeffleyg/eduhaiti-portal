@@ -1,32 +1,27 @@
 import { useState, useEffect } from "react"
-import { useAuth } from "../context/AuthContext"
-import { apiFetch } from "../utils/api"
+import { useAuth } from "../../context/AuthContext.jsx"
+import { apiFetch } from "../../lib/api.js"
 import "../styles/TeacherGrades.css"
 
 export default function TeacherGrades() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [classes, setClasses] = useState([])
   const [selectedClass, setSelectedClass] = useState(null)
   const [students, setStudents] = useState([])
   const [grades, setGrades] = useState({})
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (user?.role === "TEACHER") {
-      loadMyClasses()
+      void (async () => {
+        try {
+          const res = await apiFetch("/classes/my-classes", { token })
+          setClasses(res || [])
+        } catch (error) {
+          console.error("Failed to load classes:", error)
+        }
+      })()
     }
-  }, [user])
-
-  const loadMyClasses = async () => {
-    setLoading(true)
-    try {
-      const res = await apiFetch("/classes/my-classes")
-      setClasses(res.data || [])
-    } catch (error) {
-      console.error("Failed to load classes:", error)
-    }
-    setLoading(false)
-  }
+  }, [user, token])
 
   const handleSelectClass = (classId) => {
     setSelectedClass(classId)
@@ -51,14 +46,15 @@ export default function TeacherGrades() {
         if (score !== "" && score !== null) {
           await apiFetch("/admin/grades", {
             method: "POST",
-            body: JSON.stringify({
+            token,
+            body: {
               studentId,
               classId: selectedClass,
               disciplineId: "", // TODO: select discipline
               academicYearId: "", // TODO: get current academic year
               score,
               maxScore: 20,
-            }),
+            },
           })
         }
       }
@@ -134,8 +130,7 @@ export default function TeacherGrades() {
         </div>
       )}
 
-      {loading && <p>Carregando...</p>}
-      {!loading && classes.length === 0 && (
+      {classes.length === 0 && (
         <p className="no-data">Você não tem turmas atribuídas ainda.</p>
       )}
     </div>

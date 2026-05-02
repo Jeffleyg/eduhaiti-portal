@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentForum() {
   const { token } = useAuth()
@@ -160,22 +161,29 @@ function StudentForum() {
         <div className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
           <h3 className="font-semibold text-brand-navy">Topicos</h3>
           {threads.length > 0 ? (
-            threads.map((thread) => (
-              <button
-                key={thread.id}
-                type="button"
-                onClick={() => {
-                  setSelectedThreadId(thread.id)
-                  loadPosts(thread.id)
-                }}
-                className={`w-full rounded-xl border px-3 py-2 text-left ${
-                  selectedThreadId === thread.id ? "border-brand-red bg-brand-red/5" : "border-brand-navy/10"
-                }`}
-              >
-                <p className="font-semibold text-brand-navy">{thread.title}</p>
-                <p className="text-xs text-brand-navy/60">{thread.postsCount} respostas</p>
-              </button>
-            ))
+            <LoadMoreList
+              items={threads}
+              initialLimit={5}
+              step={5}
+              continueLabel="Próximo"
+              previousLabel="Anterior"
+              renderItem={(thread) => (
+                <button
+                  key={thread.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedThreadId(thread.id)
+                    loadPosts(thread.id)
+                  }}
+                  className={`w-full rounded-xl border px-3 py-2 text-left ${
+                    selectedThreadId === thread.id ? "border-brand-red bg-brand-red/5" : "border-brand-navy/10"
+                  }`}
+                >
+                  <p className="font-semibold text-brand-navy">{thread.title}</p>
+                  <p className="text-xs text-brand-navy/60">{thread.postsCount} respostas</p>
+                </button>
+              )}
+            />
           ) : (
             <p className="text-sm text-brand-navy/60">Sem topicos nesta turma.</p>
           )}
@@ -192,12 +200,19 @@ function StudentForum() {
 
               <div className="space-y-2">
                 {threadDetails.posts.length > 0 ? (
-                  threadDetails.posts.map((post) => (
-                    <div key={post.id} className="rounded-xl border border-brand-navy/10 p-3">
-                      <p className="text-xs text-brand-navy/60">{post.createdBy?.name ?? "Usuario"}</p>
-                      <p className="text-sm text-brand-navy">{post.body}</p>
-                    </div>
-                  ))
+                  <LoadMoreList
+                    items={threadDetails.posts}
+                    initialLimit={5}
+                    step={5}
+                    continueLabel="Próximo"
+                    previousLabel="Anterior"
+                    renderItem={(post) => (
+                      <div key={post.id} className="rounded-xl border border-brand-navy/10 p-3">
+                        <p className="text-xs text-brand-navy/60">{post.createdBy?.name ?? "Usuario"}</p>
+                        <p className="text-sm text-brand-navy">{post.body}</p>
+                      </div>
+                    )}
+                  />
                 ) : (
                   <p className="text-sm text-brand-navy/60">Sem respostas ainda.</p>
                 )}

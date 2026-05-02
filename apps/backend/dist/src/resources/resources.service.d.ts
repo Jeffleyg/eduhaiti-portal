@@ -1,4 +1,4 @@
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaService } from '../prisma/prisma.service';
 export declare class ResourcesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -12,8 +12,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -29,8 +29,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -40,8 +40,8 @@ export declare class ResourcesService {
         class: {
             id: string;
             name: string;
-            seriesId: string;
             level: string;
+            seriesId: string;
         };
         uploadedBy: {
             id: string;
@@ -52,8 +52,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -61,15 +61,15 @@ export declare class ResourcesService {
     })[]>;
     findLibraryBySchool(schoolId: string): Promise<({
         class: {
-            id: string;
-            name: string;
             academicYear: {
                 id: string;
                 year: string;
                 schoolId: string;
             };
-            seriesId: string;
+            id: string;
+            name: string;
             level: string;
+            seriesId: string;
         };
         uploadedBy: {
             id: string;
@@ -80,8 +80,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -97,8 +97,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;
@@ -108,8 +108,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        description: string | null;
         classId: string;
+        description: string | null;
         title: string;
         filePath: string;
         fileType: string;

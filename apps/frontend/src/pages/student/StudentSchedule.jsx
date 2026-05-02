@@ -4,6 +4,7 @@ import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import DataTable from "../../components/DataTable.jsx"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentSchedule() {
   const { t } = useTranslation()
@@ -84,23 +85,26 @@ function StudentSchedule() {
         <DataTable columns={todayColumns} rows={todayRows.length ? todayRows : []} />
       </section>
 
-      <div className="space-y-3">
-        {classes.length > 0 ? (
-          classes.map((cls) => (
-            <div
-              key={cls.id}
-              className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4"
-            >
-              <div>
-                <p className="font-semibold text-brand-navy">{cls.name}</p>
-                <p className="text-sm text-brand-navy/60">{cls.teacher?.name ?? cls.teacher?.email}</p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-brand-navy/60">{t("noData")}</p>
-        )}
-      </div>
+          <div className="space-y-3">
+            {classes.length > 0 ? (
+              <LoadMoreList
+                items={classes}
+                initialLimit={4}
+                step={4}
+                continueLabel={t("continue") || "Continuar"}
+                renderItem={(cls) => (
+                  <div key={cls.id} className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
+                    <div>
+                      <p className="font-semibold text-brand-navy">{cls.name}</p>
+                      <p className="text-sm text-brand-navy/60">{cls.teacher?.name ?? cls.teacher?.email}</p>
+                    </div>
+                  </div>
+                )}
+              />
+            ) : (
+              <p className="text-sm text-brand-navy/60">{t("noData")}</p>
+            )}
+          </div>
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
         <h3 className="mb-3 font-semibold text-brand-navy">Historico de presenca (mes atual)</h3>

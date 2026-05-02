@@ -30,7 +30,9 @@ let AuthService = class AuthService {
     }
     async requestCode(email) {
         const normalizedEmail = email.trim().toLowerCase();
-        let user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+        let user = await this.prisma.user.findUnique({
+            where: { email: normalizedEmail },
+        });
         if (!user) {
             user = await this.prisma.user.create({
                 data: {
@@ -41,7 +43,7 @@ let AuthService = class AuthService {
         }
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         const codeHash = await bcryptjs_1.default.hash(code, 10);
-        const ttlMinutes = Number(this.configService.get("AUTH_CODE_TTL_MINUTES") ?? 10);
+        const ttlMinutes = Number(this.configService.get('AUTH_CODE_TTL_MINUTES') ?? 10);
         const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
         await this.prisma.loginCode.deleteMany({
             where: {
@@ -57,8 +59,10 @@ let AuthService = class AuthService {
                 userId: user.id,
             },
         });
-        const response = { delivered: true };
-        if ((this.configService.get("NODE_ENV") ?? "development") !== "production") {
+        const response = {
+            delivered: true,
+        };
+        if ((this.configService.get('NODE_ENV') ?? 'development') !== 'production') {
             response.devCode = code;
         }
         return response;
@@ -71,14 +75,14 @@ let AuthService = class AuthService {
                 consumedAt: null,
                 expiresAt: { gt: new Date() },
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: 'desc' },
         });
         if (!loginCode) {
-            throw new common_1.UnauthorizedException("Invalid or expired code");
+            throw new common_1.UnauthorizedException('Invalid or expired code');
         }
         const isValid = await bcryptjs_1.default.compare(code, loginCode.codeHash);
         if (!isValid) {
-            throw new common_1.UnauthorizedException("Invalid or expired code");
+            throw new common_1.UnauthorizedException('Invalid or expired code');
         }
         const user = await this.prisma.user.findUnique({
             where: { email: normalizedEmail },
@@ -93,7 +97,7 @@ let AuthService = class AuthService {
             },
         });
         if (!user || !user.isActive) {
-            throw new common_1.UnauthorizedException("Account not available");
+            throw new common_1.UnauthorizedException('Account not available');
         }
         await this.prisma.loginCode.update({
             where: { id: loginCode.id },
@@ -139,10 +143,10 @@ let AuthService = class AuthService {
             select: { id: true, firstName: true, lastName: true },
         });
         if (!existing) {
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        const firstName = payload.firstName ?? existing.firstName ?? "";
-        const lastName = payload.lastName ?? existing.lastName ?? "";
+        const firstName = payload.firstName ?? existing.firstName ?? '';
+        const lastName = payload.lastName ?? existing.lastName ?? '';
         const fullName = `${firstName} ${lastName}`.trim() || null;
         await this.prisma.user.update({
             where: { id: userId },
@@ -150,7 +154,9 @@ let AuthService = class AuthService {
                 firstName: payload.firstName,
                 lastName: payload.lastName,
                 name: fullName,
-                dateOfBirth: payload.dateOfBirth ? new Date(payload.dateOfBirth) : undefined,
+                dateOfBirth: payload.dateOfBirth
+                    ? new Date(payload.dateOfBirth)
+                    : undefined,
                 address: payload.address,
                 gender: payload.gender,
                 fatherName: payload.fatherName,
@@ -177,39 +183,39 @@ let AuthService = class AuthService {
         });
         if (!user || !user.isActive || !user.passwordHash) {
             await this.logAccessEvent({
-                action: "LOGIN_FAILED",
+                action: 'LOGIN_FAILED',
                 entityId: normalizedEmail,
                 details: {
-                    reason: "invalid_credentials_or_inactive",
+                    reason: 'invalid_credentials_or_inactive',
                     email: normalizedEmail,
                 },
             });
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
         if (user.tempPasswordExpiresAt && user.tempPasswordExpiresAt < new Date()) {
             await this.logAccessEvent({
-                action: "LOGIN_FAILED",
+                action: 'LOGIN_FAILED',
                 entityId: user.id,
                 userId: user.id,
                 details: {
-                    reason: "temporary_password_expired",
+                    reason: 'temporary_password_expired',
                     email: user.email,
                 },
             });
-            throw new common_1.UnauthorizedException("Temporary password expired");
+            throw new common_1.UnauthorizedException('Temporary password expired');
         }
         const isValid = await bcryptjs_1.default.compare(password, user.passwordHash);
         if (!isValid) {
             await this.logAccessEvent({
-                action: "LOGIN_FAILED",
+                action: 'LOGIN_FAILED',
                 entityId: user.id,
                 userId: user.id,
                 details: {
-                    reason: "invalid_credentials",
+                    reason: 'invalid_credentials',
                     email: user.email,
                 },
             });
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const payload = { sub: user.id, email: user.email, role: user.role };
         const token = await this.jwtService.signAsync(payload);
@@ -223,7 +229,7 @@ let AuthService = class AuthService {
             enrollmentNumber: user.enrollmentNumber,
         };
         await this.logAccessEvent({
-            action: "LOGIN_SUCCESS",
+            action: 'LOGIN_SUCCESS',
             entityId: user.id,
             userId: user.id,
             details: {
@@ -235,8 +241,8 @@ let AuthService = class AuthService {
     }
     async logout(userId, email) {
         await this.logAccessEvent({
-            action: "LOGOUT",
-            entityId: userId || email || "unknown",
+            action: 'LOGOUT',
+            entityId: userId || email || 'unknown',
             userId: userId || undefined,
             details: {
                 email: email ?? null,
@@ -250,11 +256,11 @@ let AuthService = class AuthService {
             select: { id: true, passwordHash: true },
         });
         if (!user || !user.passwordHash) {
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const isValid = await bcryptjs_1.default.compare(currentPassword, user.passwordHash);
         if (!isValid) {
-            throw new common_1.UnauthorizedException("Invalid credentials");
+            throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const passwordHash = await bcryptjs_1.default.hash(newPassword, 10);
         await this.prisma.user.update({
@@ -273,7 +279,7 @@ let AuthService = class AuthService {
             where: { email: normalizedEmail },
         });
         if (existingUser) {
-            throw new common_1.ConflictException("User already exists with this email");
+            throw new common_1.ConflictException('User already exists with this email');
         }
         const user = await this.prisma.user.create({
             data: {
@@ -286,25 +292,25 @@ let AuthService = class AuthService {
         return user;
     }
     getTestCredentials() {
-        const isProduction = (this.configService.get("NODE_ENV") ?? "development") === "production";
+        const isProduction = (this.configService.get('NODE_ENV') ?? 'development') === 'production';
         if (isProduction) {
-            throw new common_1.NotFoundException("Not found");
+            throw new common_1.NotFoundException('Not found');
         }
         return {
             admin: {
                 role: client_1.Role.ADMIN,
-                email: "admin@eduhaiti.ht",
-                password: this.configService.get("ADMIN_PASSWORD") ?? "Admin@123",
+                email: 'admin@eduhaiti.ht',
+                password: this.configService.get('ADMIN_PASSWORD') ?? 'Admin@123',
             },
             teacher: {
                 role: client_1.Role.TEACHER,
-                email: "professeur@eduhaiti.ht",
-                password: this.configService.get("TEACHER_PASSWORD") ?? "Teacher@123",
+                email: 'professeur@eduhaiti.ht',
+                password: this.configService.get('TEACHER_PASSWORD') ?? 'Teacher@123',
             },
             student: {
                 role: client_1.Role.STUDENT,
-                email: "eleve@eduhaiti.ht",
-                password: this.configService.get("STUDENT_PASSWORD") ?? "Student@123",
+                email: 'eleve@eduhaiti.ht',
+                password: this.configService.get('STUDENT_PASSWORD') ?? 'Student@123',
             },
         };
     }
@@ -312,7 +318,7 @@ let AuthService = class AuthService {
         try {
             await this.prisma.auditLog.create({
                 data: {
-                    entityType: "AUTH_ACCESS",
+                    entityType: 'AUTH_ACCESS',
                     entityId: params.entityId,
                     action: params.action,
                     userId: params.userId,

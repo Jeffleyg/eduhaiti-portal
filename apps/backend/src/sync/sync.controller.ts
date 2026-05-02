@@ -1,19 +1,19 @@
-import { Body, Controller, Post } from "@nestjs/common"
-import { PullSyncDto } from "./dto/pull-sync.dto"
-import { PushSyncDto } from "./dto/push-sync.dto"
-import { SyncService } from "./sync.service"
+import { Body, Controller, Post } from '@nestjs/common';
+import { PullSyncDto } from './dto/pull-sync.dto';
+import { PushSyncDto } from './dto/push-sync.dto';
+import { SyncService } from './sync.service';
 
-@Controller("sync")
+@Controller('sync')
 export class SyncController {
   constructor(private readonly syncService: SyncService) {}
 
-  @Post("push")
+  @Post('push')
   async push(@Body() dto: PushSyncDto) {
-    return this.syncService.push(dto)
+    return this.syncService.push(dto);
   }
 
-  @Post("pull")
+  @Post('pull')
   async pull(@Body() dto: PullSyncDto) {
-    return this.syncService.pull(dto)
+    return this.syncService.pull(dto);
   }
 }

@@ -1,22 +1,22 @@
-import { Injectable } from "@nestjs/common"
-import { PrismaService } from "../../prisma/prisma.service"
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 
 export interface StudentCriticalSummary {
-  studentId: string
-  globalAverage: number
-  absences: number
-  latestAnnouncement?: string
+  studentId: string;
+  globalAverage: number;
+  absences: number;
+  latestAnnouncement?: string;
 }
 
 export interface StudentLessonAudioSummary {
-  studentId: string
-  className: string | null
-  resourceId: string
-  title: string
-  description?: string | null
-  fileType: string
-  filePath: string
-  hasAudio: boolean
+  studentId: string;
+  className: string | null;
+  resourceId: string;
+  title: string;
+  description?: string | null;
+  fileType: string;
+  filePath: string;
+  hasAudio: boolean;
 }
 
 @Injectable()
@@ -41,7 +41,7 @@ INNER JOIN Guardians gu ON gu.id = gs.guardian_id
 WHERE s.id = @studentId
   AND gu.phone_number = @senderPhone
   AND (@responsibleDocumentId IS NULL OR gu.document_id = @responsibleDocumentId)
-GROUP BY s.id;`
+GROUP BY s.id;`;
   }
 
   async getCriticalSummary(
@@ -51,7 +51,7 @@ GROUP BY s.id;`
   ): Promise<StudentCriticalSummary | null> {
     // Fast-fail guard avoids expensive reads when command is malformed.
     if (!studentId || !senderPhone) {
-      return null
+      return null;
     }
 
     // Current implementation uses Prisma for immediate compatibility.
@@ -63,24 +63,29 @@ GROUP BY s.id;`
         fatherName: true,
         motherName: true,
       },
-    })
+    });
 
     if (!student) {
-      return null
+      return null;
     }
 
-    const normalizedPhone = senderPhone.replace(/\D/g, "")
-    const normalizedToken = (responsibleDocumentId ?? "").replace(/\D/g, "")
+    const normalizedPhone = senderPhone.replace(/\D/g, '');
+    const normalizedToken = (responsibleDocumentId ?? '').replace(/\D/g, '');
 
     // Security binding fallback for current schema:
     // guardian token can be validated against known student-linked identifiers.
-    const linkedToken = (student.fatherName ?? student.motherName ?? "").replace(/\D/g, "")
+    const linkedToken = (
+      student.fatherName ??
+      student.motherName ??
+      ''
+    ).replace(/\D/g, '');
     const isAuthorized =
       normalizedPhone.length >= 8 &&
-      (!normalizedToken || (linkedToken.length > 0 && normalizedToken === linkedToken))
+      (!normalizedToken ||
+        (linkedToken.length > 0 && normalizedToken === linkedToken));
 
     if (!isAuthorized) {
-      return null
+      return null;
     }
 
     const [gradeAgg, absenceAgg, latestAnnouncement] = await Promise.all([
@@ -91,28 +96,28 @@ GROUP BY s.id;`
       this.prisma.attendance.count({
         where: {
           studentId,
-          status: "ABSENT",
+          status: 'ABSENT',
         },
       }),
       this.prisma.announcement.findFirst({
-        orderBy: { publishedAt: "desc" },
+        orderBy: { publishedAt: 'desc' },
         select: { title: true },
       }),
-    ])
+    ]);
 
     return {
       studentId,
       globalAverage: Number(gradeAgg._avg.score ?? 0),
       absences: absenceAgg,
       latestAnnouncement: latestAnnouncement?.title,
-    }
+    };
   }
 
   async getLatestLessonAudioSummary(
     studentId: string,
   ): Promise<StudentLessonAudioSummary | null> {
     if (!studentId) {
-      return null
+      return null;
     }
 
     const studentClass = await this.prisma.class.findFirst({
@@ -125,11 +130,11 @@ GROUP BY s.id;`
         id: true,
         name: true,
       },
-      orderBy: { createdAt: "desc" },
-    })
+      orderBy: { createdAt: 'desc' },
+    });
 
     if (!studentClass) {
-      return null
+      return null;
     }
 
     const latestResource = await this.prisma.resource.findFirst({
@@ -143,14 +148,14 @@ GROUP BY s.id;`
         fileType: true,
         filePath: true,
       },
-      orderBy: { updatedAt: "desc" },
-    })
+      orderBy: { updatedAt: 'desc' },
+    });
 
     if (!latestResource) {
-      return null
+      return null;
     }
 
-    const isAudioFile = latestResource.fileType.toLowerCase() === "mp3"
+    const isAudioFile = latestResource.fileType.toLowerCase() === 'mp3';
 
     return {
       studentId,
@@ -161,6 +166,6 @@ GROUP BY s.id;`
       fileType: latestResource.fileType,
       filePath: latestResource.filePath,
       hasAudio: isAudioFile,
-    }
+    };
   }
 }

@@ -1,0 +1,7 @@
+export { default as AdminUsers } from "../../pages/admin/AdminUsers.jsx"
+export { default as AdminStudentManagement } from "../../pages/admin/AdminStudentManagement.jsx"
+export { default as AdminDisciplineManagement } from "../../pages/admin/AdminDisciplineManagement.jsx"
+export { default as AdminClassManagement } from "../../pages/admin/AdminClassManagement.jsx"
+export { default as AdminFinanceControl } from "../../pages/admin/AdminFinanceControl.jsx"
+export { default as AdminAcademicConfig } from "../../pages/admin/AdminAcademicConfig.jsx"
+export { default as AdminFamilyCommunication } from "../../pages/admin/AdminFamilyCommunication.jsx"

@@ -20,21 +20,21 @@ let AttendanceService = class AttendanceService {
     }
     buildAttendanceFamilyNotice(params) {
         const statusTextByCode = {
-            PRESENT: "presente",
-            ABSENT: "ausente",
-            LATE: "atrasado",
-            EXCUSED: "justificado",
+            PRESENT: 'presente',
+            ABSENT: 'ausente',
+            LATE: 'atrasado',
+            EXCUSED: 'justificado',
         };
         const statusText = statusTextByCode[params.status];
-        const dateLabel = params.date.toLocaleDateString("pt-BR");
+        const dateLabel = params.date.toLocaleDateString('pt-BR');
         const remarksSuffix = params.remarks?.trim()
             ? ` Observacao: ${params.remarks.trim()}.`
-            : "";
+            : '';
         return {
-            title: "Atualizacao de chamada",
+            title: 'Atualizacao de chamada',
             body: `A chamada de ${dateLabel} na turma ${params.className} foi registrada como ${statusText}.${remarksSuffix}`,
-            severity: params.status === "ABSENT" ? "urgent" : "normal",
-            channel: "IN_APP",
+            severity: params.status === 'ABSENT' ? 'urgent' : 'normal',
+            channel: 'IN_APP',
             attendanceStatus: params.status,
             attendanceDate: params.date.toISOString(),
             className: params.className,
@@ -46,7 +46,7 @@ let AttendanceService = class AttendanceService {
             where: { id: payload.studentId },
         });
         if (!student) {
-            throw new common_1.NotFoundException("Student not found");
+            throw new common_1.NotFoundException('Student not found');
         }
         const classSummary = await this.prisma.class.findUnique({
             where: { id: payload.classId },
@@ -58,13 +58,14 @@ let AttendanceService = class AttendanceService {
             },
         });
         if (!classSummary) {
-            throw new common_1.NotFoundException("Class not found");
+            throw new common_1.NotFoundException('Class not found');
         }
-        if (requester?.role === client_1.Role.TEACHER && classSummary.teacherId !== requester.id) {
-            throw new common_1.ForbiddenException("Teacher can only mark attendance for own classes");
+        if (requester?.role === client_1.Role.TEACHER &&
+            classSummary.teacherId !== requester.id) {
+            throw new common_1.ForbiddenException('Teacher can only mark attendance for own classes');
         }
         if (!classSummary.students.some((item) => item.id === payload.studentId)) {
-            throw new common_1.BadRequestException("Student is not enrolled in this class");
+            throw new common_1.BadRequestException('Student is not enrolled in this class');
         }
         const startOfDay = new Date(payload.date);
         startOfDay.setHours(0, 0, 0, 0);
@@ -119,9 +120,9 @@ let AttendanceService = class AttendanceService {
             });
             await tx.auditLog.create({
                 data: {
-                    entityType: "FAMILY_NOTICE",
+                    entityType: 'FAMILY_NOTICE',
                     entityId: payload.studentId,
-                    action: "CREATE",
+                    action: 'CREATE',
                     userId: requester?.id,
                     changes: JSON.stringify(notice),
                 },
@@ -143,7 +144,7 @@ let AttendanceService = class AttendanceService {
             include: {
                 class: { select: { id: true, name: true } },
             },
-            orderBy: { date: "desc" },
+            orderBy: { date: 'desc' },
         });
     }
     async findByClass(classId, date) {
@@ -165,7 +166,7 @@ let AttendanceService = class AttendanceService {
                     select: { id: true, email: true, name: true, enrollmentNumber: true },
                 },
             },
-            orderBy: { date: "desc" },
+            orderBy: { date: 'desc' },
         });
     }
     async getStudentAttendanceStats(studentId, classId) {
@@ -181,13 +182,13 @@ let AttendanceService = class AttendanceService {
             excused: 0,
         };
         records.forEach((r) => {
-            if (r.status === "PRESENT")
+            if (r.status === 'PRESENT')
                 stats.present++;
-            else if (r.status === "ABSENT")
+            else if (r.status === 'ABSENT')
                 stats.absent++;
-            else if (r.status === "LATE")
+            else if (r.status === 'LATE')
                 stats.late++;
-            else if (r.status === "EXCUSED")
+            else if (r.status === 'EXCUSED')
                 stats.excused++;
         });
         const absencePercentage = stats.total > 0 ? (stats.absent / stats.total) * 100 : 0;
@@ -220,10 +221,10 @@ let AttendanceService = class AttendanceService {
             where: { id: attendanceId },
         });
         if (!existing) {
-            throw new common_1.NotFoundException("Attendance record not found");
+            throw new common_1.NotFoundException('Attendance record not found');
         }
         await this.prisma.attendance.delete({ where: { id: attendanceId } });
-        return { message: "Attendance record deleted" };
+        return { message: 'Attendance record deleted' };
     }
 };
 exports.AttendanceService = AttendanceService;

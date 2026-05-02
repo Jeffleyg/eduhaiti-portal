@@ -56,7 +56,7 @@ let AssignmentsService = class AssignmentsService {
                     },
                 },
             },
-            orderBy: { dueDate: "asc" },
+            orderBy: { dueDate: 'asc' },
         });
     }
     async findById(assignmentId) {
@@ -105,7 +105,7 @@ let AssignmentsService = class AssignmentsService {
                     },
                 },
             },
-            orderBy: { dueDate: "asc" },
+            orderBy: { dueDate: 'asc' },
         });
     }
     async submitAssignment(assignmentId, studentId, filePath) {

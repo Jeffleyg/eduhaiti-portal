@@ -1,15 +1,15 @@
-import { IsOptional, IsString, IsNumber } from "class-validator"
+import { IsOptional, IsString, IsNumber } from 'class-validator';
 
 export class UpdateDisciplineDto {
   @IsOptional()
   @IsString()
-  name?: string
+  name?: string;
 
   @IsOptional()
   @IsString()
-  code?: string
+  code?: string;
 
   @IsOptional()
   @IsNumber()
-  credits?: number
+  credits?: number;
 }

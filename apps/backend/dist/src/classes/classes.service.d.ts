@@ -1,4 +1,4 @@
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaService } from '../prisma/prisma.service';
 export declare class ClassesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -28,9 +28,9 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
@@ -53,9 +53,9 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
@@ -73,9 +73,9 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
@@ -89,20 +89,20 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
     findByTeacher(teacherId: string): Promise<({
-        series: {
-            id: string;
-            name: string;
-        };
         academicYear: {
             id: string;
             year: string;
+        };
+        series: {
+            id: string;
+            name: string;
         };
         teacher: {
             id: string;
@@ -118,19 +118,19 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     })[]>;
     findAll(academicYearId?: string, seriesId?: string): Promise<({
+        academicYear: {
+            year: string;
+        };
         series: {
             id: string;
             name: string;
-        };
-        academicYear: {
-            year: string;
         };
         teacher: {
             id: string;
@@ -146,23 +146,23 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     })[]>;
     findById(classId: string): Promise<{
+        series: {
+            id: string;
+            name: string;
+        };
         grades: {
             id: string;
             studentId: string;
             disciplineId: string;
             score: number;
         }[];
-        series: {
-            id: string;
-            name: string;
-        };
         teacher: {
             id: string;
             email: string;
@@ -178,20 +178,20 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     }>;
     findByStudent(studentId: string): Promise<({
-        series: {
-            id: string;
-            name: string;
-        };
         academicYear: {
             id: string;
             year: string;
+        };
+        series: {
+            id: string;
+            name: string;
         };
         teacher: {
             id: string;
@@ -202,9 +202,9 @@ export declare class ClassesService {
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        level: string;
         academicYearId: string;
         seriesId: string;
-        level: string;
         teacherId: string | null;
         maxStudents: number;
     })[]>;
@@ -216,12 +216,12 @@ export declare class ClassesService {
         endDate: Date;
     }[]>;
     listSeries(academicYearId?: string): Promise<{
-        id: string;
-        name: string;
         academicYear: {
             id: string;
             year: string;
         };
+        id: string;
+        name: string;
         academicYearId: string;
     }[]>;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { apiFetch } from "../../lib/api.js"
 import { useAuth } from "../../context/AuthContext.jsx"
@@ -7,6 +7,7 @@ import CreateStudentModal from "../../components/CreateStudentModal.jsx"
 import CreateTeacherModal from "../../components/CreateTeacherModal.jsx"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
+import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 const emptyStudent = {
   email: "",
@@ -41,7 +42,6 @@ function AdminUsers() {
   const [teachers, setTeachers] = useState([])
   const [studentData, setStudentData] = useState(emptyStudent)
   const [teacherData, setTeacherData] = useState(emptyTeacher)
-  const [newClasses, setNewClasses] = useState([{ name: "", level: "" }])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
@@ -78,15 +78,6 @@ function AdminUsers() {
     setTeachers(teachersData ?? [])
   }
 
-  const classOptions = useMemo(
-    () =>
-      classes.map((item) => ({
-        value: item.id,
-        label: `${item.name} (${item.level})`,
-      })),
-    [classes],
-  )
-
   const handleStudentChange = (event) => {
     const { name, value } = event.target
     setStudentData((prev) => ({ ...prev, [name]: value }))
@@ -100,16 +91,6 @@ function AdminUsers() {
   const handleTeacherClasses = (event) => {
     const selected = Array.from(event.target.selectedOptions).map((option) => option.value)
     setTeacherData((prev) => ({ ...prev, classIds: selected }))
-  }
-
-  const handleNewClassChange = (index, field, value) => {
-    setNewClasses((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item)),
-    )
-  }
-
-  const addNewClassRow = () => {
-    setNewClasses((prev) => [...prev, { name: "", level: "" }])
   }
 
   const submitStudent = async (event) => {
@@ -135,23 +116,21 @@ function AdminUsers() {
     }
   }
 
-  const submitTeacher = (teacherPayload) => {
+  const submitTeacher = async (teacherPayload) => {
     setLoading(true)
     setError("")
     setMessage("")
 
     try {
-      apiFetch("/admin/users/teachers", {
+      await apiFetch("/admin/users/teachers", {
         method: "POST",
         token,
         body: teacherPayload,
-      }).then(() => {
-        setMessage(t("teacherCreated"))
-        setTeacherData(emptyTeacher)
-        setNewClasses([{ name: "", level: "" }])
-        setShowCreateTeacher(false)
-        refreshUsers()
       })
+      setMessage(t("teacherCreated"))
+      setTeacherData(emptyTeacher)
+      setShowCreateTeacher(false)
+      await refreshUsers()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -256,9 +235,13 @@ function AdminUsers() {
         {students.length === 0 ? (
           <p className="mt-3 text-sm text-brand-navy/60">{t("noData")}</p>
         ) : (
-          <div className="module-grid mt-4">
-            {students.map((student) => (
-              <div key={student.id} className="module-card text-sm">
+          <LoadMoreList
+            items={students}
+            initialLimit={6}
+            step={6}
+            continueLabel={t("continue")}
+            renderItem={(student) => (
+              <div className="module-card text-sm">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="module-card-title">Aluno</p>
@@ -273,8 +256,8 @@ function AdminUsers() {
                   Parentes: {student.fatherName || "-"} / {student.motherName || "-"}
                 </p>
               </div>
-            ))}
-          </div>
+            )}
+          />
         )}
       </section>
 
@@ -288,8 +271,12 @@ function AdminUsers() {
         {teachers.length === 0 ? (
           <p className="mt-3 text-sm text-brand-navy/60">{t("noData")}</p>
         ) : (
-          <div className="module-grid mt-4">
-            {teachers.map((teacher) => (
+          <LoadMoreList
+            items={teachers}
+            initialLimit={6}
+            step={6}
+            continueLabel={t("continue")}
+            renderItem={(teacher) => (
               <div key={teacher.id} className="module-card text-sm">
                 <div className="flex items-start justify-between">
                   <div>
@@ -305,8 +292,8 @@ function AdminUsers() {
                   Disciplinas: {(teacher.subjects ?? []).length ? teacher.subjects.join(", ") : "-"}
                 </p>
               </div>
-            ))}
-          </div>
+            )}
+          />
         )}
       </section>
     </div>

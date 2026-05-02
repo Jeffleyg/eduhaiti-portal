@@ -8,14 +8,14 @@ import {
   Query,
   Req,
   UseGuards,
-} from "@nestjs/common"
-import { AttendanceService } from "./attendance.service"
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
-import { Roles } from "../common/decorators/roles.decorator"
-import { Role, AttendanceStatus } from "@prisma/client"
-import { RolesGuard } from "../common/guards/roles.guard"
+} from '@nestjs/common';
+import { AttendanceService } from './attendance.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role, AttendanceStatus } from '@prisma/client';
+import { RolesGuard } from '../common/guards/roles.guard';
 
-@Controller("admin/attendance")
+@Controller('admin/attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
@@ -26,65 +26,71 @@ export class AttendanceController {
     @Req() req: { user?: { sub?: string; role?: Role } },
     @Body()
     payload: {
-      studentId: string
-      classId: string
-      date: Date
-      status: AttendanceStatus
-      remarks?: string
+      studentId: string;
+      classId: string;
+      date: Date;
+      status: AttendanceStatus;
+      remarks?: string;
     },
   ) {
     return this.attendanceService.markAttendance(payload, {
-      id: req.user?.sub ?? "",
+      id: req.user?.sub ?? '',
       role: (req.user?.role as Role) ?? Role.TEACHER,
-    })
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @Delete(":id")
-  async deleteAttendance(@Param("id") attendanceId: string) {
-    return this.attendanceService.delete(attendanceId)
+  @Delete(':id')
+  async deleteAttendance(@Param('id') attendanceId: string) {
+    return this.attendanceService.delete(attendanceId);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("my-attendance")
+  @Get('my-attendance')
   async getMyAttendance(
     @Req() req: { user?: { sub?: string } },
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    const userId = req.user?.sub
+    const userId = req.user?.sub;
     return this.attendanceService.findByStudent(
-      userId ?? "",
+      userId ?? '',
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,
-    )
+    );
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("my-stats/:classId")
+  @Get('my-stats/:classId')
   async getMyStats(
     @Req() req: { user?: { sub?: string } },
-    @Param("classId") classId: string,
+    @Param('classId') classId: string,
   ) {
-    const userId = req.user?.sub
-    return this.attendanceService.getStudentAttendanceStats(userId ?? "", classId)
+    const userId = req.user?.sub;
+    return this.attendanceService.getStudentAttendanceStats(
+      userId ?? '',
+      classId,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
-  @Get("class/:classId")
+  @Get('class/:classId')
   async getClassAttendance(
-    @Param("classId") classId: string,
-    @Query("date") date?: string,
+    @Param('classId') classId: string,
+    @Query('date') date?: string,
   ) {
-    return this.attendanceService.findByClass(classId, date ? new Date(date) : undefined)
+    return this.attendanceService.findByClass(
+      classId,
+      date ? new Date(date) : undefined,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
-  @Get("class/:classId/report")
-  async getClassReport(@Param("classId") classId: string) {
-    return this.attendanceService.getClassAttendanceReport(classId)
+  @Get('class/:classId/report')
+  async getClassReport(@Param('classId') classId: string) {
+    return this.attendanceService.getClassAttendanceReport(classId);
   }
 }

@@ -1,5 +1,5 @@
-import { PrismaService } from "../prisma/prisma.service";
-import { Role } from "@prisma/client";
+import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
 export declare class MessagesService {
     private readonly prisma;
     constructor(prisma: PrismaService);

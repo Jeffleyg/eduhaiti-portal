@@ -1,52 +1,64 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards } from "@nestjs/common"
-import { AuthService } from "./auth.service"
-import { LoginDto } from "./dto/login.dto"
-import { ChangePasswordDto } from "./dto/change-password.dto"
-import { JwtAuthGuard } from "./guards/jwt-auth.guard"
-import { UpdateProfileDto } from "./dto/update-profile.dto"
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
-@Controller("auth")
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post("login")
+  @Post('login')
   login(@Body() body: LoginDto) {
-    return this.authService.login(body.email, body.password)
+    return this.authService.login(body.email, body.password);
   }
 
-  @Get("test-credentials")
+  @Get('test-credentials')
   getTestCredentials() {
-    return this.authService.getTestCredentials()
+    return this.authService.getTestCredentials();
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post("logout")
+  @Post('logout')
   logout(@Req() req: { user?: { sub?: string; email?: string } }) {
-    return this.authService.logout(req.user?.sub ?? "", req.user?.email)
+    return this.authService.logout(req.user?.sub ?? '', req.user?.email);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post("change-password")
+  @Post('change-password')
   changePassword(
     @Req() req: { user?: { sub?: string } },
     @Body() body: ChangePasswordDto,
   ) {
-    return this.authService.changePassword(req.user?.sub ?? "", body.currentPassword, body.newPassword)
+    return this.authService.changePassword(
+      req.user?.sub ?? '',
+      body.currentPassword,
+      body.newPassword,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("me")
+  @Get('me')
   getProfile(@Req() req: { user?: { sub?: string } }) {
-    const userId = req.user?.sub
-    return this.authService.getProfile(userId ?? "")
+    const userId = req.user?.sub;
+    return this.authService.getProfile(userId ?? '');
   }
 
   @UseGuards(JwtAuthGuard)
-  @Put("me")
+  @Put('me')
   updateProfile(
     @Req() req: { user?: { sub?: string } },
     @Body() body: UpdateProfileDto,
   ) {
-    return this.authService.updateProfile(req.user?.sub ?? "", body)
+    return this.authService.updateProfile(req.user?.sub ?? '', body);
   }
 }

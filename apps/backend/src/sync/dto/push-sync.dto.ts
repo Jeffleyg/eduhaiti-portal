@@ -1,4 +1,4 @@
-import { Type } from "class-transformer"
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -10,39 +10,39 @@ import {
   IsString,
   IsUUID,
   ValidateNested,
-} from "class-validator"
-import { SYNC_ENTITIES, SYNC_OPERATION } from "../types/sync.types"
+} from 'class-validator';
+import { SYNC_ENTITIES, SYNC_OPERATION } from '../types/sync.types';
 
 export class PushSyncActionDto {
   @IsUUID()
-  actionId!: string
+  actionId!: string;
 
   @IsEnum(SYNC_ENTITIES)
-  entityType!: (typeof SYNC_ENTITIES)[number]
+  entityType!: (typeof SYNC_ENTITIES)[number];
 
   @IsString()
   @IsNotEmpty()
-  entityId!: string
+  entityId!: string;
 
   @IsEnum(SYNC_OPERATION)
-  operation!: (typeof SYNC_OPERATION)[number]
+  operation!: (typeof SYNC_OPERATION)[number];
 
   @IsOptional()
   @IsObject()
-  payload?: Record<string, unknown>
+  payload?: Record<string, unknown>;
 
   @IsISO8601({ strict: true })
-  clientTimestamp!: string
+  clientTimestamp!: string;
 }
 
 export class PushSyncDto {
   @IsString()
   @IsNotEmpty()
-  deviceId!: string
+  deviceId!: string;
 
   @IsArray()
   @ArrayMaxSize(500)
   @ValidateNested({ each: true })
   @Type(() => PushSyncActionDto)
-  actions!: PushSyncActionDto[]
+  actions!: PushSyncActionDto[];
 }
