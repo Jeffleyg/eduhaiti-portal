@@ -18,6 +18,7 @@ function ProfessorDashboard() {
   const [stats, setStats] = useState(cached.data?.stats ?? {})
   const [recentMessages, setRecentMessages] = useState(cached.data?.recentMessages ?? [])
   const [classes, setClasses] = useState(cached.data?.classes ?? [])
+  const [leaderboard, setLeaderboard] = useState(cached.data?.leaderboard ?? [])
   const [lastUpdatedAt, setLastUpdatedAt] = useState(cached.lastUpdatedAt)
   const [loading, setLoading] = useState(!cached.data)
 
@@ -34,8 +35,16 @@ function ProfessorDashboard() {
           apiFetch("/messages/inbox", { token }),
         ])
 
+        let leaderboardSnapshot = []
+        if ((classesRes ?? []).length > 0) {
+          const firstClassId = classesRes[0].id
+          const gamificationRes = await apiFetch(`/gamification/class/${firstClassId}/leaderboard`, { token })
+          leaderboardSnapshot = (gamificationRes?.leaderboard ?? []).slice(0, 5)
+        }
+
         setClasses(classesRes ?? [])
         setRecentMessages((messagesRes ?? []).slice(0, 3))
+        setLeaderboard(leaderboardSnapshot)
         const computedStats = {
           attendance: "96%",
           grades: classesRes && classesRes[0] ? "~24" : "0",
@@ -49,6 +58,7 @@ function ProfessorDashboard() {
           classes: classesRes ?? [],
           recentMessages: (messagesRes ?? []).slice(0, 3),
           stats: computedStats,
+          leaderboard: leaderboardSnapshot,
         })
         setLastUpdatedAt(updatedAt)
       } catch (error) {
@@ -118,6 +128,25 @@ function ProfessorDashboard() {
               <p className="text-sm text-brand-navy/60">{t("noData")}</p>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-brand-navy/10 bg-white p-5">
+        <SectionHeader title="Gamificacao da Turma" subtitle="Ranking parcial de engajamento" />
+        <div className="space-y-2">
+          {leaderboard.length ? (
+            leaderboard.map((entry, index) => (
+              <div key={entry.student?.id ?? index} className="flex items-center justify-between rounded-xl border px-3 py-2">
+                <div>
+                  <p className="font-semibold text-brand-navy">{index + 1}. {entry.student?.name ?? entry.student?.email ?? "Aluno"}</p>
+                  <p className="text-xs text-brand-navy/60">Presenca: {entry.attendanceRate ?? 0}% | Entregas antecipadas: {entry.earlySubmissions ?? 0}</p>
+                </div>
+                <span className="text-sm font-bold text-brand-red">{entry.points ?? 0} pts</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-brand-navy/60">Sem dados de gamificacao para a turma selecionada.</p>
+          )}
         </div>
       </div>
     </div>

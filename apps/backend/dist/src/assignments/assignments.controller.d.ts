@@ -15,9 +15,9 @@ export declare class AssignmentsController {
                 name: string | null;
             };
         } & {
-            grade: number | null;
             id: string;
             updatedAt: Date;
+            grade: number | null;
             studentId: string;
             status: import(".prisma/client").$Enums.AssignmentStatus;
             filePath: string;
@@ -29,14 +29,14 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
+        createdById: string;
         filePath: string | null;
         dueDate: Date;
-        createdById: string;
     })[]>;
     getMyAssignments(req: any): Promise<({
         createdBy: {
@@ -51,9 +51,9 @@ export declare class AssignmentsController {
                 name: string | null;
             };
         } & {
-            grade: number | null;
             id: string;
             updatedAt: Date;
+            grade: number | null;
             studentId: string;
             status: import(".prisma/client").$Enums.AssignmentStatus;
             filePath: string;
@@ -65,14 +65,14 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
+        createdById: string;
         filePath: string | null;
         dueDate: Date;
-        createdById: string;
     })[]>;
     createAssignment(classId: string, file: any, body: {
         title: string;
@@ -91,9 +91,9 @@ export declare class AssignmentsController {
                 name: string | null;
             };
         } & {
-            grade: number | null;
             id: string;
             updatedAt: Date;
+            grade: number | null;
             studentId: string;
             status: import(".prisma/client").$Enums.AssignmentStatus;
             filePath: string;
@@ -105,14 +105,14 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
+        createdById: string;
         filePath: string | null;
         dueDate: Date;
-        createdById: string;
     }>;
     submitAssignment(assignmentId: string, file: any, req: any): Promise<{
         student: {
@@ -121,9 +121,9 @@ export declare class AssignmentsController {
             name: string | null;
         };
     } & {
-        grade: number | null;
         id: string;
         updatedAt: Date;
+        grade: number | null;
         studentId: string;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         filePath: string;
@@ -135,9 +135,9 @@ export declare class AssignmentsController {
         grade: number;
         feedback?: string;
     }): Promise<{
-        grade: number | null;
         id: string;
         updatedAt: Date;
+        grade: number | null;
         studentId: string;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         filePath: string;
@@ -149,13 +149,13 @@ export declare class AssignmentsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         maxScore: number;
         status: import(".prisma/client").$Enums.AssignmentStatus;
         title: string;
+        createdById: string;
         filePath: string | null;
         dueDate: Date;
-        createdById: string;
     }>;
 }

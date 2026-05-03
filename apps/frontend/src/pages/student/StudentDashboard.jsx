@@ -20,6 +20,14 @@ function StudentDashboard() {
   const [stats, setStats] = useState(cached.data?.stats ?? {})
   const [recentMessages, setRecentMessages] = useState(cached.data?.recentMessages ?? [])
   const [classes, setClasses] = useState(cached.data?.classes ?? [])
+  const [gamification, setGamification] = useState(
+    cached.data?.gamification ?? {
+      points: 0,
+      badges: [],
+      earlySubmissions: 0,
+      perfectAttendanceClasses: 0,
+    },
+  )
   const [lastUpdatedAt, setLastUpdatedAt] = useState(cached.lastUpdatedAt)
   const [loading, setLoading] = useState(!cached.data)
   const [error, setError] = useState("")
@@ -32,11 +40,12 @@ function StudentDashboard() {
 
     const fetchData = async () => {
       try {
-        const [classesRes, gradesRes, attendanceRes, messagesRes] = await Promise.all([
+        const [classesRes, gradesRes, attendanceRes, messagesRes, gamificationRes] = await Promise.all([
           apiFetch("/classes/my-classes", { token }),
           apiFetch("/grades/my-grades", { token }),
           apiFetch("/attendance/my-attendance", { token }),
           apiFetch("/messages/inbox", { token }),
+          apiFetch("/gamification/me", { token }),
         ])
 
         setClasses(classesRes ?? [])
@@ -58,11 +67,13 @@ function StudentDashboard() {
         }
 
         setStats(computedStats)
+        setGamification(gamificationRes ?? { points: 0, badges: [] })
 
         const updatedAt = writeHomeCache("student", {
           classes: classesRes ?? [],
           recentMessages: (messagesRes ?? []).slice(0, 3),
           stats: computedStats,
+          gamification: gamificationRes ?? { points: 0, badges: [] },
         })
         setLastUpdatedAt(updatedAt)
       } catch (err) {
@@ -121,6 +132,26 @@ function StudentDashboard() {
         <StatCard label={t("metricAttendance")} value={stats.attendance ?? "0"} />
         <StatCard label={t("metricMessages")} value={stats.messages ?? "0"} />
         <StatCard label={t("myClasses")} value={stats.classes ?? "0"} />
+      </div>
+
+      <div className="rounded-2xl border border-brand-navy/10 bg-white p-5">
+        <SectionHeader title="Gamificacao" subtitle="Pontuacao por presenca e entregas antecipadas" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <StatCard label="Pontos" value={gamification?.points ?? 0} />
+          <StatCard label="Entregas antecipadas" value={gamification?.earlySubmissions ?? 0} />
+          <StatCard label="Turmas com presenca exemplar" value={gamification?.perfectAttendanceClasses ?? 0} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {(gamification?.badges ?? []).length ? (
+            gamification.badges.map((badge) => (
+              <span key={badge.code} className="rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
+                {badge.name}
+              </span>
+            ))
+          ) : (
+            <p className="text-sm text-brand-navy/60">Continue participando para desbloquear medalhas.</p>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -1,8 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { AttendanceStatus, Role } from '@prisma/client';
+import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
 export declare class AttendanceService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly hybridOutboundSms;
+    private readonly logger;
+    constructor(prisma: PrismaService, hybridOutboundSms: HybridOutboundSmsService);
     private buildAttendanceFamilyNotice;
     markAttendance(payload: {
         studentId: string;
@@ -14,6 +17,8 @@ export declare class AttendanceService {
         id: string;
         role: Role;
     }): Promise<any>;
+    private notifyGuardiansAboutAbsence;
+    private to160Chars;
     findByStudent(studentId: string, startDate?: Date, endDate?: Date): Promise<({
         class: {
             id: string;

@@ -15,8 +15,10 @@ import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { AdminLedgerReportQueryDto } from './dto/admin-ledger-report-query.dto';
 import { AdminFinanceSummaryQueryDto } from './dto/admin-finance-summary-query.dto';
 import { AdminPaymentsQueryDto } from './dto/admin-payments-query.dto';
+import { CreateInstallmentPlanDto } from './dto/create-installment-plan.dto';
 import { CreateTuitionChargeDto } from './dto/create-tuition-charge.dto';
 import { DiasporaRemittanceDto } from './dto/diaspora-remittance.dto';
 import { DidTrustTokenDto } from './dto/did-trust-token.dto';
@@ -168,6 +170,16 @@ export class FinanceIntegrationController {
     return this.financeService.createTuitionCharge(dto, req.user.sub);
   }
 
+  @Post('admin/installment-plans')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  createInstallmentPlan(
+    @Body() dto: CreateInstallmentPlanDto,
+    @Req() req: any,
+  ) {
+    return this.financeService.createInstallmentPlan(dto, req.user.sub);
+  }
+
   @Get('admin/payments')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -192,5 +204,12 @@ export class FinanceIntegrationController {
   @Roles(Role.ADMIN)
   getSummary(@Query() filters: AdminFinanceSummaryQueryDto) {
     return this.financeService.getAdminFinanceSummary(filters);
+  }
+
+  @Get('admin/audit-report')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getAuditReport(@Query() filters: AdminLedgerReportQueryDto) {
+    return this.financeService.getFinancialAuditReport(filters);
   }
 }

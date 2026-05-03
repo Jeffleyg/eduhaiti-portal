@@ -12,8 +12,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         title: string;
         filePath: string;
         fileType: string;
@@ -29,8 +29,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         title: string;
         filePath: string;
         fileType: string;
@@ -40,8 +40,8 @@ export declare class ResourcesService {
         class: {
             id: string;
             name: string;
-            level: string;
             seriesId: string;
+            level: string;
         };
         uploadedBy: {
             id: string;
@@ -52,8 +52,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         title: string;
         filePath: string;
         fileType: string;
@@ -61,15 +61,15 @@ export declare class ResourcesService {
     })[]>;
     findLibraryBySchool(schoolId: string): Promise<({
         class: {
+            id: string;
+            name: string;
             academicYear: {
                 id: string;
                 year: string;
                 schoolId: string;
             };
-            id: string;
-            name: string;
-            level: string;
             seriesId: string;
+            level: string;
         };
         uploadedBy: {
             id: string;
@@ -80,8 +80,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         title: string;
         filePath: string;
         fileType: string;
@@ -97,8 +97,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         title: string;
         filePath: string;
         fileType: string;
@@ -108,8 +108,8 @@ export declare class ResourcesService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        classId: string;
         description: string | null;
+        classId: string;
         title: string;
         filePath: string;
         fileType: string;

@@ -22,6 +22,16 @@ db.execSync(`
   );
 `)
 
+db.execSync(`
+  CREATE TABLE IF NOT EXISTS offline_asset_manifest (
+    resource_id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    url TEXT NOT NULL,
+    cached_at TEXT NOT NULL
+  );
+`)
+
 export function readHomeCache(role) {
   const row = db.getFirstSync(
     "SELECT data, last_updated_at FROM home_cache WHERE role = ? LIMIT 1",
@@ -108,4 +118,42 @@ export function formatLastUpdated(iso, language) {
     hour: "2-digit",
     minute: "2-digit",
   })
+}
+
+export function readOfflineAssetManifest(limit = 500) {
+  const rows = db.getAllSync(
+    `SELECT resource_id, title, file_type, url, cached_at
+     FROM offline_asset_manifest
+     ORDER BY cached_at DESC
+     LIMIT ?`,
+    [limit],
+  )
+
+  return rows.map((row) => ({
+    resourceId: row.resource_id,
+    title: row.title,
+    fileType: row.file_type,
+    url: row.url,
+    cachedAt: row.cached_at,
+  }))
+}
+
+export function upsertOfflineAsset(entry) {
+  db.runSync(
+    `INSERT INTO offline_asset_manifest (resource_id, title, file_type, url, cached_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(resource_id) DO UPDATE SET
+       title = excluded.title,
+       file_type = excluded.file_type,
+       url = excluded.url,
+       cached_at = excluded.cached_at`,
+    [entry.resourceId, entry.title, entry.fileType, entry.url, entry.cachedAt],
+  )
+
+  return readOfflineAssetManifest()
+}
+
+export function removeOfflineAsset(resourceId) {
+  db.runSync(`DELETE FROM offline_asset_manifest WHERE resource_id = ?`, [resourceId])
+  return readOfflineAssetManifest()
 }

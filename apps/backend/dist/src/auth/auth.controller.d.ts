@@ -54,6 +54,10 @@ export declare class AuthController {
             sub?: string;
         };
     }): Promise<{
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
         firstName: string | null;
         lastName: string | null;
         dateOfBirth: Date | null;
@@ -61,10 +65,6 @@ export declare class AuthController {
         gender: import(".prisma/client").$Enums.Gender | null;
         fatherName: string | null;
         motherName: string | null;
-        id: string;
-        email: string;
-        enrollmentNumber: string | null;
-        name: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
@@ -84,6 +84,10 @@ export declare class AuthController {
             sub?: string;
         };
     }, body: UpdateProfileDto): Promise<{
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
         firstName: string | null;
         lastName: string | null;
         dateOfBirth: Date | null;
@@ -91,10 +95,6 @@ export declare class AuthController {
         gender: import(".prisma/client").$Enums.Gender | null;
         fatherName: string | null;
         motherName: string | null;
-        id: string;
-        email: string;
-        enrollmentNumber: string | null;
-        name: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;

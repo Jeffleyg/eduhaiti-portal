@@ -19,9 +19,9 @@ export declare class MessagesService {
         id: string;
         createdAt: Date;
         subject: string;
+        body: string;
         fromId: string;
         toId: string;
-        body: string;
         isRead: boolean;
     })[]>;
     findSentBy(userId: string): Promise<({
@@ -34,9 +34,9 @@ export declare class MessagesService {
         id: string;
         createdAt: Date;
         subject: string;
+        body: string;
         fromId: string;
         toId: string;
-        body: string;
         isRead: boolean;
     })[]>;
     send(fromId: string, toId: string, subject: string, body: string): Promise<{
@@ -50,9 +50,9 @@ export declare class MessagesService {
         id: string;
         createdAt: Date;
         subject: string;
+        body: string;
         fromId: string;
         toId: string;
-        body: string;
         isRead: boolean;
     }>;
 }

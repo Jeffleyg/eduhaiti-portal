@@ -20,7 +20,7 @@ export class UssdMenuService {
     if (path[0] === '1') {
       if (path.length === 1) {
         return {
-          text: 'Digite: 1*ID_ALUNO\nEx: 1*12345',
+          text: 'Digite: 1*ID_ALUNO*TOKEN*OTP',
           endSession: false,
         };
       }

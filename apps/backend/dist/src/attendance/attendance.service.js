@@ -8,15 +8,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var AttendanceService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttendanceService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
-let AttendanceService = class AttendanceService {
+const hybrid_outbound_sms_service_1 = require("../hybrid-gateway/services/hybrid-outbound-sms.service");
+let AttendanceService = AttendanceService_1 = class AttendanceService {
     prisma;
-    constructor(prisma) {
+    hybridOutboundSms;
+    logger = new common_1.Logger(AttendanceService_1.name);
+    constructor(prisma, hybridOutboundSms) {
         this.prisma = prisma;
+        this.hybridOutboundSms = hybridOutboundSms;
     }
     buildAttendanceFamilyNotice(params) {
         const statusTextByCode = {
@@ -81,7 +86,8 @@ let AttendanceService = class AttendanceService {
                 },
             },
         });
-        return this.prisma.$transaction(async (tx) => {
+        const wasAbsent = existing?.status === 'ABSENT';
+        const attendanceRecord = await this.prisma.$transaction(async (tx) => {
             let attendanceRecord;
             if (existing) {
                 attendanceRecord = await tx.attendance.update({
@@ -129,6 +135,59 @@ let AttendanceService = class AttendanceService {
             });
             return attendanceRecord;
         });
+        if (payload.status === 'ABSENT' && !wasAbsent) {
+            void this.notifyGuardiansAboutAbsence({
+                attendanceId: attendanceRecord.id,
+                studentId: attendanceRecord.student.id,
+                studentName: attendanceRecord.student.name ?? 'Aluno sem nome cadastrado',
+                className: attendanceRecord.class.name,
+                date: new Date(payload.date),
+                remarks: payload.remarks,
+            });
+        }
+        return attendanceRecord;
+    }
+    async notifyGuardiansAboutAbsence(params) {
+        try {
+            const guardians = await this.prisma.$queryRaw `
+        SELECT g."phoneNumber"
+        FROM "GuardianStudent" gs
+        INNER JOIN "Guardian" g ON g."id" = gs."guardianId"
+        WHERE gs."studentId" = ${params.studentId}
+      `;
+            const uniquePhones = Array.from(new Set(guardians
+                .map((item) => item.phoneNumber?.trim())
+                .filter((phone) => Boolean(phone))));
+            if (uniquePhones.length === 0) {
+                return;
+            }
+            const dateLabel = params.date.toLocaleDateString('pt-BR');
+            const message = this.to160Chars(`EduHaiti: ${params.studentName} faltou a aula em ${dateLabel} na turma ${params.className}.${params.remarks ? ` Obs: ${params.remarks}.` : ''}`);
+            await Promise.all(uniquePhones.map((phone) => this.hybridOutboundSms.sendSms({
+                to: phone,
+                text: message,
+                context: {
+                    type: 'ATTENDANCE_ABSENCE_ALERT',
+                    attendanceId: params.attendanceId,
+                    studentId: params.studentId,
+                },
+            })));
+        }
+        catch (error) {
+            const reason = error instanceof Error ? error.message : 'absence_sms_unknown_error';
+            this.logger.warn(`Failed to notify guardians on absence for ${params.studentId}: ${reason}`);
+        }
+    }
+    to160Chars(text) {
+        const normalized = text.replace(/\s+/g, ' ').trim();
+        if (normalized.length <= 160) {
+            return normalized;
+        }
+        const limit = 157;
+        const shortText = normalized.slice(0, limit);
+        const cut = shortText.lastIndexOf(' ');
+        const safe = cut > 110 ? shortText.slice(0, cut) : shortText;
+        return `${safe.trimEnd()}...`;
     }
     async findByStudent(studentId, startDate, endDate) {
         const where = { studentId };
@@ -228,8 +287,9 @@ let AttendanceService = class AttendanceService {
     }
 };
 exports.AttendanceService = AttendanceService;
-exports.AttendanceService = AttendanceService = __decorate([
+exports.AttendanceService = AttendanceService = AttendanceService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        hybrid_outbound_sms_service_1.HybridOutboundSmsService])
 ], AttendanceService);
 //# sourceMappingURL=attendance.service.js.map

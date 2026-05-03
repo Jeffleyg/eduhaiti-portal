@@ -5,6 +5,11 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+import {
+  listOfflineAssets,
+  removeOffline,
+  saveAssetOffline,
+} from "../../offline/offlineAssetLibrary.js"
 
 function StudentResources() {
   const { t } = useTranslation()
@@ -13,6 +18,9 @@ function StudentResources() {
   const [resources, setResources] = useState([])
   const [libraryResources, setLibraryResources] = useState([])
   const [loading, setLoading] = useState(true)
+  const [offlineAssets, setOfflineAssets] = useState(() => listOfflineAssets())
+  const [savingId, setSavingId] = useState("")
+  const [feedback, setFeedback] = useState("")
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,6 +53,77 @@ function StudentResources() {
     fetchData()
   }, [token])
 
+  const isSavedOffline = (resourceId) => {
+    return offlineAssets.some((item) => item.resourceId === resourceId)
+  }
+
+  const canCacheResource = (resource) => {
+    const supported = ["pdf", "mp4", "webm", "doc", "ppt", "pptx"]
+    return supported.includes(String(resource?.fileType || "").toLowerCase())
+  }
+
+  const handleSaveOffline = async (resource) => {
+    const url = apiAssetUrl(resource.filePath)
+    setFeedback("")
+    setSavingId(resource.id)
+    try {
+      const next = await saveAssetOffline({
+        id: resource.id,
+        title: resource.title,
+        fileType: resource.fileType,
+        url,
+      })
+      setOfflineAssets(next)
+      setFeedback(`"${resource.title}" salvo para acesso offline.`)
+    } catch (error) {
+      console.error("Failed to save offline asset:", error)
+      setFeedback("Nao foi possivel salvar offline. Tente novamente.")
+    } finally {
+      setSavingId("")
+    }
+  }
+
+  const handleRemoveOffline = async (resource) => {
+    const next = await removeOffline(resource.id, apiAssetUrl(resource.filePath))
+    setOfflineAssets(next)
+    setFeedback(`"${resource.title}" removido da biblioteca offline.`)
+  }
+
+  const renderResourceCard = (resource) => (
+    <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between gap-3">
+      <div>
+        <p className="font-semibold text-brand-navy">{resource.title}</p>
+        {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.description}</p>}
+        <p className="text-xs text-brand-navy/50 mt-1">Por: {resource.uploadedBy?.name}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
+          {disableImages ? "TXT-DOWNLOAD" : "Download"}
+        </a>
+        {canCacheResource(resource) ? (
+          isSavedOffline(resource.id) ? (
+            <button
+              type="button"
+              onClick={() => handleRemoveOffline(resource)}
+              className="rounded-lg border border-brand-navy/20 px-3 py-1 text-xs font-semibold text-brand-navy hover:bg-brand-navy/5"
+            >
+              Remover offline
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleSaveOffline(resource)}
+              disabled={savingId === resource.id}
+              className="rounded-lg bg-brand-navy px-3 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {savingId === resource.id ? "Salvando..." : "Salvar offline"}
+            </button>
+          )
+        ) : null}
+      </div>
+    </div>
+  )
+
   if (loading) {
     return <div className="text-center text-brand-navy">{t("loading")}</div>
   }
@@ -60,6 +139,15 @@ function StudentResources() {
         }
       />
 
+      {feedback ? <p className="text-sm text-brand-navy/80">{feedback}</p> : null}
+
+      <div className="rounded-2xl border border-brand-navy/10 bg-sand p-4">
+        <p className="text-sm text-brand-navy font-semibold">Biblioteca Offline</p>
+        <p className="text-xs text-brand-navy/70 mt-1">
+          Itens salvos: {offlineAssets.length}. Eles permanecem acessiveis mesmo sem internet no mesmo dispositivo.
+        </p>
+      </div>
+
       <div className="space-y-3">
         {resources.length > 0 ? (
           <LoadMoreList
@@ -67,18 +155,7 @@ function StudentResources() {
             initialLimit={4}
             step={4}
             continueLabel={t("continue")}
-            renderItem={(resource) => (
-              <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-brand-navy">{resource.title}</p>
-                  {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.description}</p>}
-                  <p className="text-xs text-brand-navy/50 mt-1">Por: {resource.uploadedBy?.name}</p>
-                </div>
-                <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
-                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
-                </a>
-              </div>
-            )}
+            renderItem={renderResourceCard}
           />
         ) : (
           <p className="text-center text-brand-navy/60">Nenhum recurso disponível</p>
@@ -93,17 +170,7 @@ function StudentResources() {
             initialLimit={4}
             step={4}
             continueLabel={t("continue")}
-            renderItem={(resource) => (
-              <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-brand-navy">{resource.title}</p>
-                  <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
-                </div>
-                <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
-                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
-                </a>
-              </div>
-            )}
+            renderItem={renderResourceCard}
           />
         ) : (
           <p className="text-center text-brand-navy/60">Sem itens na biblioteca da serie.</p>

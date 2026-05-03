@@ -54,7 +54,9 @@ function StudentLessonPlans() {
                     <div key={p.id} className="rounded-xl border p-3">
                       <p className="font-semibold">{p.title} <span className="text-xs text-brand-navy/60">{p.date}</span></p>
                       {p.objectives ? <p className="text-sm">{p.objectives}</p> : null}
+                      {p.methodology ? <p className="text-xs text-brand-navy/70">Metodologia: {p.methodology}</p> : null}
                       {p.content ? <p className="text-xs text-brand-navy/60">{p.content}</p> : null}
+                      {Array.isArray(p.tags) && p.tags.length ? <p className="text-xs text-brand-navy/60">Tags: {p.tags.join(", ")}</p> : null}
                     </div>
                   ))
                 ) : (

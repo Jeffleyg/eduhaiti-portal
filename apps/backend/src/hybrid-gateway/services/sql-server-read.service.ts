@@ -5,6 +5,8 @@ export interface StudentCriticalSummary {
   studentId: string;
   globalAverage: number;
   absences: number;
+  passAverage: number;
+  approvalStatus: 'APROVADO' | 'REPROVADO';
   latestAnnouncement?: string;
 }
 
@@ -88,27 +90,59 @@ GROUP BY s.id;`;
       return null;
     }
 
-    const [gradeAgg, absenceAgg, latestAnnouncement] = await Promise.all([
-      this.prisma.grade.aggregate({
-        where: { studentId },
-        _avg: { score: true },
-      }),
-      this.prisma.attendance.count({
-        where: {
-          studentId,
-          status: 'ABSENT',
-        },
-      }),
-      this.prisma.announcement.findFirst({
-        orderBy: { publishedAt: 'desc' },
-        select: { title: true },
-      }),
-    ]);
+    const [gradeAgg, absenceAgg, latestAnnouncement, latestClass] =
+      await Promise.all([
+        this.prisma.grade.aggregate({
+          where: { studentId },
+          _avg: { score: true },
+        }),
+        this.prisma.attendance.count({
+          where: {
+            studentId,
+            status: 'ABSENT',
+          },
+        }),
+        this.prisma.announcement.findFirst({
+          orderBy: { publishedAt: 'desc' },
+          select: { title: true },
+        }),
+        this.prisma.class.findFirst({
+          where: {
+            students: {
+              some: { id: studentId },
+            },
+          },
+          select: {
+            academicYear: {
+              select: {
+                schoolId: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      ]);
+
+    const { academicYear } = latestClass ?? {};
+    const schoolId = academicYear?.schoolId;
+    const settings = schoolId
+      ? await this.prisma.academicSetting.findUnique({
+          where: { schoolId },
+          select: { passAverage: true },
+        })
+      : null;
+
+    const globalAverage = Number(gradeAgg._avg.score ?? 0);
+    const passAverage = Number(settings?.passAverage ?? 10);
+    const approvalStatus =
+      globalAverage >= passAverage ? 'APROVADO' : 'REPROVADO';
 
     return {
       studentId,
-      globalAverage: Number(gradeAgg._avg.score ?? 0),
+      globalAverage,
       absences: absenceAgg,
+      passAverage,
+      approvalStatus,
       latestAnnouncement: latestAnnouncement?.title,
     };
   }

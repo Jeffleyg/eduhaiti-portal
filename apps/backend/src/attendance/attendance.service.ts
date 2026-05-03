@@ -2,14 +2,21 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AttendanceStatus, Role } from '@prisma/client';
+import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
 
 @Injectable()
 export class AttendanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(AttendanceService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly hybridOutboundSms: HybridOutboundSmsService,
+  ) {}
 
   private buildAttendanceFamilyNotice(params: {
     status: AttendanceStatus;
@@ -106,7 +113,9 @@ export class AttendanceService {
       },
     });
 
-    return this.prisma.$transaction(async (tx) => {
+    const wasAbsent = existing?.status === 'ABSENT';
+
+    const attendanceRecord = await this.prisma.$transaction(async (tx) => {
       let attendanceRecord;
 
       if (existing) {
@@ -157,6 +166,90 @@ export class AttendanceService {
 
       return attendanceRecord;
     });
+
+    if (payload.status === 'ABSENT' && !wasAbsent) {
+      void this.notifyGuardiansAboutAbsence({
+        attendanceId: attendanceRecord.id,
+        studentId: attendanceRecord.student.id,
+        studentName:
+          attendanceRecord.student.name ?? 'Aluno sem nome cadastrado',
+        className: attendanceRecord.class.name,
+        date: new Date(payload.date),
+        remarks: payload.remarks,
+      });
+    }
+
+    return attendanceRecord;
+  }
+
+  private async notifyGuardiansAboutAbsence(params: {
+    attendanceId: string;
+    studentId: string;
+    studentName: string;
+    className: string;
+    date: Date;
+    remarks?: string;
+  }): Promise<void> {
+    try {
+      const guardians = await this.prisma.$queryRaw<
+        Array<{ phoneNumber: string | null }>
+      >`
+        SELECT g."phoneNumber"
+        FROM "GuardianStudent" gs
+        INNER JOIN "Guardian" g ON g."id" = gs."guardianId"
+        WHERE gs."studentId" = ${params.studentId}
+      `;
+
+      const uniquePhones = Array.from(
+        new Set(
+          guardians
+            .map((item) => item.phoneNumber?.trim())
+            .filter((phone): phone is string => Boolean(phone)),
+        ),
+      );
+
+      if (uniquePhones.length === 0) {
+        return;
+      }
+
+      const dateLabel = params.date.toLocaleDateString('pt-BR');
+      const message = this.to160Chars(
+        `EduHaiti: ${params.studentName} faltou a aula em ${dateLabel} na turma ${params.className}.${params.remarks ? ` Obs: ${params.remarks}.` : ''}`,
+      );
+
+      await Promise.all(
+        uniquePhones.map((phone) =>
+          this.hybridOutboundSms.sendSms({
+            to: phone,
+            text: message,
+            context: {
+              type: 'ATTENDANCE_ABSENCE_ALERT',
+              attendanceId: params.attendanceId,
+              studentId: params.studentId,
+            },
+          }),
+        ),
+      );
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : 'absence_sms_unknown_error';
+      this.logger.warn(
+        `Failed to notify guardians on absence for ${params.studentId}: ${reason}`,
+      );
+    }
+  }
+
+  private to160Chars(text: string): string {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= 160) {
+      return normalized;
+    }
+
+    const limit = 157;
+    const shortText = normalized.slice(0, limit);
+    const cut = shortText.lastIndexOf(' ');
+    const safe = cut > 110 ? shortText.slice(0, cut) : shortText;
+    return `${safe.trimEnd()}...`;
   }
 
   async findByStudent(studentId: string, startDate?: Date, endDate?: Date) {

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HybridGatewayModule } from '../hybrid-gateway/hybrid-gateway.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { FinanceIntegrationController } from './finance-integration.controller';
 import { FinanceIntegrationService } from './finance-integration.service';
@@ -13,7 +14,7 @@ import { WebhookAlertService } from './services/webhook-alert.service';
 import { WebhookSignatureService } from './services/webhook-signature.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, HybridGatewayModule],
   controllers: [FinanceIntegrationController],
   providers: [
     FinanceIntegrationService,

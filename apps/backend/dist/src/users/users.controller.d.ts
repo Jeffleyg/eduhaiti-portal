@@ -6,14 +6,14 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     findAllStudents(): Promise<{
-        firstName: string | null;
-        lastName: string | null;
-        fatherName: string | null;
-        motherName: string | null;
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        fatherName: string | null;
+        motherName: string | null;
         isActive: boolean;
         createdAt: Date;
         classesAttending: {
@@ -23,12 +23,12 @@ export declare class UsersController {
         }[];
     }[]>;
     findAllTeachers(): Promise<{
-        firstName: string | null;
-        lastName: string | null;
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         subjects: string[];
         isActive: boolean;
         createdAt: Date;

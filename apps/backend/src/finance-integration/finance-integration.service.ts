@@ -2,13 +2,17 @@ import {
   BadRequestException,
   BadGatewayException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PaymentStatus, Prisma, Role } from '@prisma/client';
+import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Idempotent } from './decorators/idempotent.decorator';
+import { AdminLedgerReportQueryDto } from './dto/admin-ledger-report-query.dto';
 import { AdminFinanceSummaryQueryDto } from './dto/admin-finance-summary-query.dto';
 import { AdminPaymentsQueryDto } from './dto/admin-payments-query.dto';
+import { CreateInstallmentPlanDto } from './dto/create-installment-plan.dto';
 import { CreateTuitionChargeDto } from './dto/create-tuition-charge.dto';
 import { DiasporaRemittanceDto } from './dto/diaspora-remittance.dto';
 import { GuardianTuitionPaymentDto } from './dto/guardian-tuition-payment.dto';
@@ -24,6 +28,7 @@ import { ImmutableLedgerService } from './services/immutable-ledger.service';
 
 @Injectable()
 export class FinanceIntegrationService {
+  private readonly logger = new Logger(FinanceIntegrationService.name);
   private readonly providers: Record<string, MobileMoneyProvider>;
 
   constructor(
@@ -33,6 +38,7 @@ export class FinanceIntegrationService {
     private readonly exchangeRateService: ExchangeRateService,
     readonly idempotencyService: IdempotencyService,
     private readonly observability: FinanceObservabilityService,
+    private readonly hybridOutboundSms: HybridOutboundSmsService,
     private readonly didAuth: DidAuthService,
     private readonly ledger: ImmutableLedgerService,
   ) {
@@ -318,6 +324,18 @@ export class FinanceIntegrationService {
       { tx, persistAudit: true },
     );
 
+    await this.notifyGuardianOfflineConfirmation({
+      provider: charge.providerName,
+      studentId: student.id,
+      studentEnrollmentNumber: dto.studentEnrollmentNumber,
+      studentName: student.name,
+      guardianPhone: dto.guardianPhone,
+      paymentId: payment.id,
+      paymentStatus: payment.status,
+      netAmountHtg: charge.netAmountHtg,
+      receiptNumber: charge.providerTransactionId,
+    });
+
     return {
       paymentId: payment.id,
       provider: charge.providerName,
@@ -328,6 +346,83 @@ export class FinanceIntegrationService {
       receiptNumber: charge.providerTransactionId,
       ledgerHash: ledgerRecord.hash,
     };
+  }
+
+  private async notifyGuardianOfflineConfirmation(params: {
+    provider: string;
+    studentId: string;
+    studentEnrollmentNumber: string;
+    studentName: string | null;
+    guardianPhone?: string;
+    paymentId: string;
+    paymentStatus: PaymentStatus;
+    netAmountHtg: number;
+    receiptNumber: string;
+  }): Promise<void> {
+    if (params.provider !== 'moncash') {
+      return;
+    }
+
+    let phone = params.guardianPhone?.trim() ?? '';
+
+    if (!phone) {
+      const links = await this.prisma.$queryRaw<
+        Array<{ phoneNumber: string | null; createdAt: Date }>
+      >`
+        SELECT g."phoneNumber", gs."createdAt"
+        FROM "GuardianStudent" gs
+        INNER JOIN "Guardian" g ON g."id" = gs."guardianId"
+        WHERE gs."studentId" = ${params.studentId}
+        ORDER BY gs."createdAt" DESC
+        LIMIT 1
+      `;
+
+      phone = links[0]?.phoneNumber?.trim() ?? '';
+    }
+
+    if (!phone) {
+      return;
+    }
+
+    const statusLabel =
+      params.paymentStatus === PaymentStatus.PAID ? 'PAGO' : 'PARCIAL';
+    const text = this.to160Chars(
+      `EduHaiti: MonCash confirmou o pagamento de ${params.netAmountHtg.toFixed(2)} HTG para ${params.studentName ?? params.studentEnrollmentNumber}. Status: ${statusLabel}. Recibo: ${params.receiptNumber}.`,
+    );
+
+    try {
+      await this.hybridOutboundSms.sendSms({
+        to: phone,
+        text,
+        operatorHint: 'digicel',
+        context: {
+          type: 'MONCASH_PAYMENT_CONFIRMED',
+          paymentId: params.paymentId,
+          studentId: params.studentId,
+          studentEnrollmentNumber: params.studentEnrollmentNumber,
+          receiptNumber: params.receiptNumber,
+        },
+      });
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : 'guardian_sms_unknown_error';
+      this.logger.warn(
+        `Failed to send payment confirmation SMS for payment ${params.paymentId}: ${reason}`,
+      );
+    }
+  }
+
+  private to160Chars(text: string): string {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= 160) {
+      return normalized;
+    }
+
+    const limit = 157;
+    const shortText = normalized.slice(0, limit);
+    const cut = shortText.lastIndexOf(' ');
+    const safe = cut > 110 ? shortText.slice(0, cut) : shortText;
+    return `${safe.trimEnd()}...`;
   }
 
   async listPendingTuitionByEnrollment(studentEnrollmentNumber: string) {
@@ -362,6 +457,16 @@ export class FinanceIntegrationService {
             PaymentStatus.PARTIAL,
           ],
         },
+        OR: [
+          { description: null },
+          {
+            description: {
+              not: {
+                contains: '[RENEGOTIATED]',
+              },
+            },
+          },
+        ],
       },
       orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
       select: {
@@ -404,15 +509,44 @@ export class FinanceIntegrationService {
       throw new BadRequestException('Invalid dueDate');
     }
 
+    const discount = await this.calculateAutomaticDiscounts({
+      studentId: student.id,
+      baseAmountHtg: dto.amountHtg,
+      scholarshipPercent: dto.scholarshipPercent,
+      scholarshipLabel: dto.scholarshipLabel,
+      punctualityDiscountPercent: dto.punctualityDiscountPercent,
+      applyPunctualityDiscount: dto.applyPunctualityDiscount,
+    });
+
     const schoolId = await this.resolveSchoolId(this.prisma);
+    const finalAmount = this.roundCurrency(
+      Math.max(0.01, dto.amountHtg - discount.totalDiscountHtg),
+    );
+
+    const descriptionParts = [
+      dto.description?.trim() || 'Monthly tuition charge',
+      `base=${this.roundCurrency(dto.amountHtg)} HTG`,
+      `discount=${discount.totalDiscountHtg} HTG`,
+      `final=${finalAmount} HTG`,
+      ...(discount.scholarshipPercent > 0
+        ? [`scholarship=${discount.scholarshipPercent}%`]
+        : []),
+      ...(discount.punctualityPercent > 0
+        ? [`punctuality=${discount.punctualityPercent}%`]
+        : []),
+      ...(discount.discountTags.length > 0
+        ? [`tags=${discount.discountTags.join('|')}`]
+        : []),
+    ];
+
     const payment = await this.prisma.payment.create({
       data: {
         schoolId,
         studentId: student.id,
-        amount: dto.amountHtg,
+        amount: finalAmount,
         dueDate,
         status: PaymentStatus.PENDING,
-        description: dto.description?.trim() || 'Monthly tuition charge',
+        description: descriptionParts.join('; '),
       },
       select: {
         id: true,
@@ -430,14 +564,258 @@ export class FinanceIntegrationService {
         userId: adminUserId,
         changes: JSON.stringify({
           studentEnrollmentNumber: student.enrollmentNumber,
-          amountHtg: dto.amountHtg,
+          amountHtg: finalAmount,
+          baseAmountHtg: dto.amountHtg,
+          discount,
           dueDate,
           description: dto.description ?? null,
         }),
       },
     });
 
+    await this.ledger.append(payment.id, 'tuition-charge', {
+      studentEnrollmentNumber: student.enrollmentNumber,
+      baseAmountHtg: dto.amountHtg,
+      finalAmountHtg: finalAmount,
+      dueDate: dueDate.toISOString(),
+      discount,
+      createdBy: adminUserId,
+    });
+
     return payment;
+  }
+
+  async createInstallmentPlan(
+    dto: CreateInstallmentPlanDto,
+    adminUserId: string,
+  ) {
+    const enrollment = dto.studentEnrollmentNumber.trim();
+    if (!enrollment) {
+      throw new BadRequestException('studentEnrollmentNumber is required');
+    }
+
+    const firstDueDate = new Date(dto.firstDueDate);
+    if (Number.isNaN(firstDueDate.getTime())) {
+      throw new BadRequestException('Invalid firstDueDate');
+    }
+
+    const student = await this.prisma.user.findFirst({
+      where: {
+        enrollmentNumber: enrollment,
+        role: Role.STUDENT,
+      },
+      select: {
+        id: true,
+        enrollmentNumber: true,
+        name: true,
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student enrollment not found');
+    }
+
+    const schoolId = await this.resolveSchoolId(this.prisma);
+    const sourcePaymentIds =
+      dto.sourcePaymentIds
+        ?.map((item) => item.trim())
+        .filter((item) => item.length > 0) ?? [];
+
+    const sourcePayments = await this.prisma.payment.findMany({
+      where: {
+        studentId: student.id,
+        schoolId,
+        ...(sourcePaymentIds.length > 0 ? { id: { in: sourcePaymentIds } } : {}),
+        status: {
+          in: [PaymentStatus.PENDING, PaymentStatus.OVERDUE, PaymentStatus.PARTIAL],
+        },
+        OR: [
+          { description: null },
+          {
+            description: {
+              not: {
+                contains: '[RENEGOTIATED]',
+              },
+            },
+          },
+        ],
+      },
+      orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        id: true,
+        amount: true,
+        dueDate: true,
+        description: true,
+      },
+    });
+
+    if (sourcePayments.length === 0) {
+      throw new BadRequestException('No eligible debt records found for renegotiation');
+    }
+
+    const originalTotal = this.roundCurrency(
+      sourcePayments.reduce((sum, payment) => sum + payment.amount, 0),
+    );
+    const totalAmount = this.roundCurrency(
+      dto.customTotalAmountHtg ?? originalTotal,
+    );
+
+    if (totalAmount <= 0) {
+      throw new BadRequestException('Installment total must be greater than zero');
+    }
+
+    const planId = `PLAN-${new Date().toISOString().slice(0, 10)}-${crypto
+      .randomUUID()
+      .slice(0, 8)}`;
+    const intervalDays = dto.intervalDays ?? 30;
+    const amounts = this.splitInstallments(totalAmount, dto.installments);
+
+    const createdInstallments = await this.prisma.$transaction(async (tx) => {
+      if (dto.markSourceAsRenegotiated !== false) {
+        for (const source of sourcePayments) {
+          const updatedDescription = [
+            source.description ?? 'Renegotiated tuition debt',
+            `[RENEGOTIATED]`,
+            `plan=${planId}`,
+          ].join('; ');
+
+          await tx.payment.update({
+            where: { id: source.id },
+            data: {
+              status: PaymentStatus.OVERDUE,
+              description: updatedDescription,
+            },
+          });
+        }
+      }
+
+      const records: Array<{ id: string; amount: number; dueDate: Date }> = [];
+      for (let index = 0; index < amounts.length; index += 1) {
+        const installmentDueDate = this.buildInstallmentDueDate(
+          firstDueDate,
+          intervalDays,
+          index,
+        );
+
+        const created = await tx.payment.create({
+          data: {
+            schoolId,
+            studentId: student.id,
+            amount: amounts[index],
+            dueDate: installmentDueDate,
+            status: PaymentStatus.PENDING,
+            description: [
+              dto.description?.trim() || 'Installment plan renegotiation',
+              `plan=${planId}`,
+              `installment=${index + 1}/${amounts.length}`,
+            ].join('; '),
+          },
+          select: {
+            id: true,
+            amount: true,
+            dueDate: true,
+          },
+        });
+
+        records.push(created);
+      }
+
+      await tx.auditLog.create({
+        data: {
+          entityType: 'PAYMENT',
+          entityId: planId,
+          action: 'INSTALLMENT_PLAN_CREATED',
+          userId: adminUserId,
+          changes: JSON.stringify({
+            planId,
+            studentEnrollmentNumber: student.enrollmentNumber,
+            sourcePaymentIds: sourcePayments.map((item) => item.id),
+            sourceTotalHtg: originalTotal,
+            renegotiatedTotalHtg: totalAmount,
+            installments: records.map((item, index) => ({
+              paymentId: item.id,
+              installment: index + 1,
+              amountHtg: item.amount,
+              dueDate: item.dueDate.toISOString(),
+            })),
+            intervalDays,
+          }),
+        },
+      });
+
+      return records;
+    });
+
+    const ledgerRecord = await this.ledger.append(planId, 'installment-plan', {
+      planId,
+      studentEnrollmentNumber: student.enrollmentNumber,
+      studentName: student.name,
+      sourcePaymentIds: sourcePayments.map((item) => item.id),
+      sourceTotalHtg: originalTotal,
+      renegotiatedTotalHtg: totalAmount,
+      installments: createdInstallments.map((item, index) => ({
+        paymentId: item.id,
+        installment: index + 1,
+        amountHtg: item.amount,
+        dueDate: item.dueDate.toISOString(),
+      })),
+      intervalDays,
+      createdBy: adminUserId,
+    });
+
+    return {
+      planId,
+      student: {
+        id: student.id,
+        enrollmentNumber: student.enrollmentNumber,
+        name: student.name,
+      },
+      sourceTotalHtg: originalTotal,
+      renegotiatedTotalHtg: totalAmount,
+      installments: createdInstallments.map((item, index) => ({
+        paymentId: item.id,
+        installment: index + 1,
+        amountHtg: item.amount,
+        dueDate: item.dueDate,
+      })),
+      ledgerHash: ledgerRecord.hash,
+    };
+  }
+
+  async getFinancialAuditReport(filters: AdminLedgerReportQueryDto) {
+    const report = await this.ledger.buildFinancialTransparencyReport({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      limit: filters.limit,
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        entityType: 'PAYMENT_AUDIT_REPORT',
+        entityId: report.lastHash,
+        action: 'GENERATE',
+        changes: JSON.stringify({
+          generatedAt: report.generatedAt,
+          totalRecords: report.totalRecords,
+          integrity: report.integrity,
+          filters,
+        }),
+      },
+    });
+
+    await this.ledger.append(
+      `audit-report-${Date.now()}`,
+      'finance-audit-report',
+      {
+        generatedAt: report.generatedAt,
+        totalRecords: report.totalRecords,
+        integrity: report.integrity,
+        byCategory: report.byCategory,
+        filters,
+      },
+    );
+
+    return report;
   }
 
   private buildAdminPaymentsWhere(
@@ -755,6 +1133,136 @@ export class FinanceIntegrationService {
 
   verifyDidTrustTokenOffline(token: string) {
     return this.didAuth.verifyTrustTokenOffline(token);
+  }
+
+  private async calculateAutomaticDiscounts(params: {
+    studentId: string;
+    baseAmountHtg: number;
+    scholarshipPercent?: number;
+    scholarshipLabel?: string;
+    punctualityDiscountPercent?: number;
+    applyPunctualityDiscount?: boolean;
+  }): Promise<{
+    scholarshipPercent: number;
+    punctualityPercent: number;
+    totalDiscountHtg: number;
+    discountTags: string[];
+  }> {
+    const scholarshipPercent = Math.max(
+      0,
+      Math.min(params.scholarshipPercent ?? 0, 100),
+    );
+    const shouldApplyPunctuality = params.applyPunctualityDiscount !== false;
+    const punctualityEligible = shouldApplyPunctuality
+      ? await this.isPunctualPayer(params.studentId)
+      : false;
+    const defaultPunctualityPercent = Number(
+      process.env.PUNCTUALITY_DISCOUNT_PERCENT ?? '5',
+    );
+    const punctualityPercent = punctualityEligible
+      ? Math.max(
+          0,
+          Math.min(
+            params.punctualityDiscountPercent ?? defaultPunctualityPercent,
+            30,
+          ),
+        )
+      : 0;
+
+    const rawTotalPercent = scholarshipPercent + punctualityPercent;
+    const cappedPercent = Math.min(rawTotalPercent, 80);
+    const totalDiscountHtg = this.roundCurrency(
+      (params.baseAmountHtg * cappedPercent) / 100,
+    );
+
+    const discountTags = [] as string[];
+    if (scholarshipPercent > 0) {
+      discountTags.push(
+        params.scholarshipLabel?.trim()
+          ? `BOLSA:${params.scholarshipLabel.trim()}`
+          : 'BOLSA',
+      );
+    }
+    if (punctualityPercent > 0) {
+      discountTags.push('PONTUALIDADE');
+    }
+
+    return {
+      scholarshipPercent,
+      punctualityPercent,
+      totalDiscountHtg,
+      discountTags,
+    };
+  }
+
+  private async isPunctualPayer(studentId: string): Promise<boolean> {
+    const [latestPaid, overdueOpenCount] = await Promise.all([
+      this.prisma.payment.findMany({
+        where: {
+          studentId,
+          status: PaymentStatus.PAID,
+          paidDate: { not: null },
+        },
+        select: {
+          dueDate: true,
+          paidDate: true,
+        },
+        orderBy: { dueDate: 'desc' },
+        take: 3,
+      }),
+      this.prisma.payment.count({
+        where: {
+          studentId,
+          status: { in: [PaymentStatus.PENDING, PaymentStatus.OVERDUE] },
+          dueDate: { lt: new Date() },
+          OR: [
+            { description: null },
+            {
+              description: {
+                not: { contains: '[RENEGOTIATED]' },
+              },
+            },
+          ],
+        },
+      }),
+    ]);
+
+    if (overdueOpenCount > 0 || latestPaid.length < 2) {
+      return false;
+    }
+
+    return latestPaid.every((item) => {
+      if (!item.paidDate) {
+        return false;
+      }
+      return item.paidDate.getTime() <= item.dueDate.getTime();
+    });
+  }
+
+  private splitInstallments(totalAmount: number, count: number): number[] {
+    const cents = Math.round(totalAmount * 100);
+    const base = Math.floor(cents / count);
+    const remainder = cents - base * count;
+
+    const values = Array.from({ length: count }, (_, index) =>
+      (base + (index < remainder ? 1 : 0)) / 100,
+    );
+
+    return values.map((value) => this.roundCurrency(value));
+  }
+
+  private buildInstallmentDueDate(
+    firstDueDate: Date,
+    intervalDays: number,
+    index: number,
+  ): Date {
+    const dueDate = new Date(firstDueDate);
+    dueDate.setDate(dueDate.getDate() + intervalDays * index);
+    return dueDate;
+  }
+
+  private roundCurrency(value: number): number {
+    return Number(value.toFixed(2));
   }
 
   private async resolveSchoolId(

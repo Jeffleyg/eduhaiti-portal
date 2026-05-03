@@ -1,6 +1,7 @@
 const SQLITE_HOME_CACHE_KEY = "eduhaiti_sqlite_home_cache_v1"
 const SQLITE_SYNC_HISTORY_KEY = "eduhaiti_sqlite_sync_history_v1"
 const SQLITE_SYNC_CONFLICT_STRATEGY_KEY = "eduhaiti_sync_conflict_strategy_v1"
+const SQLITE_OFFLINE_ASSET_MANIFEST_KEY = "eduhaiti_offline_asset_manifest_v1"
 
 const SYNC_STRATEGIES = ["lww", "manual"]
 
@@ -38,6 +39,24 @@ function readSyncHistoryStore() {
 
 function writeSyncHistoryStore(history) {
   localStorage.setItem(SQLITE_SYNC_HISTORY_KEY, JSON.stringify(history))
+}
+
+function readOfflineAssetStore() {
+  try {
+    const raw = localStorage.getItem(SQLITE_OFFLINE_ASSET_MANIFEST_KEY)
+    if (!raw) {
+      return []
+    }
+
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function writeOfflineAssetStore(items) {
+  localStorage.setItem(SQLITE_OFFLINE_ASSET_MANIFEST_KEY, JSON.stringify(items))
 }
 
 function normalizeIso(iso) {
@@ -226,4 +245,23 @@ export function formatLastUpdated(iso, language) {
     hour: "2-digit",
     minute: "2-digit",
   })
+}
+
+export function readOfflineAssetManifest() {
+  return readOfflineAssetStore().slice(0, 500)
+}
+
+export function upsertOfflineAsset(entry) {
+  const current = readOfflineAssetStore()
+  const withoutCurrent = current.filter((item) => item.resourceId !== entry.resourceId)
+  const next = [entry, ...withoutCurrent].slice(0, 500)
+  writeOfflineAssetStore(next)
+  return next
+}
+
+export function removeOfflineAsset(resourceId) {
+  const current = readOfflineAssetStore()
+  const next = current.filter((item) => item.resourceId !== resourceId)
+  writeOfflineAssetStore(next)
+  return next
 }

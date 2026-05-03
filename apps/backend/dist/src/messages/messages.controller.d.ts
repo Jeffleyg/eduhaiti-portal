@@ -16,9 +16,9 @@ export declare class MessagesController {
         id: string;
         createdAt: Date;
         subject: string;
+        body: string;
         fromId: string;
         toId: string;
-        body: string;
         isRead: boolean;
     })[]>;
     getSent(req: {
@@ -35,9 +35,9 @@ export declare class MessagesController {
         id: string;
         createdAt: Date;
         subject: string;
+        body: string;
         fromId: string;
         toId: string;
-        body: string;
         isRead: boolean;
     })[]>;
     getRecipients(req: {
@@ -66,9 +66,9 @@ export declare class MessagesController {
         id: string;
         createdAt: Date;
         subject: string;
+        body: string;
         fromId: string;
         toId: string;
-        body: string;
         isRead: boolean;
     }>;
 }

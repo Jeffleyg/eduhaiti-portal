@@ -91,9 +91,7 @@ export class HybridGatewayService {
 
     const responseText = this.buildSmsResponse(
       command.type,
-      summary.globalAverage,
-      summary.absences,
-      summary.latestAnnouncement,
+      summary,
     );
 
     await this.audit.logMessageQuery({
@@ -114,6 +112,84 @@ export class HybridGatewayService {
   ) {
     const adapter = this.adapterRegistry.resolve(operatorHint);
     const request = adapter.normalizeUssd(payload);
+
+    const path = request.text.trim() ? request.text.trim().split('*') : [];
+
+    if (path[0] === '1') {
+      if (path.length < 2) {
+        return adapter.formatUssdResponse(
+          'Digite: 1*ID_ALUNO*TOKEN*OTP',
+          false,
+        );
+      }
+
+      const studentId = path[1] ?? '';
+      const responsibleDocumentId = path[2];
+      const otpCode = path[3];
+
+      const summary = await this.sqlServerRead.getCriticalSummary(
+        studentId,
+        request.senderPhone,
+        responsibleDocumentId,
+      );
+
+      if (!summary) {
+        await this.audit.logMessageQuery({
+          channel: 'ussd',
+          senderPhone: request.senderPhone,
+          command: request.text,
+          studentId,
+          status: 'denied',
+          requestId: request.requestId ?? request.sessionId,
+        });
+
+        return adapter.formatUssdResponse(
+          'Nao autorizado. Verifique ID/TOKEN e telefone cadastrado.',
+          true,
+        );
+      }
+
+      const otpVerification = await this.otp.verifyOtp({
+        phone: request.senderPhone,
+        studentId,
+        otpCode,
+        tokenHint: responsibleDocumentId,
+      });
+
+      if (!otpVerification.ok) {
+        const issued = await this.otp.issueOtp({
+          phone: request.senderPhone,
+          studentId,
+          tokenHint: responsibleDocumentId,
+        });
+
+        const devOtpHint =
+          process.env.NODE_ENV === 'production' ? '' : ` [DEV:${issued.otpCode}]`;
+
+        return adapter.formatUssdResponse(
+          this.with160Chars(
+            `OTP enviado. Digite: 1*${studentId}*${responsibleDocumentId ?? 'TOKEN'}*OTP${devOtpHint}`,
+          ),
+          false,
+        );
+      }
+
+      await this.audit.logMessageQuery({
+        channel: 'ussd',
+        senderPhone: request.senderPhone,
+        command: request.text,
+        studentId,
+        status: 'ok',
+        requestId: request.requestId ?? request.sessionId,
+      });
+
+      return adapter.formatUssdResponse(
+        this.with160Chars(
+          `Media:${summary.globalAverage.toFixed(1)} | Status:${summary.approvalStatus} | Corte:${summary.passAverage.toFixed(1)}`,
+        ),
+        true,
+      );
+    }
 
     const menu = this.ussdMenu.handle(request.text);
 
@@ -231,20 +307,27 @@ export class HybridGatewayService {
 
   private buildSmsResponse(
     command: 'NOTA' | 'FREQ' | 'AVISO' | 'AJUDA',
-    globalAverage: number,
-    absences: number,
-    latestAnnouncement?: string,
+    summary: {
+      globalAverage: number;
+      absences: number;
+      latestAnnouncement?: string;
+      passAverage: number;
+      approvalStatus: 'APROVADO' | 'REPROVADO';
+    },
   ): string {
     if (command === 'AVISO') {
       return this.with160Chars(
-        `Aviso: ${latestAnnouncement ?? 'Sem novos avisos.'}`,
+        `Aviso: ${summary.latestAnnouncement ?? 'Sem novos avisos.'}`,
       );
     }
 
-    const label = command === 'NOTA' ? 'Media' : 'Faltas';
-    const value =
-      command === 'NOTA' ? globalAverage.toFixed(1) : String(absences);
-    const base = `${label}:${value} | Media:${globalAverage.toFixed(1)} | Faltas:${absences}`;
+    if (command === 'NOTA') {
+      return this.with160Chars(
+        `Media:${summary.globalAverage.toFixed(1)} | Status:${summary.approvalStatus} | Corte:${summary.passAverage.toFixed(1)}`,
+      );
+    }
+
+    const base = `Faltas:${summary.absences} | Media:${summary.globalAverage.toFixed(1)} | Status:${summary.approvalStatus}`;
 
     return this.with160Chars(base);
   }

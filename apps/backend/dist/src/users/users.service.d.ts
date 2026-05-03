@@ -35,14 +35,14 @@ export declare class UsersService {
         expiresAt: Date;
     }>;
     findAllStudents(): Promise<{
-        firstName: string | null;
-        lastName: string | null;
-        fatherName: string | null;
-        motherName: string | null;
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        fatherName: string | null;
+        motherName: string | null;
         isActive: boolean;
         createdAt: Date;
         classesAttending: {
@@ -52,12 +52,12 @@ export declare class UsersService {
         }[];
     }[]>;
     findAllTeachers(): Promise<{
-        firstName: string | null;
-        lastName: string | null;
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
+        firstName: string | null;
+        lastName: string | null;
         subjects: string[];
         isActive: boolean;
         createdAt: Date;

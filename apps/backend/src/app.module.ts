@@ -26,6 +26,8 @@ import { ForumsModule } from './forums/forums.module';
 import { FamilyAccessModule } from './family-access/family-access.module';
 import { ScorecardsModule } from './scorecards/scorecards.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { LessonsModule } from './lessons/lessons.module';
+import { GamificationModule } from './gamification/gamification.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { InventoryModule } from './inventory/inventory.module';
     FamilyAccessModule,
     ScorecardsModule,
     InventoryModule,
+    LessonsModule,
+    GamificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
