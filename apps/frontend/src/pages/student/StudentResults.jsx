@@ -158,7 +158,6 @@ function StudentResults() {
                 items={evolution.timeline}
                 initialLimit={4}
                 step={4}
-                continueLabel={t("continue")}
                 renderItem={(point) => (
                   <div key={point.period} className="flex items-center justify-between text-sm">
                     <span className="text-brand-navy/70">{point.period}</span>
@@ -178,7 +177,6 @@ function StudentResults() {
                 items={evolution.byDiscipline}
                 initialLimit={4}
                 step={4}
-                continueLabel={t("continue")}
                 renderItem={(item) => (
                   <div key={item.disciplineId} className="flex items-center justify-between text-sm">
                     <span className="text-brand-navy/70">{item.disciplineName}</span>

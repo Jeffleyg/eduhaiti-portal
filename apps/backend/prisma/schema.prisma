@@ -9,6 +9,7 @@ datasource db {
 }
 
 enum Role {
+  OWNER
   ADMIN
   TEACHER
   STUDENT
@@ -96,14 +97,26 @@ model School {
   principal String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  
+  // Feature flags
+  enableFamilyAccess    Boolean @default(true)
+  enablePayment         Boolean @default(true)
+  enableGamification    Boolean @default(false)
+  enableForums          Boolean @default(true)
+  enableLessons         Boolean @default(true)
+  enableInventory       Boolean @default(false)
+  enableFinance         Boolean @default(true)
+  enableSync            Boolean @default(true)
 
-  academicYears AcademicYear[]
-  announcements Announcement[]
-  payments      Payment[]
-  inventoryItems SchoolInventoryItem[]
-  events        CalendarEvent[]
-  academicPeriods AcademicPeriod[]
-  academicSetting AcademicSetting?
+  academicYears       AcademicYear[]
+  announcements       Announcement[]
+  payments            Payment[]
+  inventoryItems      SchoolInventoryItem[]
+  events              CalendarEvent[]
+  academicPeriods     AcademicPeriod[]
+  academicSetting     AcademicSetting?
+  usageAnalytics      SchoolUsageAnalytic[]
+  permissionCodes     SchoolPermissionCode[]
 }
 
 model AcademicYear {
@@ -173,6 +186,7 @@ model User {
   motherName            String?
   menfpId               String?   @unique
   enrollmentNumber      String?   @unique
+  profilePhoto          String?
   passwordHash          String?
   mustChangePassword    Boolean   @default(false)
   tempPasswordExpiresAt DateTime?
@@ -628,4 +642,49 @@ model IdempotencyRecord {
   updatedAt       DateTime          @updatedAt
 
   @@index([operation, status])
+}
+
+model SchoolUsageAnalytic {
+  id              String   @id @default(uuid())
+  schoolId        String
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  // Usage metrics
+  totalLogins     Int      @default(0)
+  totalUsers      Int      @default(0)
+  studentCount    Int      @default(0)
+  teacherCount    Int      @default(0)
+  classCount      Int      @default(0)
+  gradeCreations  Int      @default(0)
+  attendanceRecords Int    @default(0)
+  messagesSent    Int      @default(0)
+  resourcesUploaded Int    @default(0)
+  assignmentsCreated Int   @default(0)
+  
+  // Last activity
+  lastActivityAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([schoolId])
+  @@index([schoolId])
+}
+
+model SchoolPermissionCode {
+  id            String   @id @default(uuid())
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  code          String   @unique // Código de 6-8 caracteres para acesso
+  name          String?  // Nome do acesso (ex: "Contador", "Secretária")
+  expiresAt     DateTime?
+  isActive      Boolean  @default(true)
+  usedBy        String?  // Email da pessoa que usou o código
+  usedAt        DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([schoolId])
+  @@index([code])
 }

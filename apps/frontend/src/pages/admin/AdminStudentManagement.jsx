@@ -183,7 +183,6 @@ function AdminStudentManagement() {
             items={filteredStudents}
             initialLimit={6}
             step={6}
-            continueLabel={t("continue")}
             renderItem={(student) => (
               <div key={student.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

@@ -40,4 +40,9 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(120)
   motherName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  profilePhoto?: string;
 }

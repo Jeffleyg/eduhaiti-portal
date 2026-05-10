@@ -293,7 +293,6 @@ function ProfessorGrades() {
             items={selectedClass.students}
             initialLimit={6}
             step={6}
-            continueLabel={t("continue")}
             renderItem={(student) => {
               const existingGrade = grades.find((item) => item.studentId === student.id)
 

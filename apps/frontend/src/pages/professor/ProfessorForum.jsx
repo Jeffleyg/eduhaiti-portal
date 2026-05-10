@@ -165,8 +165,6 @@ function ProfessorForum() {
               items={threads}
               initialLimit={5}
               step={5}
-              continueLabel="Próximo"
-              previousLabel="Anterior"
               renderItem={(thread) => (
                 <button
                   key={thread.id}
@@ -204,8 +202,6 @@ function ProfessorForum() {
                     items={threadDetails.posts}
                     initialLimit={5}
                     step={5}
-                    continueLabel="Próximo"
-                    previousLabel="Anterior"
                     renderItem={(post) => (
                       <div key={post.id} className="rounded-xl border border-brand-navy/10 p-3">
                         <p className="text-xs text-brand-navy/60">{post.createdBy?.name ?? "Usuario"}</p>

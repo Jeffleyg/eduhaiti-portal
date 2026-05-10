@@ -155,7 +155,6 @@ function StudentMessages() {
             items={tab === "inbox" ? messages : sentMessages}
             initialLimit={5}
             step={5}
-            continueLabel={t("continue")}
             renderItem={(message) => (
               <div key={message.id} className="rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
                 <div className="flex items-center justify-between">

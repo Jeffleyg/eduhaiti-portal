@@ -142,7 +142,6 @@ function GuardianTuitionPayment() {
                 items={charges}
                 initialLimit={3}
                 step={3}
-                continueLabel="Continuar"
                 renderItem={(charge) => (
                   <div key={charge.id} className="rounded-xl border border-brand-navy/10 bg-white p-3">
                     <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>

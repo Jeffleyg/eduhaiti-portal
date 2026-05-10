@@ -1,21 +1,23 @@
 import { Camera, Mail, User, Settings, Edit3 } from "lucide-react"
 import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
+import { apiAssetUrl } from "../lib/api.js"
 
 function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClick }) {
   const { t } = useTranslation()
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const fileInputRef = useRef(null)
 
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
       reader.onloadend = () => {
         setPreviewPhoto(reader.result)
-        onPhotoUpload(file, reader.result)
       }
       reader.readAsDataURL(file)
+      await onPhotoUpload(file)
+      setPreviewPhoto(null)
     }
   }
 
@@ -56,7 +58,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
               {previewPhoto ? (
                 <img src={previewPhoto} alt={user?.name} className="h-full w-full object-cover" />
               ) : user?.profilePhoto ? (
-                <img src={user.profilePhoto} alt={user?.name} className="h-full w-full object-cover" />
+                <img src={apiAssetUrl(user.profilePhoto)} alt={user?.name} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-navy to-brand-sky">
                   <User className="h-12 w-12 text-white/60" />
@@ -65,6 +67,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
             </div>
 
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
               className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-brand-navy p-2 text-white transition-colors hover:bg-brand-navy/90 disabled:opacity-50"

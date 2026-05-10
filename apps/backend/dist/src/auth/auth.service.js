@@ -94,6 +94,7 @@ let AuthService = class AuthService {
                 isActive: true,
                 mustChangePassword: true,
                 enrollmentNumber: true,
+                profilePhoto: true,
             },
         });
         if (!user || !user.isActive) {
@@ -120,6 +121,7 @@ let AuthService = class AuthService {
                 name: true,
                 firstName: true,
                 lastName: true,
+                profilePhoto: true,
                 dateOfBirth: true,
                 address: true,
                 gender: true,
@@ -161,6 +163,7 @@ let AuthService = class AuthService {
                 gender: payload.gender,
                 fatherName: payload.fatherName,
                 motherName: payload.motherName,
+                profilePhoto: payload.profilePhoto,
             },
         });
         return this.getProfile(userId);
@@ -179,6 +182,7 @@ let AuthService = class AuthService {
                 mustChangePassword: true,
                 tempPasswordExpiresAt: true,
                 enrollmentNumber: true,
+                profilePhoto: true,
             },
         });
         if (!user || !user.isActive || !user.passwordHash) {
@@ -227,6 +231,7 @@ let AuthService = class AuthService {
             isActive: user.isActive,
             mustChangePassword: user.mustChangePassword,
             enrollmentNumber: user.enrollmentNumber,
+            profilePhoto: user.profilePhoto,
         };
         await this.logAccessEvent({
             action: 'LOGIN_SUCCESS',

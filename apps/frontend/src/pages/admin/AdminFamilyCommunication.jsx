@@ -187,7 +187,6 @@ function AdminFamilyCommunication() {
             items={requests}
             initialLimit={4}
             step={4}
-            continueLabel="Continuar"
             renderItem={(request) => (
               <article key={request.requestId} className="rounded-xl border border-brand-navy/10 p-4 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">

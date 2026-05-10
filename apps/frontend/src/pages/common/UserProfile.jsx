@@ -6,7 +6,7 @@ import ProfileCard from "../../components/ProfileCard.jsx"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
-import { apiFetch } from "../../lib/api.js"
+import { apiFetch, apiUpload } from "../../lib/api.js"
 
 const emptyForm = {
   firstName: "",
@@ -103,11 +103,10 @@ function UserProfile() {
       const formData = new FormData()
       formData.append("profilePhoto", file)
 
-      const response = await apiFetch("/users/profile-photo", {
+      const response = await apiUpload("/auth/profile-photo", {
         method: "POST",
         token,
-        body: formData,
-        isFormData: true,
+        formData,
       })
 
       if (response?.user) {

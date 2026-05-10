@@ -10,6 +10,31 @@ function CorporateHeader() {
   const { user, logout } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
 
+  const getProfilePath = () => {
+    switch (user?.role) {
+      case "ADMIN":
+        return "/admin/profile"
+      case "TEACHER":
+        return "/professor/profile"
+      case "STUDENT":
+        return "/student/profile"
+      default:
+        return "/profile"
+    }
+  }
+
+  const getSettingsPath = () => {
+    switch (user?.role) {
+      case "STUDENT":
+        return "/student/settings"
+      case "ADMIN":
+      case "TEACHER":
+        return "/change-password"
+      default:
+        return "/change-password"
+    }
+  }
+
   const handleLogout = () => {
     logout()
     navigate("/", { replace: true })
@@ -87,7 +112,7 @@ function CorporateHeader() {
               <div className="space-y-1 p-2">
                 <button
                   onClick={() => {
-                    navigate("/profile")
+                    navigate(getProfilePath())
                     setShowMenu(false)
                   }}
                   className="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-sm text-brand-navy hover:bg-brand-navy/10 transition-colors"
@@ -97,7 +122,7 @@ function CorporateHeader() {
                 </button>
                 <button
                   onClick={() => {
-                    navigate("/settings")
+                    navigate(getSettingsPath())
                     setShowMenu(false)
                   }}
                   className="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-sm text-brand-navy hover:bg-brand-navy/10 transition-colors"

@@ -234,7 +234,6 @@ function AdminDisciplineManagement() {
                   items={disciplines}
                   initialLimit={6}
                   step={6}
-                  continueLabel={t("continue")}
                   renderItem={(discipline) => (
                     <div
                       key={discipline.id}

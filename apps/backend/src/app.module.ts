@@ -28,8 +28,9 @@ import { ScorecardsModule } from './scorecards/scorecards.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { GamificationModule } from './gamification/gamification.module';
+import { OwnerModule } from './owner/owner.module';
 
-@Module({
+  @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -60,6 +61,7 @@ import { GamificationModule } from './gamification/gamification.module';
     InventoryModule,
     LessonsModule,
     GamificationModule,
+    OwnerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import PaginationControls from "./PaginationControls.jsx"
 
 function LoadMoreList({
   items = [],
@@ -12,7 +13,7 @@ function LoadMoreList({
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const pageSize = step || initialLimit || 5
-  const nextLabel = continueLabel ?? t("continue") ?? "Próximo"
+  const nextLabel = continueLabel ?? t("continue") ?? "Continuar"
   const prevLabel = previousLabel ?? t("previous") ?? "Anterior"
   const totalPages = Math.max(1, Math.ceil((Array.isArray(items) ? items.length : 0) / pageSize))
 
@@ -38,29 +39,14 @@ function LoadMoreList({
         ))}
       </div>
 
-      {totalPages > 1 ? (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm">
-          <button
-            className="outline-button"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            type="button"
-            disabled={safePage <= 1}
-          >
-            {prevLabel}
-          </button>
-          <p className="text-xs text-brand-navy/70">
-            Página {safePage} de {totalPages}
-          </p>
-          <button
-            className="outline-button"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            type="button"
-            disabled={safePage >= totalPages}
-          >
-            {nextLabel}
-          </button>
-        </div>
-      ) : null}
+      <PaginationControls
+        currentPage={safePage}
+        totalPages={totalPages}
+        previousLabel={prevLabel}
+        continueLabel={nextLabel}
+        onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
+        onContinue={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+      />
     </div>
   )
 }

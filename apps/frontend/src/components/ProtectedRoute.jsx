@@ -5,6 +5,7 @@ const ROLE_MAP = {
   professor: ["TEACHER", "ADMIN"],
   student: ["STUDENT", "ADMIN"],
   admin: ["ADMIN"],
+  owner: ["OWNER"],
 }
 
 function ProtectedRoute({ role }) {

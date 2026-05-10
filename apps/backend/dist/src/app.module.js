@@ -37,6 +37,7 @@ const scorecards_module_1 = require("./scorecards/scorecards.module");
 const inventory_module_1 = require("./inventory/inventory.module");
 const lessons_module_1 = require("./lessons/lessons.module");
 const gamification_module_1 = require("./gamification/gamification.module");
+const owner_module_1 = require("./owner/owner.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -72,6 +73,7 @@ exports.AppModule = AppModule = __decorate([
             inventory_module_1.InventoryModule,
             lessons_module_1.LessonsModule,
             gamification_module_1.GamificationModule,
+            owner_module_1.OwnerModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

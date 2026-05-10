@@ -91,7 +91,6 @@ function StudentSchedule() {
                 items={classes}
                 initialLimit={4}
                 step={4}
-                continueLabel={t("continue") || "Continuar"}
                 renderItem={(cls) => (
                   <div key={cls.id} className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
                     <div>

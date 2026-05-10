@@ -239,7 +239,6 @@ function AdminUsers() {
             items={students}
             initialLimit={6}
             step={6}
-            continueLabel={t("continue")}
             renderItem={(student) => (
               <div className="module-card text-sm">
                 <div className="flex items-start justify-between">
@@ -275,7 +274,6 @@ function AdminUsers() {
             items={teachers}
             initialLimit={6}
             step={6}
-            continueLabel={t("continue")}
             renderItem={(teacher) => (
               <div key={teacher.id} className="module-card text-sm">
                 <div className="flex items-start justify-between">

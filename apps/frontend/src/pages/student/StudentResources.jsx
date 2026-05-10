@@ -154,7 +154,6 @@ function StudentResources() {
             items={resources}
             initialLimit={4}
             step={4}
-            continueLabel={t("continue")}
             renderItem={renderResourceCard}
           />
         ) : (
@@ -169,7 +168,6 @@ function StudentResources() {
             items={libraryResources}
             initialLimit={4}
             step={4}
-            continueLabel={t("continue")}
             renderItem={renderResourceCard}
           />
         ) : (

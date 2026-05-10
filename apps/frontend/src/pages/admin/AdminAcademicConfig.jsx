@@ -1,8 +1,15 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import Sidebar from "../../components/Sidebar.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
+import SectionCard from "../../components/SectionCard.jsx"
+import SchoolContext from "../../components/admin/SchoolContext.jsx"
+import PeriodForm from "../../components/admin/PeriodForm.jsx"
+import PeriodsList from "../../components/admin/PeriodsList.jsx"
+import SettingsForm from "../../components/admin/SettingsForm.jsx"
+import Feedback from "../../components/Feedback.jsx"
 
 const initialPeriod = {
   name: "",
@@ -164,168 +171,32 @@ function AdminAcademicConfig() {
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader title={t("academicAdminTitle")} subtitle={t("academicAdminSubtitle")} />
+    <div className="flex gap-6">
+      <Sidebar role="admin" />
+      <main className="flex-1 space-y-6">
+        <SectionHeader title={t("academicAdminTitle")} subtitle={t("academicAdminSubtitle")} />
 
-      {error ? <p className="text-sm text-brand-red">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
+        <Feedback error={error} message={message} />
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6 space-y-4">
-        <h3 className="text-base font-semibold text-brand-navy">{t("academicSchoolContext")}</h3>
-        <div className="flex flex-col gap-3 md:flex-row md:items-end">
-          <label className="flex-1 text-sm text-brand-navy/70">
-            {t("academicSchoolId")}
-            <input
-              value={schoolId}
-              onChange={(event) => setSchoolId(event.target.value)}
-              className="mt-1 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              placeholder="school-uuid"
-            />
-          </label>
-          <button className="outline-button" onClick={loadPeriods} disabled={loading} type="button">
-            {t("academicLoadPeriods")}
-          </button>
-          <button className="outline-button" onClick={loadSettings} disabled={loading} type="button">
-            {t("academicLoadSettings")}
-          </button>
-        </div>
-      </section>
+        <SectionCard>
+          <SchoolContext t={t} schoolId={schoolId} setSchoolId={setSchoolId} loadPeriods={loadPeriods} loadSettings={loadSettings} loading={loading} />
+        </SectionCard>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
-        <h3 className="text-base font-semibold text-brand-navy">{t("academicCreatePeriod")}</h3>
-        <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={createPeriod}>
-          <input
-            value={periodForm.name}
-            onChange={(event) => setPeriodForm((prev) => ({ ...prev, name: event.target.value }))}
-            placeholder={t("academicPeriodName")}
-            className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            required
-          />
-          <input
-            type="date"
-            value={periodForm.startDate}
-            onChange={(event) => setPeriodForm((prev) => ({ ...prev, startDate: event.target.value }))}
-            className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            required
-          />
-          <input
-            type="date"
-            value={periodForm.endDate}
-            onChange={(event) => setPeriodForm((prev) => ({ ...prev, endDate: event.target.value }))}
-            className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            required
-          />
-          <input
-            value={periodForm.description}
-            onChange={(event) => setPeriodForm((prev) => ({ ...prev, description: event.target.value }))}
-            placeholder={t("academicPeriodDescription")}
-            className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-          />
-          <button className="primary-button md:col-span-2" type="submit" disabled={loading}>
-            {t("academicCreatePeriodAction")}
-          </button>
-        </form>
-      </section>
+        <SectionCard>
+          <PeriodForm t={t} periodForm={periodForm} setPeriodForm={setPeriodForm} createPeriod={createPeriod} loading={loading} />
+        </SectionCard>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
-        <h3 className="text-base font-semibold text-brand-navy">{t("academicPeriodsList")}</h3>
-        <div className="mt-4 space-y-3">
-          {periods.length === 0 ? (
-            <p className="text-sm text-brand-navy/60">{t("noData")}</p>
-          ) : (
-            periods.map((period) => (
-              <div key={period.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-semibold text-brand-navy">{period.name}</p>
-                    <p className="text-xs text-brand-navy/60">
-                      {period.startDate?.slice(0, 10)} - {period.endDate?.slice(0, 10)}
-                    </p>
-                    <p className="text-xs text-brand-navy/60">{period.description || "-"}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                        period.isOpen ? "bg-emerald-100 text-emerald-700" : "bg-brand-red/10 text-brand-red"
-                      }`}
-                    >
-                      {period.isOpen ? t("academicStatusOpen") : t("academicStatusClosed")}
-                    </span>
-                    <button className="outline-button" type="button" onClick={() => togglePeriod(period)}>
-                      {period.isOpen ? t("academicClose") : t("academicOpen")}
-                    </button>
-                    <button className="outline-button" type="button" onClick={() => removePeriod(period.id)}>
-                      {t("academicDelete")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+        <SectionCard>
+          <h3 className="text-base font-semibold text-brand-navy">{t("academicPeriodsList")}</h3>
+          <div className="mt-4">
+            <PeriodsList t={t} periods={periods} togglePeriod={togglePeriod} removePeriod={removePeriod} />
+          </div>
+        </SectionCard>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
-        <h3 className="text-base font-semibold text-brand-navy">{t("academicSettingsTitle")}</h3>
-        <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={saveSettings}>
-          <label className="text-sm text-brand-navy/70">
-            {t("academicPassAverage")}
-            <input
-              type="number"
-              min="0"
-              max="20"
-              step="0.1"
-              value={settingsForm.passAverage}
-              onChange={(event) =>
-                setSettingsForm((prev) => ({ ...prev, passAverage: Number(event.target.value) }))
-              }
-              className="mt-1 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="text-sm text-brand-navy/70">
-            {t("academicMaxAbsences")}
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={settingsForm.maxAbsencesPerCourse}
-              onChange={(event) =>
-                setSettingsForm((prev) => ({ ...prev, maxAbsencesPerCourse: Number(event.target.value) }))
-              }
-              className="mt-1 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="text-sm text-brand-navy/70">
-            {t("academicLateDays")}
-            <input
-              type="number"
-              min="0"
-              max="30"
-              value={settingsForm.assignmentLateDaysLimit}
-              onChange={(event) =>
-                setSettingsForm((prev) => ({ ...prev, assignmentLateDaysLimit: Number(event.target.value) }))
-              }
-              className="mt-1 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="text-sm text-brand-navy/70">
-            {t("academicReviewWindow")}
-            <input
-              type="number"
-              min="0"
-              max="60"
-              value={settingsForm.gradeReviewWindowDays}
-              onChange={(event) =>
-                setSettingsForm((prev) => ({ ...prev, gradeReviewWindowDays: Number(event.target.value) }))
-              }
-              className="mt-1 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-            />
-          </label>
-          <button className="primary-button md:col-span-2" type="submit" disabled={loading}>
-            {t("academicSaveSettings")}
-          </button>
-        </form>
-      </section>
+        <SectionCard>
+          <SettingsForm t={t} settingsForm={settingsForm} setSettingsForm={setSettingsForm} saveSettings={saveSettings} loading={loading} />
+        </SectionCard>
+      </main>
     </div>
   )
 }

@@ -294,7 +294,6 @@ function AdminClassManagement() {
               items={classes}
               initialLimit={6}
               step={6}
-              continueLabel={t("continue")}
               renderItem={(classItem) => (
                 <div
                   key={classItem.id}

@@ -158,6 +158,7 @@ const ptTranslation = {
   provider_wise: "Wise",
   generateInvoice: "Gerar fatura",
   continue: "Continuar",
+  previous: "Anterior",
   profileQuickAccess: "Acesso rápido",
   profileAcademicHistory: "Histórico acadêmico",
   profileAcademicHistoryDescription: "Veja notas, evolução e o boletim em PDF.",

@@ -19,6 +19,7 @@ export declare class AuthService {
             email: string;
             enrollmentNumber: string | null;
             name: string | null;
+            profilePhoto: string | null;
             mustChangePassword: boolean;
             role: import(".prisma/client").$Enums.Role;
             isActive: boolean;
@@ -36,6 +37,7 @@ export declare class AuthService {
         gender: import(".prisma/client").$Enums.Gender | null;
         fatherName: string | null;
         motherName: string | null;
+        profilePhoto: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
@@ -62,6 +64,7 @@ export declare class AuthService {
         gender: import(".prisma/client").$Enums.Gender | null;
         fatherName: string | null;
         motherName: string | null;
+        profilePhoto: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
@@ -86,6 +89,7 @@ export declare class AuthService {
             isActive: true;
             mustChangePassword: boolean;
             enrollmentNumber: string | null;
+            profilePhoto: string | null;
         };
     }>;
     logout(userId: string, email?: string): Promise<{

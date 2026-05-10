@@ -1,3 +1,4 @@
+import React, { useState } from "react"
 import {
   BookOpen,
   CalendarDays,
@@ -13,6 +14,8 @@ import {
   UploadCloud,
   Users,
   LogOut,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -54,11 +57,17 @@ const adminNav = [
   { to: "/admin/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
 ]
 
+const ownerNav = [
+  { to: "/owner", icon: LayoutDashboard, labelKey: "Painel de Controle" },
+  { to: "/owner/profile", icon: Settings, labelKey: "navProfile" },
+]
+
 function Sidebar({ role }) {
   const { t } = useTranslation()
+  const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const navItems = role === "admin" ? adminNav : role === "professor" ? professorNav : studentNav
+  const navItems = role === "owner" ? ownerNav : role === "admin" ? adminNav : role === "professor" ? professorNav : studentNav
 
   const handleLogout = async () => {
     await logout()
@@ -66,45 +75,67 @@ function Sidebar({ role }) {
   }
 
   return (
-    <aside className="glass-panel sticky top-6 hidden h-[calc(100vh-3rem)] w-64 flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 lg:flex xl:w-72">
-      <div className="shrink-0">
-        <img
-          src="/LogoEdu.png"
-          alt={t("brand")}
-          className="h-12 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1"
-        />
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
-          {t("appSubtitle")}
-        </p>
-        <h2 className="mt-2 font-display text-2xl text-brand-navy">{t("brand")}</h2>
-        <p className="mt-2 text-sm text-brand-navy/70">{t("role" + role)}</p>
+    <aside
+      className={`glass-panel sticky top-6 hidden h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 lg:flex ${
+        collapsed ? "w-16" : "w-64 xl:w-72"
+      }`}
+    >
+      <div className="shrink-0 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img
+            src="/LogoEdu.png"
+            alt={t("brand")}
+            className={`h-10 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 ${collapsed ? "" : ""}`}
+          />
+          {!collapsed ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">{t("appSubtitle")}</p>
+              <h2 className="mt-1 font-display text-xl text-brand-navy">{t("brand")}</h2>
+              <p className="mt-1 text-sm text-brand-navy/70">{t("role" + role)}</p>
+            </div>
+          ) : null}
+        </div>
+
+        <button
+          onClick={() => setCollapsed((s) => !s)}
+          className="rounded-full p-1 text-brand-navy/70 hover:bg-white"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-2 overflow-y-auto pr-1">
+      <nav className="flex flex-1 flex-col gap-2 overflow-y-auto pr-1 pt-3">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === "/professor" || item.to === "/student"}
+            title={t(item.labelKey)}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive ? "bg-brand-navy text-white shadow-md shadow-brand-navy/20" : "text-brand-navy/70 hover:bg-white"
-              }`
+              } ${collapsed ? "justify-center px-0" : ""}`
             }
           >
             <item.icon className="h-4 w-4" />
-            {t(item.labelKey)}
+            {!collapsed ? t(item.labelKey) : null}
           </NavLink>
         ))}
       </nav>
 
-      <button
-        onClick={handleLogout}
-        className="mt-auto flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red"
-      >
-        <LogOut className="h-4 w-4" />
-        {t("logout")}
-      </button>
+      <div className="mt-auto">
+        <button
+          onClick={handleLogout}
+          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red ${
+            collapsed ? "justify-center" : ""
+          }`}
+          title={t("logout")}
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed ? t("logout") : null}
+        </button>
+      </div>
     </aside>
   )
 }

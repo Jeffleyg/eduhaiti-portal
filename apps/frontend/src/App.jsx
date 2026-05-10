@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx"
 import Landing from "./pages/Landing.jsx"
 import Login from "./pages/auth/Login.jsx"
 import ChangePassword from "./pages/auth/ChangePassword.jsx"
+import OwnerDashboard from "./pages/owner/OwnerDashboard.jsx"
 import {
   AdminUsers,
   AdminStudentManagement,
@@ -99,6 +100,13 @@ function App() {
                   <Route path="academic" element={<AdminAcademicConfig />} />
                   <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
                   <Route path="family-communication" element={<AdminFamilyCommunication />} />
+                </Route>
+              </Route>
+
+              <Route element={<ProtectedRoute role="owner" />}>
+                <Route path="/owner" element={<AppShell role="owner" />}>
+                  <Route index element={<OwnerDashboard />} />
+                  <Route path="profile" element={<UserProfile />} />
                 </Route>
               </Route>
 

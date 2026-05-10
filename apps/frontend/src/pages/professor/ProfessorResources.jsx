@@ -176,7 +176,6 @@ function ProfessorResources() {
             items={resources}
             initialLimit={4}
             step={4}
-            continueLabel={t("continue")}
             renderItem={(resource) => (
               <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
                 <div>
@@ -201,7 +200,6 @@ function ProfessorResources() {
             items={libraryResources}
             initialLimit={4}
             step={4}
-            continueLabel={t("continue")}
             renderItem={(resource) => (
               <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
                 <div>

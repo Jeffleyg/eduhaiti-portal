@@ -142,7 +142,6 @@ export default function AdminClasses() {
           items={classes}
           initialLimit={6}
           step={6}
-          continueLabel="Continuar"
           renderItem={(cls) => (
             <div key={cls.id} className="class-card">
               <h3>{cls.name}</h3>

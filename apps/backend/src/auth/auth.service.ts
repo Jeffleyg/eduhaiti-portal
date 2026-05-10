@@ -100,6 +100,7 @@ export class AuthService {
         isActive: true,
         mustChangePassword: true,
         enrollmentNumber: true,
+        profilePhoto: true,
       },
     });
 
@@ -131,6 +132,7 @@ export class AuthService {
         name: true,
         firstName: true,
         lastName: true,
+        profilePhoto: true,
         dateOfBirth: true,
         address: true,
         gender: true,
@@ -176,6 +178,7 @@ export class AuthService {
         gender: payload.gender,
         fatherName: payload.fatherName,
         motherName: payload.motherName,
+        profilePhoto: payload.profilePhoto,
       },
     });
 
@@ -196,6 +199,7 @@ export class AuthService {
         mustChangePassword: true,
         tempPasswordExpiresAt: true,
         enrollmentNumber: true,
+        profilePhoto: true,
       },
     });
 
@@ -249,6 +253,7 @@ export class AuthService {
       isActive: user.isActive,
       mustChangePassword: user.mustChangePassword,
       enrollmentNumber: user.enrollmentNumber,
+      profilePhoto: user.profilePhoto,
     };
 
     await this.logAccessEvent({

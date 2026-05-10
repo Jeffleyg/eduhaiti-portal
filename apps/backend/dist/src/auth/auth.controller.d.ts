@@ -15,6 +15,7 @@ export declare class AuthController {
             isActive: true;
             mustChangePassword: boolean;
             enrollmentNumber: string | null;
+            profilePhoto: string | null;
         };
     }>;
     getTestCredentials(): {
@@ -65,6 +66,7 @@ export declare class AuthController {
         gender: import(".prisma/client").$Enums.Gender | null;
         fatherName: string | null;
         motherName: string | null;
+        profilePhoto: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
@@ -95,6 +97,38 @@ export declare class AuthController {
         gender: import(".prisma/client").$Enums.Gender | null;
         fatherName: string | null;
         motherName: string | null;
+        profilePhoto: string | null;
+        mustChangePassword: boolean;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        classesTeaching: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+        classesAttending: {
+            id: string;
+            name: string;
+            level: string;
+        }[];
+    } | null>;
+    uploadProfilePhoto(req: {
+        user?: {
+            sub?: string;
+        };
+    }, file: any): Promise<{
+        id: string;
+        email: string;
+        enrollmentNumber: string | null;
+        name: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        dateOfBirth: Date | null;
+        address: string | null;
+        gender: import(".prisma/client").$Enums.Gender | null;
+        fatherName: string | null;
+        motherName: string | null;
+        profilePhoto: string | null;
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;

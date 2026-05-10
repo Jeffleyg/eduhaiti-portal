@@ -165,7 +165,6 @@ function FamilyPortal() {
                               items={atts}
                               initialLimit={4}
                               step={4}
-                              continueLabel="Continuar"
                               renderItem={(item) => (
                                 <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
                                   <p className="font-semibold text-brand-navy">{new Date(item.date).toLocaleDateString("pt-BR")} - {item.class?.name}</p>
@@ -191,7 +190,6 @@ function FamilyPortal() {
                       items={overview.announcements ?? []}
                       initialLimit={3}
                       step={3}
-                      continueLabel="Continuar"
                       renderItem={(item) => (
                         <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
                           <p className="font-semibold text-brand-navy">{item.title}</p>
@@ -213,7 +211,6 @@ function FamilyPortal() {
                       items={overview.familyNotices ?? []}
                       initialLimit={3}
                       step={3}
-                      continueLabel="Continuar"
                       renderItem={(item) => (
                         <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
                           <p className="font-semibold text-brand-navy">{String(item.title ?? "Recado")}</p>

@@ -98,7 +98,6 @@ function ProfessorDashboard() {
                 items={classes}
                 initialLimit={4}
                 step={4}
-                continueLabel={t("continue") || "Continuar"}
                 renderItem={(cls) => (
                   <div key={cls.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
                     <span className="font-semibold text-brand-navy">{cls.name}</span>
