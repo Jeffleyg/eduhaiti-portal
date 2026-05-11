@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx"
 import Landing from "./pages/Landing.jsx"
 import Login from "./pages/auth/Login.jsx"
 import ChangePassword from "./pages/auth/ChangePassword.jsx"
+import RedeemAccess from "./pages/auth/RedeemAccess.jsx"
 import OwnerDashboard from "./pages/owner/OwnerDashboard.jsx"
 import {
   AdminUsers,
@@ -52,6 +53,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/redeem-access" element={<RedeemAccess />} />
               <Route path="/pagamento-escolaridade" element={<GuardianTuitionPayment />} />
               <Route path="/familia" element={<FamilyPortal />} />
               <Route element={<ProtectedRoute />}>

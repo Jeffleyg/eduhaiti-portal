@@ -8,9 +8,11 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma = new client_1.PrismaClient();
 async function main() {
     console.log("🌱 Seeding database...");
+    const ownerEmail = "owner@eduhaiti.ht";
     const adminEmail = "admin@eduhaiti.ht";
     const teacherEmail = "professeur@eduhaiti.ht";
     const studentEmail = "eleve@eduhaiti.ht";
+    const ownerPassword = process.env.OWNER_PASSWORD ?? "Owner@123";
     const adminPassword = process.env.ADMIN_PASSWORD ?? "Admin@123";
     const teacherPassword = process.env.TEACHER_PASSWORD ?? "Teacher@123";
     const studentPassword = process.env.STUDENT_PASSWORD ?? "Student@123";
@@ -27,6 +29,20 @@ async function main() {
             },
         });
         console.log("✅ Admin created:", admin.email);
+    }
+    let owner = await prisma.user.findUnique({ where: { email: ownerEmail } });
+    if (!owner) {
+        const passwordHash = await bcryptjs_1.default.hash(ownerPassword, 10);
+        owner = await prisma.user.create({
+            data: {
+                email: ownerEmail,
+                name: "Owner EduHaiti",
+                role: "OWNER",
+                isActive: true,
+                passwordHash,
+            },
+        });
+        console.log("✅ Owner created:", owner.email);
     }
     let teacher = await prisma.user.findUnique({ where: { email: teacherEmail } });
     if (!teacher) {

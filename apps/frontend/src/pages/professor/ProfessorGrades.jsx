@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
-import DataTable from "../../components/DataTable.jsx"
+import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
@@ -132,13 +132,13 @@ function ProfessorGrades() {
     event.preventDefault()
 
     if (!selectedClassId || !selectedDisciplineId) {
-      setError("Selecione turma e disciplina.")
+      setError(t("selectClassAndDiscipline"))
       return
     }
 
     const numericMaxScore = Number(maxScore)
     if (Number.isNaN(numericMaxScore) || numericMaxScore <= 0) {
-      setError("A nota maxima precisa ser maior que zero.")
+      setError(t("maxScoreMustBePositive"))
       return
     }
 
@@ -151,7 +151,7 @@ function ProfessorGrades() {
       .filter((item) => item.rawScore !== "" && item.rawScore !== undefined)
 
     if (!entries.length) {
-      setError("Informe ao menos uma nota para salvar.")
+      setError(t("requiresNote"))
       return
     }
 
@@ -160,14 +160,14 @@ function ProfessorGrades() {
     for (const entry of entries) {
       const numericScore = Number(entry.rawScore)
       if (Number.isNaN(numericScore) || numericScore < 0 || numericScore > numericMaxScore) {
-        setError("Cada nota precisa estar entre 0 e a nota maxima.")
+        setError(t("gradesInRange"))
         return
       }
       parsedEntries.push({ studentId: entry.studentId, score: numericScore })
     }
 
     if (!selectedClass?.academicYear?.id) {
-      setError("Nao foi possivel identificar o ano academico da turma.")
+      setError(t("academicYearNotFound"))
       return
     }
 
@@ -195,7 +195,7 @@ function ProfessorGrades() {
 
       const classGrades = await loadGrades(selectedClassId, selectedDisciplineId)
       buildDraftsFromGrades(selectedClassId, classGrades)
-      setMessage(`${parsedEntries.length} nota(s) salva(s) com sucesso.`)
+      setMessage(`${parsedEntries.length} ${t("gradesSaved")}`)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -205,7 +205,7 @@ function ProfessorGrades() {
 
   const handlePublish = async () => {
     if (!selectedClassId || !selectedDisciplineId) {
-      setError("Selecione turma e disciplina para publicar.")
+      setError(t("selectClassAndDiscipline"))
       return
     }
 
@@ -218,7 +218,7 @@ function ProfessorGrades() {
         method: "POST",
         token,
       })
-      setMessage("Notas publicadas com sucesso.")
+      setMessage(t("gradesPublishedSuccess"))
       await loadGrades(selectedClassId, selectedDisciplineId)
     } catch (err) {
       setError(err.message)
@@ -258,7 +258,7 @@ function ProfessorGrades() {
           onChange={(event) => handleClassChange(event.target.value)}
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
         >
-          <option value="">Selecione a turma</option>
+          <option value="">{t("selectClass")}</option>
           {classes.map((cls) => (
             <option key={cls.id} value={cls.id}>{cls.name}</option>
           ))}
@@ -270,7 +270,7 @@ function ProfessorGrades() {
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
           disabled={!selectedClassId}
         >
-          <option value="">Selecione a disciplina</option>
+          <option value="">{t("selectDiscipline")}</option>
           {disciplines.map((discipline) => (
             <option key={discipline.id} value={discipline.id}>{discipline.name}</option>
           ))}
@@ -284,7 +284,7 @@ function ProfessorGrades() {
           min="1"
           value={maxScore}
           onChange={(event) => setMaxScore(event.target.value)}
-          placeholder="Nota maxima"
+          placeholder={t("maxScore")}
           className="w-full rounded-xl border border-brand-navy/20 px-3 py-2 md:w-56"
         />
 
@@ -313,7 +313,7 @@ function ProfessorGrades() {
                     max={maxScore || undefined}
                     value={gradeDrafts[student.id] ?? ""}
                     onChange={(event) => handleDraftChange(student.id, event.target.value)}
-                    placeholder="Nota"
+                    placeholder={t("enterGrade")}
                     className="rounded-xl border border-brand-navy/20 px-3 py-2"
                     disabled={!selectedDisciplineId}
                   />
@@ -326,7 +326,7 @@ function ProfessorGrades() {
         )}
 
         <button type="submit" className="primary-button" disabled={submitting || !selectedClassId || !selectedDisciplineId}>
-          {submitting ? "Salvando..." : "Salvar notas da turma"}
+          {submitting ? t("savingClassGrades") : t("savingClassGrades")}
         </button>
       </form>
 
@@ -337,11 +337,14 @@ function ProfessorGrades() {
           className="outline-button"
           disabled={publishing || !selectedClassId || !selectedDisciplineId}
         >
-          {publishing ? "Publicando..." : "Publicar notas"}
+          {publishing ? t("publishingGrades") : t("publishGrades")}
         </button>
       </div>
 
-      <DataTable columns={columns} rows={rows.length > 0 ? rows : []} />
+      <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <h3 className="mb-4 font-semibold text-brand-navy">{t("gradesViewTable")}</h3>
+        <DataTablePaginated columns={columns} rows={rows.length > 0 ? rows : []} pageSize={10} />
+      </section>
     </div>
   )
 }

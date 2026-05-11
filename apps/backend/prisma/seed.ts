@@ -6,9 +6,11 @@ const prisma = new PrismaClient()
 async function main() {
   console.log("🌱 Seeding database...")
 
+  const ownerEmail = "owner@eduhaiti.ht"
   const adminEmail = "admin@eduhaiti.ht"
   const teacherEmail = "professeur@eduhaiti.ht"
   const studentEmail = "eleve@eduhaiti.ht"
+  const ownerPassword = process.env.OWNER_PASSWORD ?? "Owner@123"
   const adminPassword = process.env.ADMIN_PASSWORD ?? "Admin@123"
   const teacherPassword = process.env.TEACHER_PASSWORD ?? "Teacher@123"
   const studentPassword = process.env.STUDENT_PASSWORD ?? "Student@123"
@@ -27,6 +29,22 @@ async function main() {
       },
     })
     console.log("✅ Admin created:", admin.email)
+  }
+
+  // Create or update Owner
+  let owner = await prisma.user.findUnique({ where: { email: ownerEmail } })
+  if (!owner) {
+    const passwordHash = await bcrypt.hash(ownerPassword, 10)
+    owner = await prisma.user.create({
+      data: {
+        email: ownerEmail,
+        name: "Owner EduHaiti",
+        role: "OWNER",
+        isActive: true,
+        passwordHash,
+      },
+    })
+    console.log("✅ Owner created:", owner.email)
   }
 
   // Create or update Teacher

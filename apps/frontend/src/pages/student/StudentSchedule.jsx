@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
-import DataTable from "../../components/DataTable.jsx"
+import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentSchedule() {
@@ -55,7 +55,7 @@ function StudentSchedule() {
   }
 
   const todayColumns = [
-    { key: "class", label: "Turma" },
+    { key: "class", label: t("class") },
     { key: "status", label: t("attendanceStatus") },
   ]
 
@@ -65,8 +65,8 @@ function StudentSchedule() {
   }))
 
   const historyColumns = [
-    { key: "date", label: "Data" },
-    { key: "class", label: "Turma" },
+    { key: "date", label: t("date") },
+    { key: "class", label: t("class") },
     { key: "status", label: t("attendanceStatus") },
   ]
 
@@ -81,33 +81,36 @@ function StudentSchedule() {
       <SectionHeader title={t("navSchedule")} subtitle={t("scheduleSubtitle")} />
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="mb-3 font-semibold text-brand-navy">Presenca de hoje</h3>
-        <DataTable columns={todayColumns} rows={todayRows.length ? todayRows : []} />
+        <h3 className="mb-3 font-semibold text-brand-navy">{t("todayAttendance")}</h3>
+        <DataTablePaginated columns={todayColumns} rows={todayRows.length ? todayRows : []} pageSize={10} />
       </section>
 
-          <div className="space-y-3">
-            {classes.length > 0 ? (
-              <LoadMoreList
-                items={classes}
-                initialLimit={4}
-                step={4}
-                renderItem={(cls) => (
-                  <div key={cls.id} className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
-                    <div>
-                      <p className="font-semibold text-brand-navy">{cls.name}</p>
-                      <p className="text-sm text-brand-navy/60">{cls.teacher?.name ?? cls.teacher?.email}</p>
-                    </div>
+      <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <h3 className="mb-3 font-semibold text-brand-navy">{t("allClasses")}</h3>
+        <div className="space-y-3">
+          {classes.length > 0 ? (
+            <LoadMoreList
+              items={classes}
+              initialLimit={4}
+              step={4}
+              renderItem={(cls) => (
+                <div key={cls.id} className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
+                  <div>
+                    <p className="font-semibold text-brand-navy">{cls.name}</p>
+                    <p className="text-sm text-brand-navy/60">{cls.teacher?.name ?? cls.teacher?.email}</p>
                   </div>
-                )}
-              />
-            ) : (
-              <p className="text-sm text-brand-navy/60">{t("noData")}</p>
-            )}
-          </div>
+                </div>
+              )}
+            />
+          ) : (
+            <p className="text-sm text-brand-navy/60">{t("noData")}</p>
+          )}
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="mb-3 font-semibold text-brand-navy">Historico de presenca (mes atual)</h3>
-        <DataTable columns={historyColumns} rows={historyRows.length ? historyRows : []} />
+        <h3 className="mb-3 font-semibold text-brand-navy">{t("attendanceHistoryMonth")}</h3>
+        <DataTablePaginated columns={historyColumns} rows={historyRows.length ? historyRows : []} pageSize={10} />
       </section>
     </div>
   )

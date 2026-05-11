@@ -116,10 +116,4 @@ export class OwnerController {
   async revokePermissionCode(@Param('codeId') codeId: string) {
     return this.ownerService.revokePermissionCode(codeId)
   }
-
-  // Verify permission code (for school admins)
-  @Post('verify-permission-code')
-  async verifyPermissionCode(@Body() data: { code: string; email: string }) {
-    return this.ownerService.verifyPermissionCode(data.code, data.email)
-  }
 }

@@ -115,7 +115,7 @@ model School {
   events              CalendarEvent[]
   academicPeriods     AcademicPeriod[]
   academicSetting     AcademicSetting?
-  usageAnalytics      SchoolUsageAnalytic[]
+  usageAnalytics      SchoolUsageAnalytic?
   permissionCodes     SchoolPermissionCode[]
 }
 

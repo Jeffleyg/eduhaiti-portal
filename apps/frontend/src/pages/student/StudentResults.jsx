@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
-import DataTable from "../../components/DataTable.jsx"
+import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { jsPDF } from "jspdf"
@@ -144,10 +144,14 @@ function StudentResults() {
           {t("downloadTranscriptPdf")}
         </button>
       </div>
-      <DataTable columns={columns} rows={rows.length > 0 ? rows : []} />
+
+      <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <h3 className="mb-4 font-semibold text-brand-navy">{t("myResultsByDiscipline")}</h3>
+        <DataTablePaginated columns={columns} rows={rows.length > 0 ? rows : []} pageSize={10} />
+      </section>
 
       <section className="mt-6 rounded-2xl border border-brand-navy/10 bg-white p-5 space-y-4">
-        <h3 className="text-lg font-semibold text-brand-navy">Evolucao de desempenho</h3>
+        <h3 className="text-lg font-semibold text-brand-navy">{t("myEvolution")}</h3>
         <p className="text-sm text-brand-navy/70">Media geral no periodo: {Number(evolution?.overallAverage ?? 0).toFixed(2)}/20</p>
 
         <div className="grid gap-4 md:grid-cols-2">

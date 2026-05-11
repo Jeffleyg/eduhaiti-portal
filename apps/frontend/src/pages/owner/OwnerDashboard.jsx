@@ -50,28 +50,39 @@ function OwnerDashboard() {
   }, [])
 
   const handleCreateSchool = (schoolData) => {
-    setMessage('Escola criada com sucesso')
+    setMessage(t("schoolCreatedSuccess"))
     setShowForm(false)
     loadSchools()
     setTimeout(() => setMessage(''), 3000)
   }
 
   const handleUpdateSchool = (schoolData) => {
-    setMessage('Escola atualizada com sucesso')
+    setMessage(t("schoolUpdatedSuccess"))
     setSelectedSchool(null)
     loadSchools()
     setTimeout(() => setMessage(''), 3000)
   }
 
+  const openCreateForm = () => {
+    setSelectedSchool(null)
+    setShowForm(true)
+  }
+
+  const openEditForm = (school) => {
+    setSelectedSchool(school)
+    setShowForm(true)
+    setActiveTab('schools')
+  }
+
   const handleDeleteSchool = async (schoolId) => {
-    if (!window.confirm('Tem certeza que deseja deletar esta escola?')) return
+    if (!window.confirm(t("confirmDeleteSchool"))) return
 
     try {
       await apiFetch(`/owner/schools/${schoolId}`, {
         method: 'DELETE',
         token,
       })
-      setMessage('Escola deletada com sucesso')
+      setMessage(t("schoolDeletedSuccess"))
       loadSchools()
       setTimeout(() => setMessage(''), 3000)
     } catch (err) {
@@ -84,14 +95,42 @@ function OwnerDashboard() {
     setMessage('')
   }
 
+  const totalSchools = schools.length
+  const schoolsWithAnalytics = schools.filter((school) => school.usageAnalytics).length
+  const totalUsers = analytics?.totalUsers ?? 0
+  const totalLogins = analytics?.totalLogins ?? 0
+
   return (
     <div className="flex gap-6">
       <Sidebar role="owner" />
       <main className="flex-1 space-y-6">
-        <SectionHeader
-          title="Painel de Controle - Dono do Sistema"
-          subtitle="Gerencie escolas, recursos e permissões"
-        />
+        <section className="surface-panel overflow-hidden">
+          <div className="bg-atlas bg-grid px-5 py-6 sm:px-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl space-y-2">
+                <span className="chip">{t("controlPanel")}</span>
+                <h1 className="font-display text-3xl text-brand-navy sm:text-4xl">{t("centralManagementEcosystem")}</h1>
+                <p className="max-w-xl text-sm leading-6 text-brand-navy/70 sm:text-base">
+                  {t("centralManagementDescription")}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
+                {[
+                  [t("schools"), totalSchools],
+                  [t("withMetrics"), schoolsWithAnalytics],
+                  [t("users"), totalUsers],
+                  [t("logins"), totalLogins],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-white/50 bg-white/85 px-4 py-3 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-navy/50">{label}</p>
+                    <p className="mt-1 text-2xl font-semibold text-brand-navy">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {error && (
           <div className="rounded-2xl border border-brand-red/20 bg-brand-red/5 px-4 py-3 text-sm text-brand-red">
@@ -121,7 +160,7 @@ function OwnerDashboard() {
                 : 'text-brand-navy/60 hover:text-brand-navy'
             }`}
           >
-            Escolas ({schools.length})
+            {t("schools")} ({schools.length})
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
@@ -131,7 +170,7 @@ function OwnerDashboard() {
                 : 'text-brand-navy/60 hover:text-brand-navy'
             }`}
           >
-            Análise de Uso
+            {t("usageAnalysis")}
           </button>
         </div>
 
@@ -139,10 +178,17 @@ function OwnerDashboard() {
         {activeTab === 'schools' && (
           <div className="space-y-6">
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => {
+                if (showForm && !selectedSchool) {
+                  setShowForm(false)
+                  return
+                }
+
+                openCreateForm()
+              }}
               className="rounded-2xl bg-brand-red px-6 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 transition-colors"
             >
-              {showForm ? 'Cancelar' : '+ Nova Escola'}
+              {showForm ? t("cancel") : `+ ${t("newSchool")}`}
             </button>
 
             {showForm && (
@@ -160,11 +206,7 @@ function OwnerDashboard() {
             <SchoolsList
               schools={schools}
               loading={loading}
-              onEdit={(school) => {
-                setSelectedSchool(school)
-                setShowForm(true)
-                setActiveTab('schools')
-              }}
+              onEdit={openEditForm}
               onDelete={handleDeleteSchool}
               token={token}
             />

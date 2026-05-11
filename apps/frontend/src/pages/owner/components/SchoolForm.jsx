@@ -1,45 +1,72 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../../../lib/api.js'
 
+const initialFormState = {
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  city: '',
+  country: 'Haiti',
+  principal: '',
+}
+
 function SchoolForm({ school, onSuccess, onCancel, token }) {
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    country: 'Haiti',
-    principal: '',
-  })
+  const { t } = useTranslation()
+  const [form, setForm] = useState(initialFormState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (school) {
-      setForm(school)
+      setForm({
+        name: school.name ?? '',
+        email: school.email ?? '',
+        phone: school.phone ?? '',
+        address: school.address ?? '',
+        city: school.city ?? '',
+        country: school.country ?? 'Haiti',
+        principal: school.principal ?? '',
+      })
+      return
     }
+
+    setForm(initialFormState)
   }, [school])
+
+  const buildPayload = () => ({
+    name: form.name.trim(),
+    email: form.email.trim(),
+    phone: form.phone.trim(),
+    address: form.address.trim(),
+    city: form.city.trim(),
+    country: form.country.trim() || 'Haiti',
+    principal: form.principal.trim(),
+  })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
+    const payload = buildPayload()
+
     try {
       if (school) {
         await apiFetch(`/owner/schools/${school.id}`, {
           method: 'PATCH',
           token,
-          body: form,
+          body: payload,
         })
       } else {
         await apiFetch('/owner/schools', {
           method: 'POST',
           token,
-          body: form,
+          body: payload,
         })
       }
-      onSuccess(form)
+      onSuccess(payload)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -50,7 +77,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
   return (
     <div className="rounded-2xl border border-brand-navy/10 bg-white p-6">
       <h3 className="font-semibold text-brand-navy mb-4">
-        {school ? 'Editar Escola' : 'Criar Nova Escola'}
+        {school ? t("editSchool") : t("createNewSchool")}
       </h3>
 
       {error && (
@@ -60,7 +87,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
       <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
         <input
           type="text"
-          placeholder="Nome da Escola"
+          placeholder={t("schoolName")}
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
@@ -68,7 +95,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
         />
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t("email")}
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
@@ -76,35 +103,35 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
         />
         <input
           type="tel"
-          placeholder="Telefone"
+          placeholder={t("phone")}
           value={form.phone || ''}
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
           className="rounded-lg border border-brand-navy/10 px-3 py-2 text-sm"
         />
         <input
           type="text"
-          placeholder="Endereço"
+          placeholder={t("address")}
           value={form.address || ''}
           onChange={(e) => setForm({ ...form, address: e.target.value })}
           className="rounded-lg border border-brand-navy/10 px-3 py-2 text-sm"
         />
         <input
           type="text"
-          placeholder="Cidade"
+          placeholder={t("city")}
           value={form.city || ''}
           onChange={(e) => setForm({ ...form, city: e.target.value })}
           className="rounded-lg border border-brand-navy/10 px-3 py-2 text-sm"
         />
         <input
           type="text"
-          placeholder="País"
+          placeholder={t("country")}
           value={form.country}
           onChange={(e) => setForm({ ...form, country: e.target.value })}
           className="rounded-lg border border-brand-navy/10 px-3 py-2 text-sm"
         />
         <input
           type="text"
-          placeholder="Diretor/Diretora"
+          placeholder={t("principal")}
           value={form.principal || ''}
           onChange={(e) => setForm({ ...form, principal: e.target.value })}
           className="rounded-lg border border-brand-navy/10 px-3 py-2 text-sm"
@@ -116,14 +143,14 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
             disabled={loading}
             className="rounded-lg bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
           >
-            {loading ? 'Salvando...' : 'Salvar'}
+            {loading ? t("saving") : t("save")}
           </button>
           <button
             type="button"
             onClick={onCancel}
             className="rounded-lg border border-brand-navy/20 px-4 py-2 text-sm font-semibold text-brand-navy hover:bg-brand-navy/5"
           >
-            Cancelar
+            {t("cancel")}
           </button>
         </div>
       </form>

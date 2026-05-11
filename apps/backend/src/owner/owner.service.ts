@@ -1,10 +1,11 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import * as crypto from 'crypto'
+import { EmailService } from '../common/services/email.service'
 
 @Injectable()
 export class OwnerService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private readonly emailService: EmailService) {}
 
   // Schools Management
   async listAllSchools() {
@@ -100,9 +101,28 @@ export class OwnerService {
       }
     }
 
+    // Only pass allowed scalar fields to Prisma to avoid validation errors
+    const updateData: {
+      name?: string
+      email?: string
+      phone?: string
+      address?: string
+      city?: string
+      country?: string
+      principal?: string
+    } = {}
+
+    if (data.name !== undefined) updateData.name = data.name
+    if (data.email !== undefined) updateData.email = data.email
+    if (data.phone !== undefined) updateData.phone = data.phone
+    if (data.address !== undefined) updateData.address = data.address
+    if (data.city !== undefined) updateData.city = data.city
+    if (data.country !== undefined) updateData.country = data.country
+    if (data.principal !== undefined) updateData.principal = data.principal
+
     return this.prisma.school.update({
       where: { id: schoolId },
-      data,
+      data: updateData,
     })
   }
 
@@ -191,37 +211,33 @@ export class OwnerService {
       include: { usageAnalytics: true },
     })
 
-    const summary = {
+    const summary: any = {
       totalSchools: schools.length,
       totalLogins: 0,
       totalUsers: 0,
       totalGrades: 0,
       totalAttendance: 0,
       totalMessages: 0,
-      schoolsDetails: schools.map((school) => {
-        const analytics = Array.isArray(school.usageAnalytics) ? school.usageAnalytics[0] : school.usageAnalytics
-        return {
-          id: school.id,
-          name: school.name,
-          logins: analytics?.totalLogins || 0,
-          users: analytics?.totalUsers || 0,
-          students: analytics?.studentCount || 0,
-          teachers: analytics?.teacherCount || 0,
-          classes: analytics?.classCount || 0,
-          lastActivity: analytics?.lastActivityAt,
-        }
-      }),
+      schoolsDetails: schools.map((school: any) => ({
+        id: school.id,
+        name: school.name,
+        logins: school.usageAnalytics?.totalLogins || 0,
+        users: school.usageAnalytics?.totalUsers || 0,
+        students: school.usageAnalytics?.studentCount || 0,
+        teachers: school.usageAnalytics?.teacherCount || 0,
+        classes: school.usageAnalytics?.classCount || 0,
+        lastActivity: school.usageAnalytics?.lastActivityAt,
+      })),
     }
 
     // Calculate totals
-    schools.forEach((school) => {
-      const analytics = Array.isArray(school.usageAnalytics) ? school.usageAnalytics[0] : school.usageAnalytics
-      if (analytics) {
-        summary.totalLogins += analytics.totalLogins
-        summary.totalUsers += analytics.totalUsers
-        summary.totalGrades += analytics.gradeCreations
-        summary.totalAttendance += analytics.attendanceRecords
-        summary.totalMessages += analytics.messagesSent
+    schools.forEach((school: any) => {
+      if (school.usageAnalytics) {
+        summary.totalLogins += school.usageAnalytics.totalLogins
+        summary.totalUsers += school.usageAnalytics.totalUsers
+        summary.totalGrades += school.usageAnalytics.gradeCreations
+        summary.totalAttendance += school.usageAnalytics.attendanceRecords
+        summary.totalMessages += school.usageAnalytics.messagesSent
       }
     })
 
@@ -323,7 +339,7 @@ export class OwnerService {
     })
   }
 
-  async verifyPermissionCode(code: string, email: string) {
+  async verifyPermissionCode(code: string, email: string, name?: string) {
     const permissionCode = await this.prisma.schoolPermissionCode.findFirst({
       where: {
         code: code.toUpperCase(),
@@ -337,7 +353,41 @@ export class OwnerService {
       throw new BadRequestException('Invalid or expired permission code')
     }
 
-    // Mark as used
+    // Check if user already exists
+    const normalizedEmail = email.trim().toLowerCase()
+    let user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    })
+
+    // If user doesn't exist, create as ADMIN
+    if (!user) {
+      const tempPassword = this.generateTempPassword()
+      const passwordHash = await this.hashPassword(tempPassword)
+      
+      user = await this.prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          name: name || `Admin - ${permissionCode.school.name}`,
+          firstName: name?.split(' ')[0] || 'Admin',
+          lastName: name?.split(' ').slice(1).join(' ') || permissionCode.school.name,
+          role: 'ADMIN',
+          isActive: true,
+          passwordHash,
+          mustChangePassword: true,
+          tempPasswordExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      })
+      // Send temporary password by email (if SMTP configured)
+      try {
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt)
+      } catch (e) {
+        // Don't fail the whole flow if email sending fails; just log server-side
+        // (Nest logger could be used, but keep silent here)
+      }
+    }
+
+    // Mark permission code as used
     await this.prisma.schoolPermissionCode.update({
       where: { id: permissionCode.id },
       data: {
@@ -347,10 +397,40 @@ export class OwnerService {
     })
 
     return {
+      success: true,
       schoolId: permissionCode.school.id,
       schoolName: permissionCode.school.name,
       permissionName: permissionCode.name,
-      message: `Access granted to ${permissionCode.school.name}`,
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      message: `Welcome to ${permissionCode.school.name}! Please log in.`,
     }
+  }
+
+  private generateTempPassword(): string {
+    const length = 12
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+    const numbers = '0123456789'
+    const symbols = '!@#$%^&*'
+    const all = uppercase + lowercase + numbers + symbols
+    
+    let password = ''
+    password += uppercase[Math.floor(Math.random() * uppercase.length)]
+    password += lowercase[Math.floor(Math.random() * lowercase.length)]
+    password += numbers[Math.floor(Math.random() * numbers.length)]
+    password += symbols[Math.floor(Math.random() * symbols.length)]
+    
+    for (let i = password.length; i < length; i++) {
+      password += all[Math.floor(Math.random() * all.length)]
+    }
+    
+    return password.split('').sort(() => Math.random() - 0.5).join('')
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const bcrypt = await import('bcryptjs')
+    return bcrypt.default.hash(password, 10)
   }
 }

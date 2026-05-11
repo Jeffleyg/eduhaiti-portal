@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext.jsx"
 
 const ROLE_MAP = {
@@ -9,13 +10,14 @@ const ROLE_MAP = {
 }
 
 function ProtectedRoute({ role }) {
+  const { t } = useTranslation()
   const { user, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-sand text-brand-navy">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em]">Loading</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em]">{t("loading")}</p>
       </div>
     )
   }

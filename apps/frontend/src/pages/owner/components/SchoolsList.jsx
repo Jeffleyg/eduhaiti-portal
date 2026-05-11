@@ -1,26 +1,38 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../../../lib/api.js'
 import SchoolFeatures from './SchoolFeatures.jsx'
 import PermissionCodeManager from './PermissionCodeManager.jsx'
 
 function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
+  const { t } = useTranslation()
   const [expandedSchool, setExpandedSchool] = useState(null)
 
   return (
     <div className="space-y-4">
       {loading ? (
-        <p className="text-center text-brand-navy/60">Carregando escolas...</p>
+        <div className="surface-panel p-8 text-center text-brand-navy/60">
+          {t("loadingSchools")}
+        </div>
       ) : schools.length === 0 ? (
-        <p className="text-center text-brand-navy/60">Nenhuma escola cadastrada</p>
+        <div className="surface-panel p-8 text-center">
+          <p className="text-lg font-semibold text-brand-navy">{t("noSchoolsRegistered")}</p>
+          <p className="mt-2 text-sm text-brand-navy/60">
+            {t("useNewSchoolButtonToCreate")}
+          </p>
+        </div>
       ) : (
         schools.map((school) => (
           <div
             key={school.id}
-            className="rounded-2xl border border-brand-navy/10 bg-white p-4 hover:shadow-lg transition-shadow"
+            className="surface-panel p-4 transition-all hover:-translate-y-0.5 hover:shadow-2xl"
           >
-            <div className="flex items-center justify-between gap-4 md:flex-row flex-col">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row">
               <div className="flex-1">
-                <h3 className="font-semibold text-brand-navy text-lg">{school.name}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-semibold text-brand-navy">{school.name}</h3>
+                  <span className="chip">{school.country}</span>
+                </div>
                 <p className="text-sm text-brand-navy/60">{school.email}</p>
                 <p className="text-xs text-brand-navy/50 mt-1">
                   {school.city && `${school.city}, `}
@@ -38,21 +50,21 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}
-                  className="rounded-lg bg-blue-500 px-3 py-2 text-sm text-white hover:bg-blue-600"
+                  className="rounded-lg bg-brand-navy px-3 py-2 text-sm text-white transition-colors hover:bg-brand-navy/90"
                 >
-                  {expandedSchool === school.id ? 'Recolher' : 'Detalhes'}
+                  {expandedSchool === school.id ? t("collapse") : t("details")}
                 </button>
                 <button
                   onClick={() => onEdit(school)}
-                  className="rounded-lg bg-emerald-500 px-3 py-2 text-sm text-white hover:bg-emerald-600"
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white transition-colors hover:bg-emerald-700"
                 >
-                  Editar
+                  {t("editAction")}
                 </button>
                 <button
                   onClick={() => onDelete(school.id)}
-                  className="rounded-lg bg-brand-red px-3 py-2 text-sm text-white hover:bg-brand-red/90"
+                  className="rounded-lg bg-brand-red px-3 py-2 text-sm text-white transition-colors hover:bg-brand-red/90"
                 >
-                  Deletar
+                  {t("deleteAction")}
                 </button>
               </div>
             </div>
