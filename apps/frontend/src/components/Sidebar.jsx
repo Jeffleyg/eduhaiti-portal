@@ -22,24 +22,24 @@ import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext.jsx"
 
 const professorNav = [
-  { to: "/professor", icon: LayoutDashboard, labelKey: "navOverview" },
-  { to: "/professor/profile", icon: Users, labelKey: "navProfile" },
-  { to: "/professor/notes", icon: GraduationCap, labelKey: "navGrades" },
-  { to: "/professor/presence", icon: ClipboardCheck, labelKey: "navAttendance" },
-  { to: "/professor/ressources", icon: UploadCloud, labelKey: "navResources" },
-  { to: "/professor/tarefas", icon: BookOpen, labelKey: "Tarefas" },
-  { to: "/professor/forum", icon: MessageSquare, labelKey: "Forum" },
-  { to: "/professor/messages", icon: Mail, labelKey: "navMessages" },
-  { to: "/professor/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
+  { to: "/teacher", icon: LayoutDashboard, labelKey: "navOverview" },
+  { to: "/teacher/profile", icon: Users, labelKey: "navProfile" },
+  { to: "/teacher/grades", icon: GraduationCap, labelKey: "navGrades" },
+  { to: "/teacher/attendance", icon: ClipboardCheck, labelKey: "navAttendance" },
+  { to: "/teacher/resources", icon: UploadCloud, labelKey: "navResources" },
+  { to: "/teacher/assignments", icon: BookOpen, labelKey: "navHomework" },
+  { to: "/teacher/forum", icon: MessageSquare, labelKey: "Forum" },
+  { to: "/teacher/messages", icon: Mail, labelKey: "navMessages" },
+  { to: "/teacher/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
 ]
 
 const studentNav = [
   { to: "/student", icon: LayoutDashboard, labelKey: "navOverview" },
   { to: "/student/profile", icon: Users, labelKey: "navProfile" },
-  { to: "/student/resultats", icon: BookOpen, labelKey: "navResults" },
-  { to: "/student/horaire", icon: CalendarDays, labelKey: "navSchedule" },
-  { to: "/student/ressources", icon: UploadCloud, labelKey: "navResources" },
-  { to: "/student/tarefas", icon: ClipboardCheck, labelKey: "Tarefas" },
+  { to: "/student/grades", icon: BookOpen, labelKey: "navResults" },
+  { to: "/student/schedule", icon: CalendarDays, labelKey: "navSchedule" },
+  { to: "/student/resources", icon: UploadCloud, labelKey: "navResources" },
+  { to: "/student/assignments", icon: ClipboardCheck, labelKey: "navHomework" },
   { to: "/student/forum", icon: MessageSquare, labelKey: "Forum" },
   { to: "/student/messages", icon: Mail, labelKey: "navMessages" },
   { to: "/student/academic-requests", icon: FileCheck2, labelKey: "navAcademicRequests" },
@@ -58,7 +58,7 @@ const adminNav = [
 ]
 
 const ownerNav = [
-  { to: "/owner", icon: LayoutDashboard, labelKey: "Painel de Controle" },
+  { to: "/owner", icon: LayoutDashboard, labelKey: "controlPanel" },
   { to: "/owner/profile", icon: Settings, labelKey: "navProfile" },
 ]
 
@@ -67,7 +67,8 @@ function Sidebar({ role }) {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const navItems = role === "owner" ? ownerNav : role === "admin" ? adminNav : role === "professor" ? professorNav : studentNav
+  const navItems = role === "owner" ? ownerNav : role === "admin" ? adminNav : role === "teacher" || role === "professor" ? professorNav : studentNav
+  const roleLabelKey = role === "teacher" ? "roleprofessor" : `role${role}`
 
   const handleLogout = async () => {
     await logout()
@@ -91,7 +92,7 @@ function Sidebar({ role }) {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">{t("appSubtitle")}</p>
               <h2 className="mt-1 font-display text-xl text-brand-navy">{t("brand")}</h2>
-              <p className="mt-1 text-sm text-brand-navy/70">{t("role" + role)}</p>
+              <p className="mt-1 text-sm text-brand-navy/70">{t(roleLabelKey)}</p>
             </div>
           ) : null}
         </div>
@@ -110,7 +111,7 @@ function Sidebar({ role }) {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === "/professor" || item.to === "/student"}
+            end={item.to === "/teacher" || item.to === "/student" || item.to === "/owner"}
             title={t(item.labelKey)}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${

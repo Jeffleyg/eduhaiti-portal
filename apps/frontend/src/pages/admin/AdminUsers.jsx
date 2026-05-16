@@ -9,18 +9,6 @@ import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
-const emptyStudent = {
-  email: "",
-  firstName: "",
-  lastName: "",
-  dateOfBirth: "",
-  address: "",
-  gender: "",
-  fatherName: "",
-  motherName: "",
-  classId: "",
-}
-
 const emptyTeacher = {
   email: "",
   firstName: "",
@@ -40,7 +28,6 @@ function AdminUsers() {
   const [classes, setClasses] = useState([])
   const [students, setStudents] = useState([])
   const [teachers, setTeachers] = useState([])
-  const [studentData, setStudentData] = useState(emptyStudent)
   const [teacherData, setTeacherData] = useState(emptyTeacher)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -78,11 +65,6 @@ function AdminUsers() {
     setTeachers(teachersData ?? [])
   }
 
-  const handleStudentChange = (event) => {
-    const { name, value } = event.target
-    setStudentData((prev) => ({ ...prev, [name]: value }))
-  }
-
   const handleTeacherChange = (event) => {
     const { name, value } = event.target
     setTeacherData((prev) => ({ ...prev, [name]: value }))
@@ -93,8 +75,7 @@ function AdminUsers() {
     setTeacherData((prev) => ({ ...prev, classIds: selected }))
   }
 
-  const submitStudent = async (event) => {
-    event.preventDefault()
+  const submitStudent = async (formData) => {
     setLoading(true)
     setError("")
     setMessage("")
@@ -103,11 +84,10 @@ function AdminUsers() {
       await apiFetch("/admin/users/students", {
         method: "POST",
         token,
-        body: studentData,
+        body: formData,
       })
       setShowCreateStudent(false)
       setMessage(t("studentCreated"))
-      setStudentData(emptyStudent)
       await refreshUsers()
     } catch (err) {
       setError(err.message)
@@ -181,22 +161,17 @@ function AdminUsers() {
         isOpen={showCreateStudent}
         onClose={() => {
           setShowCreateStudent(false)
-          setStudentData(emptyStudent)
           setError("")
         }}
         title={t("createStudentTitle")}
       >
         <CreateStudentModal
-          isOpen={showCreateStudent}
           onClose={() => {
             setShowCreateStudent(false)
-            setStudentData(emptyStudent)
           }}
           onSubmit={submitStudent}
           loading={loading}
           classes={classes}
-          studentData={studentData}
-          onChangeStudent={handleStudentChange}
         />
       </Modal>
 

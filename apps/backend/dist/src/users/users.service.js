@@ -46,7 +46,7 @@ let UsersService = class UsersService {
             .replace(/[^a-zA-Z0-9]/g, '')
             .slice(0, 8);
     }
-    async createStudent(payload) {
+    async createStudent(payload, schoolId) {
         const normalizedEmail = payload.email.trim().toLowerCase();
         const existing = await this.prisma.user.findUnique({
             where: { email: normalizedEmail },
@@ -62,13 +62,16 @@ let UsersService = class UsersService {
         const enrollmentNumber = await this.generateEnrollmentNumber();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+        let resolvedSchoolId = schoolId;
         if (payload.classId) {
             const classExists = await this.prisma.class.findUnique({
                 where: { id: payload.classId },
+                select: { id: true, academicYear: { select: { schoolId: true } } },
             });
             if (!classExists) {
                 throw new common_1.BadRequestException('Class not found');
             }
+            resolvedSchoolId ??= classExists.academicYear.schoolId;
         }
         return this.prisma.$transaction(async (tx) => {
             const user = await tx.user.create({
@@ -83,6 +86,7 @@ let UsersService = class UsersService {
                     fatherName: payload.fatherName,
                     motherName: payload.motherName,
                     enrollmentNumber,
+                    schoolId: resolvedSchoolId,
                     passwordHash,
                     mustChangePassword: true,
                     tempPasswordExpiresAt: expiresAt,
@@ -103,7 +107,7 @@ let UsersService = class UsersService {
             return user;
         });
     }
-    async createTeacher(payload) {
+    async createTeacher(payload, schoolId) {
         const normalizedEmail = payload.email.trim().toLowerCase();
         const existing = await this.prisma.user.findUnique({
             where: { email: normalizedEmail },
@@ -116,6 +120,24 @@ let UsersService = class UsersService {
         const enrollmentNumber = await this.generateEnrollmentNumber();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+        let resolvedSchoolId = schoolId;
+        if (!resolvedSchoolId && payload.classIds && payload.classIds.length > 0) {
+            const firstClass = await this.prisma.class.findFirst({
+                where: { id: { in: payload.classIds } },
+                select: { academicYear: { select: { schoolId: true } } },
+            });
+            resolvedSchoolId = firstClass?.academicYear.schoolId;
+        }
+        if (!resolvedSchoolId && payload.newClasses && payload.newClasses.length > 0) {
+            const firstAcademicYearId = payload.newClasses[0].academicYearId;
+            if (firstAcademicYearId) {
+                const academicYear = await this.prisma.academicYear.findUnique({
+                    where: { id: firstAcademicYearId },
+                    select: { schoolId: true },
+                });
+                resolvedSchoolId = academicYear?.schoolId;
+            }
+        }
         return this.prisma.$transaction(async (tx) => {
             const user = await tx.user.create({
                 data: {
@@ -129,6 +151,7 @@ let UsersService = class UsersService {
                     fatherName: payload.fatherName,
                     motherName: payload.motherName,
                     enrollmentNumber,
+                    schoolId: resolvedSchoolId,
                     passwordHash,
                     mustChangePassword: true,
                     tempPasswordExpiresAt: expiresAt,
@@ -206,9 +229,23 @@ let UsersService = class UsersService {
             expiresAt,
         };
     }
-    async findAllStudents() {
+    async findAllStudents(schoolId) {
         return this.prisma.user.findMany({
-            where: { role: client_1.Role.STUDENT },
+            where: {
+                role: client_1.Role.STUDENT,
+                ...(schoolId
+                    ? {
+                        OR: [
+                            { schoolId },
+                            {
+                                classesAttending: {
+                                    some: { academicYear: { schoolId } },
+                                },
+                            },
+                        ],
+                    }
+                    : {}),
+            },
             select: {
                 id: true,
                 email: true,
@@ -231,9 +268,23 @@ let UsersService = class UsersService {
             orderBy: { name: 'asc' },
         });
     }
-    async findAllTeachers() {
+    async findAllTeachers(schoolId) {
         return this.prisma.user.findMany({
-            where: { role: client_1.Role.TEACHER },
+            where: {
+                role: client_1.Role.TEACHER,
+                ...(schoolId
+                    ? {
+                        OR: [
+                            { schoolId },
+                            {
+                                classesTeaching: {
+                                    some: { academicYear: { schoolId } },
+                                },
+                            },
+                        ],
+                    }
+                    : {}),
+            },
             select: {
                 id: true,
                 email: true,

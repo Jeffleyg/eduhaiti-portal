@@ -14,9 +14,9 @@ import { useState } from "react"
  * @param {string} props.status - Status badge (optional)
  * @param {string} props.statusColor - Cor do status: "green" | "yellow" | "red" | "blue" (default: "blue")
  * @param {Array} props.tags - Array de tags [{label: "TAG1", color: "blue"}, ...] (optional)
- * @param {Array} props.actions - Array de ações [{label: "Editar", onClick: fn}, ...] (optional)
- * @param {Function} props.onEdit - Shortcut para ação Editar (optional)
- * @param {Function} props.onDelete - Shortcut para ação Deletar (optional)
+ * @param {Array} props.actions - Array of actions [{label: "Edit", onClick: fn}, ...] (optional)
+ * @param {Function} props.onEdit - Shortcut for Edit action (optional)
+ * @param {Function} props.onDelete - Shortcut for Delete action (optional)
  * @param {Function} props.onClick - Callback ao clicar no card (optional)
  * @param {boolean} props.isSelected - Se card está selecionado
  * @returns {JSX.Element}
@@ -48,14 +48,14 @@ function ListItemCard({
   const defaultActions = []
   if (onEdit) {
     defaultActions.push({
-      label: "Editar",
+      label: "Edit",
       onClick: onEdit,
       icon: <Edit2 size={14} />,
     })
   }
   if (onDelete) {
     defaultActions.push({
-      label: "Deletar",
+      label: "Delete",
       onClick: onDelete,
       icon: <Trash2 size={14} />,
       isDangerous: true,

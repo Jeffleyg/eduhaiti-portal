@@ -31,11 +31,13 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(2),
+    (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateStudentDto.prototype, "firstName", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(2),
+    (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateStudentDto.prototype, "lastName", void 0);
 __decorate([
@@ -44,6 +46,8 @@ __decorate([
 ], CreateStudentDto.prototype, "dateOfBirth", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(5),
+    (0, class_validator_1.MaxLength)(255),
     __metadata("design:type", String)
 ], CreateStudentDto.prototype, "address", void 0);
 __decorate([
@@ -53,11 +57,15 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(2),
+    (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateStudentDto.prototype, "fatherName", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(2),
+    (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateStudentDto.prototype, "motherName", void 0);
 __decorate([

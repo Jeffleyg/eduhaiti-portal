@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { buildAuditData } from '../../common/audit-compat';
 
 type OutboundSmsPayload = {
   to: string;
@@ -64,7 +65,7 @@ export class HybridOutboundSmsService {
       });
 
       if (!response.ok) {
-        throw new Error(`Outbound SMS rejected (${response.status})`);
+        throw new ServiceUnavailableException(`Outbound SMS rejected (${response.status})`);
       }
 
       await this.persistAudit('SMS_SENT', to, {
@@ -105,15 +106,15 @@ export class HybridOutboundSmsService {
     payload: Record<string, unknown>,
   ): Promise<void> {
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'HYBRID_OUTBOUND_SMS',
         entityId,
         action,
-        changes: JSON.stringify({
+        changes: {
           ts: new Date().toISOString(),
           ...payload,
-        }),
-      },
+        },
+      }),
     });
   }
 }

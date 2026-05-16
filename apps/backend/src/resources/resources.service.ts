@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 
 @Injectable()
 export class ResourcesService {
@@ -30,19 +31,19 @@ export class ResourcesService {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'RESOURCE',
         entityId: resource.id,
         action: 'CREATE',
         userId: uploadedById,
-        changes: JSON.stringify({
+        changes: {
           id: resource.id,
           classId,
           title,
           filePath,
           fileType,
-        }),
-      },
+        },
+      }),
     });
 
     return resource;
@@ -134,18 +135,18 @@ export class ResourcesService {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'RESOURCE',
         entityId: deleted.id,
         action: 'DELETE',
-        changes: JSON.stringify({
+        changes: {
           id: deleted.id,
           classId: deleted.classId,
           title: deleted.title,
           filePath: deleted.filePath,
           fileType: deleted.fileType,
-        }),
-      },
+        },
+      }),
     });
 
     return deleted;

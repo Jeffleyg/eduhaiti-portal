@@ -121,7 +121,7 @@ function StudentDashboard() {
         <p className="text-xs uppercase tracking-[0.12em] text-brand-navy/50">{t("enrollmentNumber")}</p>
         <p className="mt-1 text-lg font-semibold text-brand-navy">{user?.enrollmentNumber ?? "-"}</p>
         <div className="mt-3">
-          <Link to="/student/resultats" className="outline-button inline-flex">
+          <Link to="/student/grades" className="outline-button inline-flex">
             {t("downloadTranscriptPdf")}
           </Link>
         </div>

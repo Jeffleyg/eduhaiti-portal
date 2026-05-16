@@ -17,19 +17,19 @@ import {
   AdminFamilyCommunication,
 } from "./modules/admin/index.js"
 import {
-  ProfessorDashboard,
-  ProfessorGrades,
-  ProfessorAttendance,
-  ProfessorResources,
-  ProfessorAssignments,
-  ProfessorMessages,
-  ProfessorForum,
-  ProfessorAcademicRequests,
-  ProfessorLessonPlans,
-} from "./modules/professor/index.js"
+  TeacherDashboard,
+  TeacherGrades,
+  TeacherAttendance,
+  TeacherResources,
+  TeacherAssignments,
+  TeacherMessages,
+  TeacherForum,
+  TeacherAcademicRequests,
+  TeacherLessonPlans,
+} from "./modules/teacher/index.js"
 import {
   StudentDashboard,
-  StudentResults,
+  StudentGrades,
   StudentSchedule,
   StudentResources,
   StudentAssignments,
@@ -54,34 +54,51 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/redeem-access" element={<RedeemAccess />} />
-              <Route path="/pagamento-escolaridade" element={<GuardianTuitionPayment />} />
-              <Route path="/familia" element={<FamilyPortal />} />
+              <Route path="/tuition-payment" element={<GuardianTuitionPayment />} />
+              <Route path="/family" element={<FamilyPortal />} />
+              <Route path="/pagamento-escolaridade" element={<Navigate to="/tuition-payment" replace />} />
+              <Route path="/familia" element={<Navigate to="/family" replace />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/change-password" element={<ChangePassword />} />
               </Route>
 
-              <Route element={<ProtectedRoute role="professor" />}>
-                <Route path="/professor" element={<AppShell role="professor" />}>
-                  <Route index element={<ProfessorDashboard />} />
-                  <Route path="notes" element={<ProfessorGrades />} />
-                  <Route path="presence" element={<ProfessorAttendance />} />
-                  <Route path="ressources" element={<ProfessorResources />} />
-                  <Route path="tarefas" element={<ProfessorAssignments />} />
-                    <Route path="lesson-plans" element={<ProfessorLessonPlans />} />
-                  <Route path="forum" element={<ProfessorForum />} />
-                  <Route path="messages" element={<ProfessorMessages />} />
+              <Route path="/professor" element={<Navigate to="/teacher" replace />} />
+              <Route path="/professor/profile" element={<Navigate to="/teacher/profile" replace />} />
+              <Route path="/professor/notes" element={<Navigate to="/teacher/grades" replace />} />
+              <Route path="/professor/presence" element={<Navigate to="/teacher/attendance" replace />} />
+              <Route path="/professor/ressources" element={<Navigate to="/teacher/resources" replace />} />
+              <Route path="/professor/tarefas" element={<Navigate to="/teacher/assignments" replace />} />
+              <Route path="/professor/forum" element={<Navigate to="/teacher/forum" replace />} />
+              <Route path="/professor/messages" element={<Navigate to="/teacher/messages" replace />} />
+              <Route path="/professor/academic-requests" element={<Navigate to="/teacher/academic-requests" replace />} />
+
+              <Route path="/student/resultats" element={<Navigate to="/student/grades" replace />} />
+              <Route path="/student/horaire" element={<Navigate to="/student/schedule" replace />} />
+              <Route path="/student/ressources" element={<Navigate to="/student/resources" replace />} />
+              <Route path="/student/tarefas" element={<Navigate to="/student/assignments" replace />} />
+
+              <Route element={<ProtectedRoute role="teacher" />}>
+                <Route path="/teacher" element={<AppShell role="teacher" />}>
+                  <Route index element={<TeacherDashboard />} />
+                  <Route path="grades" element={<TeacherGrades />} />
+                  <Route path="attendance" element={<TeacherAttendance />} />
+                  <Route path="resources" element={<TeacherResources />} />
+                  <Route path="assignments" element={<TeacherAssignments />} />
+                    <Route path="lesson-plans" element={<TeacherLessonPlans />} />
+                  <Route path="forum" element={<TeacherForum />} />
+                  <Route path="messages" element={<TeacherMessages />} />
                   <Route path="profile" element={<UserProfile />} />
-                  <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
+                  <Route path="academic-requests" element={<TeacherAcademicRequests />} />
                 </Route>
               </Route>
 
               <Route element={<ProtectedRoute role="student" />}>
                 <Route path="/student" element={<AppShell role="student" />}>
                   <Route index element={<StudentDashboard />} />
-                  <Route path="resultats" element={<StudentResults />} />
-                  <Route path="horaire" element={<StudentSchedule />} />
-                  <Route path="ressources" element={<StudentResources />} />
-                  <Route path="tarefas" element={<StudentAssignments />} />
+                  <Route path="grades" element={<StudentGrades />} />
+                  <Route path="schedule" element={<StudentSchedule />} />
+                  <Route path="resources" element={<StudentResources />} />
+                  <Route path="assignments" element={<StudentAssignments />} />
                   <Route path="lesson-plans" element={<StudentLessonPlans />} />
                   <Route path="forum" element={<StudentForum />} />
                   <Route path="messages" element={<StudentMessages />} />
@@ -100,7 +117,7 @@ function App() {
                   <Route path="finance" element={<AdminFinanceControl />} />
                   <Route path="profile" element={<UserProfile />} />
                   <Route path="academic" element={<AdminAcademicConfig />} />
-                  <Route path="academic-requests" element={<ProfessorAcademicRequests />} />
+                  <Route path="academic-requests" element={<TeacherAcademicRequests />} />
                   <Route path="family-communication" element={<AdminFamilyCommunication />} />
                 </Route>
               </Route>

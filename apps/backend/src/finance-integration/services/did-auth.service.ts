@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import { buildAuditData } from '../../common/audit-compat';
 import {
   createCipheriv,
   createDecipheriv,
@@ -50,12 +51,12 @@ export class DidAuthService {
     const encryptedKeyBlob = this.encryptKeyMaterial(randomBytes(32));
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'DID_KEY',
         entityId: student.id,
         action: 'STORE',
-        changes: JSON.stringify({ deviceId, keyRef, encryptedKeyBlob }),
-      },
+        changes: { deviceId, keyRef, encryptedKeyBlob },
+      }),
     });
 
     const issuedAt = Date.now();

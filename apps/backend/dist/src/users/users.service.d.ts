@@ -15,14 +15,14 @@ export declare class UsersService {
     } | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
     private generateEnrollmentNumber;
     private generateTempPassword;
-    createStudent(payload: CreateStudentDto): Promise<{
+    createStudent(payload: CreateStudentDto, schoolId?: string): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
         role: import(".prisma/client").$Enums.Role;
     }>;
-    createTeacher(payload: CreateTeacherDto): Promise<{
+    createTeacher(payload: CreateTeacherDto, schoolId?: string): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;
@@ -34,7 +34,7 @@ export declare class UsersService {
         email: string;
         expiresAt: Date;
     }>;
-    findAllStudents(): Promise<{
+    findAllStudents(schoolId?: string): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;
@@ -51,7 +51,7 @@ export declare class UsersService {
             level: string;
         }[];
     }[]>;
-    findAllTeachers(): Promise<{
+    findAllTeachers(schoolId?: string): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;

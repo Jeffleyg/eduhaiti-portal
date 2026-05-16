@@ -16,6 +16,7 @@ export declare class AuthController {
             mustChangePassword: boolean;
             enrollmentNumber: string | null;
             profilePhoto: string | null;
+            schoolId: string | null;
         };
     }>;
     getTestCredentials(): {
@@ -70,6 +71,7 @@ export declare class AuthController {
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
+        schoolId: string | null;
         classesTeaching: {
             id: string;
             name: string;
@@ -101,6 +103,7 @@ export declare class AuthController {
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
+        schoolId: string | null;
         classesTeaching: {
             id: string;
             name: string;
@@ -132,6 +135,7 @@ export declare class AuthController {
         mustChangePassword: boolean;
         role: import(".prisma/client").$Enums.Role;
         isActive: boolean;
+        schoolId: string | null;
         classesTeaching: {
             id: string;
             name: string;

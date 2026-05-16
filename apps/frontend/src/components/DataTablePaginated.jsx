@@ -114,8 +114,8 @@ function DataTablePaginated({
         <PaginationControls
           currentPage={safePage}
           totalPages={totalPages}
-          previousLabel={t("previous") ?? "Anterior"}
-          continueLabel={t("continue") ?? "Continuar"}
+          previousLabel={t("previous") ?? "Previous"}
+          continueLabel={t("continue") ?? "Next"}
           onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
           onContinue={() => setPage((prev) => Math.min(totalPages, prev + 1))}
         />

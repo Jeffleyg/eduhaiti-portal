@@ -117,6 +117,15 @@ model School {
   academicSetting     AcademicSetting?
   usageAnalytics      SchoolUsageAnalytic?
   permissionCodes     SchoolPermissionCode[]
+  users               User[]
+  
+  // Owner management
+  tenantConfig        TenantConfiguration?
+  rolePermissions     RolePermission[]
+  paymentGateway      PaymentGatewayConfig[]
+  auditLogs           AuditLog[]
+  metricHistory       SchoolMetricHistory[]
+  tenantMetrics       TenantMetric?
 }
 
 model AcademicYear {
@@ -195,6 +204,8 @@ model User {
   isActive              Boolean   @default(true)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  school                School?   @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  schoolId              String?
 
   loginCodes            LoginCode[]
   classesTeaching       Class[]                @relation("ClassesTeaching")
@@ -214,6 +225,9 @@ model User {
   guardianOtpChallenges GuardianOtpChallenge[]
   academicRequestsSubmitted AcademicRequest[]  @relation("AcademicRequestStudent")
   academicRequestsReviewed  AcademicRequest[]  @relation("AcademicRequestReviewer")
+  
+  // Audit trail
+  auditLogs             AuditLog[]
 }
 
 model LoginCode {
@@ -617,20 +631,6 @@ model SchoolInventoryMovement {
   @@index([itemId, createdAt])
 }
 
-model AuditLog {
-  id         String  @id @default(uuid())
-  entityType String // "Grade", "Attendance", "User", etc
-  entityId   String
-  action     String // "CREATE", "UPDATE", "DELETE"
-  changes    String  @db.Text // JSON string of changes
-  userId     String? // who made the change
-
-  createdAt DateTime @default(now())
-
-  @@index([entityType, entityId])
-  @@index([userId])
-}
-
 model IdempotencyRecord {
   id              String            @id @default(uuid())
   idempotencyKey  String            @unique
@@ -688,3 +688,231 @@ model SchoolPermissionCode {
   @@index([schoolId])
   @@index([code])
 }
+
+// ========== OWNER/SUPER ADMIN MANAGEMENT ==========
+
+model TenantConfiguration {
+  id                    String   @id @default(uuid())
+  schoolId              String   @unique
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Limites
+  maxStudents           Int      @default(1000)
+  maxTeachers           Int      @default(100)
+  maxClasses            Int      @default(50)
+  storageLimitGb        Int      @default(10)
+  maxConcurrentUsers    Int      @default(500)
+
+  // White Label
+  logoUrl               String?
+  faviconUrl            String?
+  primaryColor          String   @default("#0F2B5E")    // Brand Navy
+  secondaryColor        String   @default("#E63946")    // Brand Red
+  companyName           String?
+  supportEmail          String?
+  supportPhone          String?
+
+  // Features
+  enableCustomDomain    Boolean  @default(false)
+  enableSso             Boolean  @default(false)
+  enableAdvancedAnalytics Boolean @default(false)
+  enableApiAccess       Boolean  @default(false)
+
+  // Billing
+  subscriptionTier      String   @default("basic")  // basic, professional, enterprise
+  billingEmail          String?
+  billingCycle          String   @default("monthly") // monthly, annual
+  nextBillingDate       DateTime?
+
+  isActive              Boolean  @default(true)
+  deletedAt             DateTime? // Soft delete
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now()) @updatedAt
+
+  @@index([schoolId])
+}
+
+model RolePermission {
+  id                    String   @id @default(uuid())
+  schoolId              String
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  role                  String   // TEACHER, ADMIN, SECRETARY, etc
+  resource              String   // students, grades, attendance, etc
+  permissions           String   // "READ,WRITE,DELETE" (comma-separated)
+  
+  metadata              Json?    // Extra config per role
+
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([schoolId, role, resource])
+  @@index([schoolId, role])
+}
+
+model GlobalSetting {
+  id                    String   @id @default(uuid())
+
+  // System settings
+  key                   String   @unique
+  value                 String
+  description           String?
+  valueType             String   @default("string") // string, number, boolean, json
+  isEncrypted           Boolean  @default(false)
+
+  // Categories
+  category              String   @default("general") // general, payment, email, security, etc
+
+  isEditable            Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([category])
+}
+
+model PaymentGatewayConfig {
+  id                    String   @id @default(uuid())
+  schoolId              String?  // null = global config
+  school                School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  provider              String   // stripe, asaas, efi, paypal
+  apiKeyEncrypted       String   // Encrypted
+  secretKeyEncrypted    String?  // Encrypted
+  webhookSecret         String?  // Encrypted
+  
+  isActive              Boolean  @default(false)
+  metadata              Json?    // Provider-specific config
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([schoolId, provider])
+  @@index([provider])
+}
+
+model AuditLog {
+  id                    String   @id @default(uuid())
+  schoolId              String?
+  school                School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  userId                String?
+  user                  User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action                String
+  resource              String   // User, School, Grade, etc
+  resourceId            String?  // ID of affected resource
+  description           String?
+  entityType            String?
+  entityId              String?
+
+  // Changes
+  oldValues             Json?    // Previous values
+  newValues             Json?    // New values
+  changesSummary        String?  // Human readable summary
+  changes               Json?
+
+  ipAddress             String?
+  userAgent             String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now()) @updatedAt
+
+  @@index([schoolId])
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}
+
+model BusinessMetric {
+  id                    String   @id @default(uuid())
+
+  // Metrics
+  totalSchools          Int      @default(0)
+  totalActiveStudents   Int      @default(0)
+  totalUsers            Int      @default(0)
+  totalTeachers         Int      @default(0)
+  
+  // Financial
+  totalRevenue          Float    @default(0)
+  delinquencyRate       Float    @default(0)
+  averageStudentPerSchool Float  @default(0)
+
+  // Growth
+  newSchoolsThisMonth   Int      @default(0)
+  newStudentsThisMonth  Int      @default(0)
+  churnRate             Float    @default(0)
+
+  // System health
+  systemUptime          Float    @default(99.9)
+  avgResponseTime       Int      @default(0) // milliseconds
+  errorRate             Float    @default(0)
+
+  recordedAt            DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model SchoolMetricHistory {
+  id                    String   @id @default(uuid())
+  schoolId              String
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  year                  Int
+  month                 Int
+  
+  studentCount          Int
+  teacherCount          Int
+  classCount            Int
+  enrollmentsCount      Int
+  revenue               Float
+  delinquentCount       Int
+
+  recordedAt            DateTime @default(now())
+
+  @@unique([schoolId, year, month])
+  @@index([schoolId])
+  @@index([year, month])
+}
+
+model SystemNotification {
+  id                    String   @id @default(uuid())
+  
+  title                 String
+  message               String
+  type                  String   @default("info") // info, warning, error, success
+  
+  // Scope
+  targetRole            String?  // null = all users
+  targetSchools         String?  // comma-separated IDs
+  
+  priority              Int      @default(0) // 0 = normal, 1 = high, 2 = critical
+  
+  activeFrom            DateTime @default(now())
+  expireAt              DateTime?
+  isActive              Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model TenantMetric {
+  id                    String   @id @default(uuid())
+  schoolId              String
+  school                School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  totalStudentsActive   Int      @default(0)
+  totalTeachersActive   Int      @default(0)
+  defaultRate           Float    @default(0) // percentage
+  enrollmentGrowthMoM   Float    @default(0) // month-over-month percentage
+  totalRevenueCollected Float    @default(0)
+  
+  recordedAt            DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([schoolId])
+  @@index([schoolId])
+  @@index([recordedAt])
+}
+

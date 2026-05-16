@@ -27,17 +27,17 @@ let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
-    findAllStudents() {
-        return this.usersService.findAllStudents();
+    findAllStudents(req) {
+        return this.usersService.findAllStudents(req.user?.schoolId);
     }
-    findAllTeachers() {
-        return this.usersService.findAllTeachers();
+    findAllTeachers(req) {
+        return this.usersService.findAllTeachers(req.user?.schoolId);
     }
-    createStudent(body) {
-        return this.usersService.createStudent(body);
+    createStudent(req, body) {
+        return this.usersService.createStudent(body, req.user?.schoolId);
     }
-    createTeacher(body) {
-        return this.usersService.createTeacher(body);
+    createTeacher(req, body) {
+        return this.usersService.createTeacher(body, req.user?.schoolId);
     }
     resendTempPassword(body) {
         return this.usersService.resendTempPassword(body.email);
@@ -46,28 +46,32 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)('students'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAllStudents", null);
 __decorate([
     (0, common_1.Get)('teachers'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAllTeachers", null);
 __decorate([
     (0, common_1.Post)('students'),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_student_dto_1.CreateStudentDto]),
+    __metadata("design:paramtypes", [Object, create_student_dto_1.CreateStudentDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "createStudent", null);
 __decorate([
     (0, common_1.Post)('teachers'),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_teacher_dto_1.CreateTeacherDto]),
+    __metadata("design:paramtypes", [Object, create_teacher_dto_1.CreateTeacherDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "createTeacher", null);
 __decorate([

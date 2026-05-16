@@ -84,13 +84,13 @@ function Landing() {
                 <Link className="primary-button" to="/login">
                   {t("cta")}
                 </Link>
-                <Link className="outline-button" to="/professor">
+                <Link className="outline-button" to="/teacher">
                   {t("secondaryCta")}
                 </Link>
-                <Link className="outline-button" to="/pagamento-escolaridade">
+                <Link className="outline-button" to="/tuition-payment">
                   {t("tuitionPaymentCta")}
                 </Link>
-                <Link className="outline-button" to="/familia">
+                <Link className="outline-button" to="/family">
                   {t("familyPortalCta")}
                 </Link>
               </div>

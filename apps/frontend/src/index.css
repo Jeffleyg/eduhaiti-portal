@@ -1,56 +1,353 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Space+Grotesk:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   ROOT VARIABLES & COLOR SCHEME
+   ============================================ */
 :root {
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --navy: #002147;
-  --red: #d21034;
-  --sky: #00a8e8;
-  --sand: #f4f1ea;
+
+  /* Brand Colors */
+  --brand-navy: #0F2B5E;
+  --brand-red: #E63946;
+  --brand-sand: #F5EFEA;
+  --brand-sky: #00a8e8;
+
+  /* Semantic Colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
+
+  /* Text Colors */
   --ink: #0b1220;
+  --text-muted: #6B7280;
+  --text-light: #D1D5DB;
+
+  /* Background */
+  --mist: #f9fbff;
+  --sand: #F5EFEA;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   BODY & GLOBAL STYLES
+   ============================================ */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top left, #ffffff 0%, #f8f6f1 55%, #f1f4f9 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f6f1 50%, #f0f4f9 100%);
   color: var(--ink);
-  font-family: "Space Grotesk", system-ui, sans-serif;
-  /* Estabilidade visual */
+  font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  line-height: 1.5;
+  
+  /* Performance optimizations */
   scrollbar-gutter: stable;
   contain: layout style paint;
+  
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+
+  /* Better text rendering */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 #root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+a {
+  color: var(--brand-navy);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+a:hover {
+  color: var(--brand-red);
+}
+
+a:focus {
+  outline: 2px solid var(--brand-navy);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+code, pre {
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+  background-color: #f3f4f6;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+code {
+  color: var(--brand-red);
+}
+
+pre {
+  overflow-x: auto;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+input, 
+textarea, 
+select {
+  font-family: inherit;
+  font-size: 1em;
+  line-height: 1.5;
+  color: inherit;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Custom checkbox & radio */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand-red);
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================
+   BACKGROUND PATTERNS & EFFECTS
+   ============================================ */
 .bg-atlas {
   background-image:
-    radial-gradient(circle at 10% 20%, rgba(0, 168, 232, 0.18), transparent 40%),
-    radial-gradient(circle at 85% 10%, rgba(210, 16, 52, 0.2), transparent 35%),
-    radial-gradient(circle at 80% 80%, rgba(0, 33, 71, 0.2), transparent 45%);
+    radial-gradient(circle at 10% 20%, rgba(0, 168, 232, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(230, 57, 70, 0.15), transparent 35%),
+    radial-gradient(circle at 80% 80%, rgba(15, 43, 94, 0.1), transparent 45%);
+}
+
+.bg-gradient-brand {
+  background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-red) 100%);
 }
 
 .bg-grid {
-  background-image: linear-gradient(90deg, rgba(0, 33, 71, 0.08) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(0, 33, 71, 0.08) 1px, transparent 1px);
+  background-image: 
+    linear-gradient(90deg, rgba(15, 43, 94, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(15, 43, 94, 0.05) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
+/* Glassmorphism effect */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(0, 33, 71, 0.08);
-  box-shadow: 0 24px 70px rgba(0, 33, 71, 0.12);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(15, 43, 94, 0.1);
+}
+
+/* Gradient overlay */
+.gradient-overlay {
+  position: relative;
+}
+
+.gradient-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Text shadows for better readability */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.hover-brighten {
+  transition: filter var(--transition-fast);
+}
+
+.hover-brighten:hover {
+  filter: brightness(1.05);
+}
+
+/* Loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Responsive Container */
+.container-responsive {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (max-width: 640px) {
+  .container-responsive {
+    padding: 0 12px;
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 43, 94, 0.2);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 43, 94, 0.4);
+}
+
+/* Firefox */
+* {
+  scrollbar-color: rgba(15, 43, 94, 0.2) transparent;
+  scrollbar-width: thin;
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--brand-navy);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  body {
+    background: #ffffff;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* Dark mode support (future-proofing) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f0f4f9;
+    --text-muted: #9ca3af;
+    --text-light: #4b5563;
+  }
+
+  body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  }
+
+  .glass-panel {
+    background: rgba(30, 30, 46, 0.85);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  body {
+    background: white;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  button,
+  input[type="button"],
+  input[type="submit"] {
+    border: 1px solid #ccc;
+  }
 }
 
 .fade-rise {

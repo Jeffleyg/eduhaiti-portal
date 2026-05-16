@@ -5,7 +5,11 @@ import { ResendTempPasswordDto } from './dto/resend-temp-password.dto';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
-    findAllStudents(): Promise<{
+    findAllStudents(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;
@@ -22,7 +26,11 @@ export declare class UsersController {
             level: string;
         }[];
     }[]>;
-    findAllTeachers(): Promise<{
+    findAllTeachers(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;
@@ -38,14 +46,22 @@ export declare class UsersController {
             level: string;
         }[];
     }[]>;
-    createStudent(body: CreateStudentDto): Promise<{
+    createStudent(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, body: CreateStudentDto): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;
         name: string | null;
         role: import(".prisma/client").$Enums.Role;
     }>;
-    createTeacher(body: CreateTeacherDto): Promise<{
+    createTeacher(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, body: CreateTeacherDto): Promise<{
         id: string;
         email: string;
         enrollmentNumber: string | null;

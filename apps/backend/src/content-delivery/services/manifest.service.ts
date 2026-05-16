@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { safeParseJson as auditSafeParseJson } from '../../common/audit-compat';
 import { promises as fs } from 'fs';
 
 interface BuildManifestInput {
@@ -159,13 +160,6 @@ export class ManifestService {
       where: {
         entityType: 'RESOURCE',
         action: 'DELETE',
-        ...(input.classId
-          ? {
-              changes: {
-                contains: `"classId":"${input.classId}"`,
-              },
-            }
-          : {}),
         ...(since ? { createdAt: { gt: since } } : {}),
       },
       orderBy: { createdAt: 'asc' },
@@ -173,12 +167,20 @@ export class ManifestService {
 
     const deleted = deletedLogs
       .map((log) => {
-        const parsed = this.safeParseJson(log.changes);
+        const parsed = auditSafeParseJson(log.changes);
         const resourceId =
           typeof parsed?.id === 'string' ? parsed.id : log.entityId;
 
         if (!resourceId) {
           return null;
+        }
+
+        if (input.classId) {
+          const classIdFromPayload =
+            typeof parsed?.classId === 'string' ? parsed.classId : null;
+          if (classIdFromPayload && classIdFromPayload !== input.classId) {
+            return null;
+          }
         }
 
         return {

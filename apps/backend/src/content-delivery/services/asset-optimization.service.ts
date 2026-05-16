@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PDFDocument } from 'pdf-lib';
+// Load pdf-lib dynamically inside the PDF optimization routine to avoid
+// crashing the entire app at startup if pdf-lib has platform/packaging issues.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import { basename, dirname, extname, join } from 'path';
@@ -73,12 +75,26 @@ export class AssetOptimizationService {
   private async optimizePdf(filePath: string): Promise<OptimizationResult> {
     try {
       const input = await fs.readFile(filePath);
-      const pdf = await PDFDocument.load(input, { ignoreEncryption: true });
 
-      const output = await pdf.save({
-        useObjectStreams: true,
-        updateFieldAppearances: false,
-      });
+      // Dynamic import to avoid top-level require issues on some Node/npm setups
+      let PDFDocument: any
+      try {
+        const mod = await import('pdf-lib')
+        PDFDocument = mod.PDFDocument ?? mod.default?.PDFDocument ?? mod.default
+      } catch (e) {
+        // If dynamic import fails, fallback to returning original file (no-op)
+        this.logger.warn(`pdf-lib import failed: ${e instanceof Error ? e.message : String(e)}`)
+        return {
+          optimizedPath: filePath,
+          fileType: 'pdf',
+          contentHash: this.hashBuffer(input),
+          sizeBytes: input.byteLength,
+        }
+      }
+
+      const pdf = await PDFDocument.load(input, { ignoreEncryption: true })
+
+      const output = await pdf.save({ useObjectStreams: true, updateFieldAppearances: false })
 
       const outputPath = this.buildOptimizedPath(filePath, '.pdf');
       await fs.writeFile(outputPath, output);

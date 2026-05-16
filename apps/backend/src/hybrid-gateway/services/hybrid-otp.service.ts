@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { buildAuditData, safeParseJson } from '../../common/audit-compat';
 
 type OtpIssuePayload = {
   phone: string;
@@ -45,12 +46,12 @@ export class HybridOtpService {
     };
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'HYBRID_OTP',
         entityId,
         action: 'ISSUE',
-        changes: JSON.stringify(payload),
-      },
+        changes: payload,
+      }),
     });
 
     return { otpCode, expiresAt };
@@ -84,12 +85,7 @@ export class HybridOtpService {
       return { ok: false as const, reason: 'not-issued' };
     }
 
-    let payload: OtpIssuePayload | null = null;
-    try {
-      payload = JSON.parse(latestIssue.changes) as OtpIssuePayload;
-    } catch {
-      payload = null;
-    }
+    const payload = safeParseJson<OtpIssuePayload>(latestIssue.changes);
 
     if (!payload) {
       return { ok: false as const, reason: 'invalid-payload' };
@@ -99,12 +95,12 @@ export class HybridOtpService {
     const expiry = new Date(payload.expiresAt).getTime();
     if (!Number.isFinite(expiry) || now > expiry) {
       await this.prisma.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'HYBRID_OTP',
           entityId,
           action: 'VERIFY_EXPIRED',
-          changes: JSON.stringify({ issueLogId: latestIssue.id }),
-        },
+          changes: { issueLogId: latestIssue.id },
+        }),
       });
       return { ok: false as const, reason: 'expired' };
     }
@@ -121,12 +117,12 @@ export class HybridOtpService {
 
     const ok = payload.otpCode === params.otpCode.trim();
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'HYBRID_OTP',
         entityId,
         action: ok ? 'VERIFY_OK' : 'VERIFY_FAIL',
-        changes: JSON.stringify({ issueLogId: latestIssue.id }),
-      },
+        changes: { issueLogId: latestIssue.id },
+      }),
     });
 
     return ok

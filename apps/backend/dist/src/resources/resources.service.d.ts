@@ -65,8 +65,8 @@ export declare class ResourcesService {
             name: string;
             academicYear: {
                 id: string;
-                year: string;
                 schoolId: string;
+                year: string;
             };
             seriesId: string;
             level: string;

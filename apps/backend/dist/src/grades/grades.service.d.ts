@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { GradeStatus, Role } from '@prisma/client';
+import { GradeStatus, Role, Prisma } from '@prisma/client';
 export declare class GradesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -65,7 +65,7 @@ export declare class GradesService {
     delete(gradeId: string): Promise<{
         message: string;
     }>;
-    publishGrades(classId: string, disciplineId: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
+    publishGrades(classId: string, disciplineId: string): Promise<Prisma.BatchPayload>;
     findByStudent(studentId: string, academicYearId?: string): Promise<({
         discipline: {
             id: string;

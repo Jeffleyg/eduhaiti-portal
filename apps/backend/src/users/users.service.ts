@@ -41,7 +41,7 @@ export class UsersService {
       .slice(0, 8);
   }
 
-  async createStudent(payload: CreateStudentDto) {
+  async createStudent(payload: CreateStudentDto, schoolId?: string) {
     const normalizedEmail = payload.email.trim().toLowerCase();
     const existing = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -63,13 +63,16 @@ export class UsersService {
     const fullName = `${payload.firstName} ${payload.lastName}`.trim();
 
     // Validate class exists if classId is provided
+    let resolvedSchoolId = schoolId;
     if (payload.classId) {
       const classExists = await this.prisma.class.findUnique({
         where: { id: payload.classId },
+        select: { id: true, academicYear: { select: { schoolId: true } } },
       });
       if (!classExists) {
         throw new BadRequestException('Class not found');
       }
+      resolvedSchoolId ??= classExists.academicYear.schoolId;
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -85,6 +88,7 @@ export class UsersService {
           fatherName: payload.fatherName,
           motherName: payload.motherName,
           enrollmentNumber,
+          schoolId: resolvedSchoolId,
           passwordHash,
           mustChangePassword: true,
           tempPasswordExpiresAt: expiresAt,
@@ -112,7 +116,7 @@ export class UsersService {
     });
   }
 
-  async createTeacher(payload: CreateTeacherDto) {
+  async createTeacher(payload: CreateTeacherDto, schoolId?: string) {
     const normalizedEmail = payload.email.trim().toLowerCase();
     const existing = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -126,6 +130,28 @@ export class UsersService {
     const enrollmentNumber = await this.generateEnrollmentNumber();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+    let resolvedSchoolId = schoolId;
+
+    if (!resolvedSchoolId && payload.classIds && payload.classIds.length > 0) {
+      const firstClass = await this.prisma.class.findFirst({
+        where: { id: { in: payload.classIds } },
+        select: { academicYear: { select: { schoolId: true } } },
+      });
+
+      resolvedSchoolId = firstClass?.academicYear.schoolId;
+    }
+
+    if (!resolvedSchoolId && payload.newClasses && payload.newClasses.length > 0) {
+      const firstAcademicYearId = payload.newClasses[0].academicYearId;
+      if (firstAcademicYearId) {
+        const academicYear = await this.prisma.academicYear.findUnique({
+          where: { id: firstAcademicYearId },
+          select: { schoolId: true },
+        });
+
+        resolvedSchoolId = academicYear?.schoolId;
+      }
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -140,6 +166,7 @@ export class UsersService {
           fatherName: payload.fatherName,
           motherName: payload.motherName,
           enrollmentNumber,
+          schoolId: resolvedSchoolId,
           passwordHash,
           mustChangePassword: true,
           tempPasswordExpiresAt: expiresAt,
@@ -245,9 +272,23 @@ export class UsersService {
     };
   }
 
-  async findAllStudents() {
+  async findAllStudents(schoolId?: string) {
     return this.prisma.user.findMany({
-      where: { role: Role.STUDENT },
+      where: {
+        role: Role.STUDENT,
+        ...(schoolId
+          ? {
+              OR: [
+                { schoolId },
+                {
+                  classesAttending: {
+                    some: { academicYear: { schoolId } },
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
       select: {
         id: true,
         email: true,
@@ -271,9 +312,23 @@ export class UsersService {
     });
   }
 
-  async findAllTeachers() {
+  async findAllTeachers(schoolId?: string) {
     return this.prisma.user.findMany({
-      where: { role: Role.TEACHER },
+      where: {
+        role: Role.TEACHER,
+        ...(schoolId
+          ? {
+              OR: [
+                { schoolId },
+                {
+                  classesTeaching: {
+                    some: { academicYear: { schoolId } },
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
       select: {
         id: true,
         email: true,

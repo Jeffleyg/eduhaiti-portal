@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import Sidebar from "../../components/Sidebar.jsx"
@@ -27,7 +27,7 @@ const initialSettings = {
 
 function AdminAcademicConfig() {
   const { t } = useTranslation()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [schoolId, setSchoolId] = useState("")
   const [periodForm, setPeriodForm] = useState(initialPeriod)
   const [settingsForm, setSettingsForm] = useState(initialSettings)
@@ -40,6 +40,12 @@ function AdminAcademicConfig() {
     setError("")
     setMessage("")
   }
+
+  useEffect(() => {
+    if (user?.schoolId) {
+      setSchoolId(user.schoolId)
+    }
+  }, [user?.schoolId])
 
   const loadPeriods = async () => {
     if (!schoolId.trim()) {
@@ -179,7 +185,7 @@ function AdminAcademicConfig() {
         <Feedback error={error} message={message} />
 
         <SectionCard>
-          <SchoolContext t={t} schoolId={schoolId} setSchoolId={setSchoolId} loadPeriods={loadPeriods} loadSettings={loadSettings} loading={loading} />
+          <SchoolContext t={t} schoolId={schoolId} setSchoolId={setSchoolId} loadPeriods={loadPeriods} loadSettings={loadSettings} loading={loading} locked={Boolean(user?.schoolId)} />
         </SectionCard>
 
         <SectionCard>

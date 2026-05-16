@@ -3,6 +3,25 @@ import { PrismaService } from '../prisma/prisma.service'
 import * as crypto from 'crypto'
 import { EmailService } from '../common/services/email.service'
 
+interface AnalyticsSummary {
+  totalSchools: number
+  totalLogins: number
+  totalUsers: number
+  totalGrades: number
+  totalAttendance: number
+  totalMessages: number
+  schoolsDetails: Array<{
+    id: string
+    name: string
+    logins: number
+    users: number
+    students: number
+    teachers: number
+    classes: number
+    lastActivity?: Date
+  }>
+}
+
 @Injectable()
 export class OwnerService {
   constructor(private prisma: PrismaService, private readonly emailService: EmailService) {}
@@ -206,19 +225,19 @@ export class OwnerService {
     return analytics
   }
 
-  async getAnalyticsSummary() {
+  async getAnalyticsSummary(): Promise<AnalyticsSummary> {
     const schools = await this.prisma.school.findMany({
       include: { usageAnalytics: true },
     })
 
-    const summary: any = {
+    const summary: AnalyticsSummary = {
       totalSchools: schools.length,
       totalLogins: 0,
       totalUsers: 0,
       totalGrades: 0,
       totalAttendance: 0,
       totalMessages: 0,
-      schoolsDetails: schools.map((school: any) => ({
+      schoolsDetails: schools.map((school) => ({
         id: school.id,
         name: school.name,
         logins: school.usageAnalytics?.totalLogins || 0,
@@ -226,7 +245,7 @@ export class OwnerService {
         students: school.usageAnalytics?.studentCount || 0,
         teachers: school.usageAnalytics?.teacherCount || 0,
         classes: school.usageAnalytics?.classCount || 0,
-        lastActivity: school.usageAnalytics?.lastActivityAt,
+        lastActivity: school.usageAnalytics?.lastActivityAt || undefined,
       })),
     }
 
@@ -372,6 +391,7 @@ export class OwnerService {
           lastName: name?.split(' ').slice(1).join(' ') || permissionCode.school.name,
           role: 'ADMIN',
           isActive: true,
+          schoolId: permissionCode.school.id,
           passwordHash,
           mustChangePassword: true,
           tempPasswordExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

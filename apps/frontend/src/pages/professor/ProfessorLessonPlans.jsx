@@ -138,7 +138,7 @@ function ProfessorLessonPlans() {
             <option value="CLASS">Apenas turma atual</option>
           </select>
 
-          <button className="primary-button md:col-span-2" type="submit">Salvar plano</button>
+          <button className="primary-button md:col-span-2" type="submit">Save lesson plan</button>
         </form>
       </section>
 

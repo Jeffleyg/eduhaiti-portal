@@ -18,6 +18,7 @@ function OwnerDashboard() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [accessLink, setAccessLink] = useState('')
   const [activeTab, setActiveTab] = useState('schools')
 
   const loadSchools = async () => {
@@ -49,18 +50,20 @@ function OwnerDashboard() {
     loadAnalytics()
   }, [])
 
-  const handleCreateSchool = (schoolData) => {
-    setMessage(t("schoolCreatedSuccess"))
+  const handleCreateSchool = (result) => {
+    const schoolName = result?.school?.name || t('newSchool')
+    setMessage(`${t('schoolCreatedSuccess')}: ${schoolName}`)
+    setAccessLink(result?.accessLink || '')
     setShowForm(false)
     loadSchools()
-    setTimeout(() => setMessage(''), 3000)
   }
 
-  const handleUpdateSchool = (schoolData) => {
-    setMessage(t("schoolUpdatedSuccess"))
+  const handleUpdateSchool = (result) => {
+    const schoolName = result?.school?.name || t('school')
+    setMessage(`${t('schoolUpdatedSuccess')}: ${schoolName}`)
+    setAccessLink('')
     setSelectedSchool(null)
     loadSchools()
-    setTimeout(() => setMessage(''), 3000)
   }
 
   const openCreateForm = () => {
@@ -93,6 +96,7 @@ function OwnerDashboard() {
   const clearMessages = () => {
     setError('')
     setMessage('')
+    setAccessLink('')
   }
 
   const totalSchools = schools.length
@@ -146,7 +150,12 @@ function OwnerDashboard() {
             <button onClick={clearMessages} className="float-right">
               ✕
             </button>
-            {message}
+            <p>{message}</p>
+            {accessLink ? (
+              <p className="mt-2">
+                Link de acesso inicial: <a className="font-semibold underline" href={accessLink} target="_blank" rel="noreferrer">abrir acesso</a>
+              </p>
+            ) : null}
           </div>
         )}
 

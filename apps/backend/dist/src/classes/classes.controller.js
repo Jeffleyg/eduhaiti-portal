@@ -24,29 +24,29 @@ let ClassesController = class ClassesController {
     constructor(classesService) {
         this.classesService = classesService;
     }
-    async createClass(payload) {
-        return this.classesService.create(payload);
+    async createClass(req, payload) {
+        return this.classesService.create(payload, req.user?.schoolId);
     }
-    async updateClass(classId, payload) {
-        return this.classesService.update(classId, payload);
+    async updateClass(req, classId, payload) {
+        return this.classesService.update(classId, payload, req.user?.schoolId);
     }
-    async deleteClass(classId) {
-        return this.classesService.delete(classId);
+    async deleteClass(req, classId) {
+        return this.classesService.delete(classId, req.user?.schoolId);
     }
-    async enrollStudent(classId, payload) {
-        return this.classesService.enrollStudent(classId, payload.studentId);
+    async enrollStudent(req, classId, payload) {
+        return this.classesService.enrollStudent(classId, payload.studentId, req.user?.schoolId);
     }
-    async removeStudent(classId, studentId) {
-        return this.classesService.removeStudent(classId, studentId);
+    async removeStudent(req, classId, studentId) {
+        return this.classesService.removeStudent(classId, studentId, req.user?.schoolId);
     }
-    async getAllClasses(academicYearId, seriesId) {
-        return this.classesService.findAll(academicYearId, seriesId);
+    async getAllClasses(req, academicYearId, seriesId) {
+        return this.classesService.findAll(academicYearId, seriesId, req.user?.schoolId);
     }
-    async getAcademicYears() {
-        return this.classesService.listAcademicYears();
+    async getAcademicYears(req) {
+        return this.classesService.listAcademicYears(req.user?.schoolId);
     }
-    async getSeries(academicYearId) {
-        return this.classesService.listSeries(academicYearId);
+    async getSeries(req, academicYearId) {
+        return this.classesService.listSeries(academicYearId, req.user?.schoolId);
     }
     async getMyClasses(req) {
         const userId = req.user?.sub;
@@ -54,13 +54,13 @@ let ClassesController = class ClassesController {
         if (role === 'TEACHER') {
             return this.classesService.findByTeacher(userId ?? '');
         }
-        else if (role === 'STUDENT') {
-            return this.classesService.findByStudent(userId ?? '');
+        if (role === 'STUDENT') {
+            return this.classesService.findByStudent(userId ?? '', req.user?.schoolId);
         }
         return [];
     }
-    async getClass(classId) {
-        return this.classesService.findById(classId);
+    async getClass(req, classId) {
+        return this.classesService.findById(classId, req.user?.schoolId);
     }
 };
 exports.ClassesController = ClassesController;
@@ -68,75 +68,83 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "createClass", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Put)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "updateClass", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "deleteClass", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Post)(':id/enroll'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "enrollStudent", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Delete)(':id/students/:studentId'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Param)('studentId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('studentId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "removeStudent", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('academicYearId')),
-    __param(1, (0, common_1.Query)('seriesId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('academicYearId')),
+    __param(2, (0, common_1.Query)('seriesId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "getAllClasses", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Get)('meta/academic-years'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "getAcademicYears", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     (0, common_1.Get)('meta/series'),
-    __param(0, (0, common_1.Query)('academicYearId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('academicYearId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "getSeries", null);
 __decorate([
@@ -150,9 +158,10 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], ClassesController.prototype, "getClass", null);
 exports.ClassesController = ClassesController = __decorate([

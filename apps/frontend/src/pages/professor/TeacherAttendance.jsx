@@ -157,7 +157,7 @@ export default function TeacherAttendance() {
             onClick={handleSaveAttendance}
             disabled={Object.keys(attendance).length === 0}
           >
-            ✓ Salvar Presença
+            ✓ Save Attendance
           </button>
         </div>
       )}

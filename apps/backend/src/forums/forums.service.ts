@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData, safeParseJson } from '../common/audit-compat';
 
 type Requester = {
   id: string;
@@ -30,13 +31,7 @@ type PostPayload = {
 export class ForumsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private parseJson<T>(value: string): T | null {
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return null;
-    }
-  }
+  private parseJson = <T>(value: unknown): T | null => safeParseJson<T>(value);
 
   private async ensureClassAccess(classId: string, requester: Requester) {
     if (requester.role === Role.ADMIN) {
@@ -153,18 +148,18 @@ export class ForumsService {
 
     const threadId = crypto.randomUUID();
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'FORUM_THREAD',
         entityId: threadId,
         action: 'CREATE',
         userId: requester.id,
-        changes: JSON.stringify({
+        changes: {
           threadId,
           classId,
           title,
           body: content,
-        }),
-      },
+        },
+      }),
     });
 
     return {
@@ -288,18 +283,18 @@ export class ForumsService {
 
     const postId = crypto.randomUUID();
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'FORUM_POST',
         entityId: threadId,
         action: 'CREATE',
         userId: requester.id,
-        changes: JSON.stringify({
+        changes: {
           postId,
           threadId,
           classId: thread.payload.classId,
           body: content,
-        }),
-      },
+        },
+      }),
     });
 
     return {

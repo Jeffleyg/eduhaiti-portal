@@ -62,7 +62,7 @@ export default function TeacherGrades() {
       setGrades({})
     } catch (error) {
       console.error("Failed to save grades:", error)
-      alert("Erro ao salvar notas")
+      alert("Error saving grades")
     }
   }
 
@@ -125,7 +125,7 @@ export default function TeacherGrades() {
             onClick={handleSaveGrades}
             disabled={Object.keys(grades).length === 0}
           >
-            ✓ Salvar Notas
+            ✓ Save Grades
           </button>
         </div>
       )}

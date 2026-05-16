@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 import { AttendanceStatus, Role } from '@prisma/client';
 import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
 
@@ -155,13 +156,13 @@ export class AttendanceService {
       });
 
       await tx.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'FAMILY_NOTICE',
           entityId: payload.studentId,
           action: 'CREATE',
           userId: requester?.id,
-          changes: JSON.stringify(notice),
-        },
+          changes: notice,
+        }),
       });
 
       return attendanceRecord;

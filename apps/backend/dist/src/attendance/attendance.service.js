@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AttendanceService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const audit_compat_1 = require("../common/audit-compat");
 const client_1 = require("@prisma/client");
 const hybrid_outbound_sms_service_1 = require("../hybrid-gateway/services/hybrid-outbound-sms.service");
 let AttendanceService = AttendanceService_1 = class AttendanceService {
@@ -125,13 +126,13 @@ let AttendanceService = AttendanceService_1 = class AttendanceService {
                 attendanceId: attendanceRecord.id,
             });
             await tx.auditLog.create({
-                data: {
+                data: (0, audit_compat_1.buildAuditData)({
                     entityType: 'FAMILY_NOTICE',
                     entityId: payload.studentId,
                     action: 'CREATE',
                     userId: requester?.id,
-                    changes: JSON.stringify(notice),
-                },
+                    changes: notice,
+                }),
             });
             return attendanceRecord;
         });

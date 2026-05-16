@@ -46,18 +46,18 @@ function LanguageSelector({ onLanguageChange }) {
       await i18n.changeLanguage(languageCode)
       setSelectedLanguage(languageCode)
 
-      // Salvar preferência no localStorage
+      // Save language preference in localStorage
       localStorage.setItem("preferredLanguage", languageCode)
 
-      // Chamar callback se fornecido
+      // Call callback if provided
       if (onLanguageChange) {
         onLanguageChange(languageCode)
       }
 
-      // Notificar usuário de sucesso
-      console.log(`Idioma alterado para: ${LANGUAGE_MAP[languageCode]?.nativeName}`)
+      // Notify user of success
+      console.log(`Language changed to: ${LANGUAGE_MAP[languageCode]?.nativeName}`)
     } catch (error) {
-      console.error("Erro ao alterar idioma:", error)
+      console.error("Failed to change language:", error)
     } finally {
       setIsLoading(false)
     }

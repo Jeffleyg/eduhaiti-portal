@@ -1,6 +1,7 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, BadRequestException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData, safeParseJson } from '../common/audit-compat';
 
 type LessonPlanPayload = {
   classId: string;
@@ -49,12 +50,12 @@ export class LessonsService {
     }
 
     const plan = await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'LESSON_PLAN',
         entityId: payload.classId,
         action: 'PUBLISH',
         userId: requester.id,
-        changes: JSON.stringify({
+        changes: {
           classId: payload.classId,
           schoolId: classRow.academicYear.schoolId,
           date: payload.date,
@@ -64,8 +65,8 @@ export class LessonsService {
           methodology: payload.methodology ?? null,
           visibility: payload.visibility ?? 'SCHOOL',
           tags: payload.tags ?? [],
-        }),
-      },
+        },
+      }),
     });
 
     return {
@@ -194,7 +195,7 @@ export class LessonsService {
     }));
   }
 
-  private parseLessonPlanChanges(changes: string): {
+  private parseLessonPlanChanges(changes: unknown): {
     classId: string;
     schoolId?: string;
     date: string;
@@ -206,9 +207,10 @@ export class LessonsService {
     tags: string[];
   } {
     try {
-      const raw = JSON.parse(changes) as Partial<LessonPlanPayload> & {
-        schoolId?: string;
-      };
+      const raw = safeParseJson<Partial<LessonPlanPayload> & { schoolId?: string }>(
+        changes,
+      );
+      if (!raw) throw new BadRequestException('Invalid lesson plan data');
       return {
         classId: String(raw.classId ?? ''),
         schoolId: raw.schoolId,

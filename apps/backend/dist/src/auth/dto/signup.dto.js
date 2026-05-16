@@ -25,6 +25,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(3),
+    (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], SignupDto.prototype, "name", void 0);
 __decorate([

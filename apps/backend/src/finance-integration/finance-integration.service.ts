@@ -8,6 +8,7 @@ import {
 import { PaymentStatus, Prisma, Role } from '@prisma/client';
 import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 import { Idempotent } from './decorators/idempotent.decorator';
 import { AdminLedgerReportQueryDto } from './dto/admin-ledger-report-query.dto';
 import { AdminFinanceSummaryQueryDto } from './dto/admin-finance-summary-query.dto';
@@ -105,18 +106,18 @@ export class FinanceIntegrationService {
     });
 
     await db.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'PAYMENT',
         entityId: payment.id,
         action: 'MOBILE_MONEY_CREDIT',
-        changes: JSON.stringify({
+        changes: {
           provider: charge.providerName,
           grossAmountHtg: dto.amountHtg,
           feeAmountHtg: charge.feeAmountHtg,
           netAmountHtg: charge.netAmountHtg,
           providerTransactionId: charge.providerTransactionId,
-        }),
-      },
+        },
+      }),
     });
 
     const ledgerRecord = await this.ledger.append(payment.id, 'mobile-money', {
@@ -277,11 +278,11 @@ export class FinanceIntegrationService {
     }
 
     await db.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'PAYMENT',
         entityId: payment.id,
         action: 'GUARDIAN_TUITION_PAYMENT',
-        changes: JSON.stringify({
+        changes: {
           provider: charge.providerName,
           grossAmountHtg: dto.amountHtg,
           feeAmountHtg: charge.feeAmountHtg,
@@ -291,8 +292,8 @@ export class FinanceIntegrationService {
           guardianPhone: dto.guardianPhone ?? null,
           tuitionPaymentId: dto.tuitionPaymentId ?? null,
           resultingStatus: payment.status,
-        }),
-      },
+        },
+      }),
     });
 
     const ledgerRecord = await this.ledger.append(
@@ -557,20 +558,20 @@ export class FinanceIntegrationService {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'PAYMENT',
         entityId: payment.id,
         action: 'TUITION_CHARGE_CREATED',
         userId: adminUserId,
-        changes: JSON.stringify({
+        changes: {
           studentEnrollmentNumber: student.enrollmentNumber,
           amountHtg: finalAmount,
           baseAmountHtg: dto.amountHtg,
           discount,
           dueDate,
           description: dto.description ?? null,
-        }),
-      },
+        },
+      }),
     });
 
     await this.ledger.append(payment.id, 'tuition-charge', {
@@ -721,12 +722,12 @@ export class FinanceIntegrationService {
       }
 
       await tx.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'PAYMENT',
           entityId: planId,
           action: 'INSTALLMENT_PLAN_CREATED',
           userId: adminUserId,
-          changes: JSON.stringify({
+          changes: {
             planId,
             studentEnrollmentNumber: student.enrollmentNumber,
             sourcePaymentIds: sourcePayments.map((item) => item.id),
@@ -739,8 +740,8 @@ export class FinanceIntegrationService {
               dueDate: item.dueDate.toISOString(),
             })),
             intervalDays,
-          }),
-        },
+          },
+        }),
       });
 
       return records;
@@ -790,17 +791,17 @@ export class FinanceIntegrationService {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'PAYMENT_AUDIT_REPORT',
         entityId: report.lastHash,
         action: 'GENERATE',
-        changes: JSON.stringify({
+        changes: {
           generatedAt: report.generatedAt,
           totalRecords: report.totalRecords,
           integrity: report.integrity,
           filters,
-        }),
-      },
+        },
+      }),
     });
 
     await this.ledger.append(
@@ -1056,19 +1057,19 @@ export class FinanceIntegrationService {
     });
 
     await db.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'PAYMENT',
         entityId: payment.id,
         action: 'DIASPORA_REMITTANCE_CREDIT',
-        changes: JSON.stringify({
+        changes: {
           sourcePlatform: dto.sourcePlatform,
           transferId: dto.transferId,
           sourceAmount: dto.amount,
           sourceCurrency: dto.currency,
           fx,
           studentEnrollmentNumber: dto.studentEnrollmentNumber,
-        }),
-      },
+        },
+      }),
     });
 
     const ledgerRecord = await this.ledger.append(

@@ -50,8 +50,8 @@ export declare class ResourcesController {
             name: string;
             academicYear: {
                 id: string;
-                year: string;
                 schoolId: string;
+                year: string;
             };
             seriesId: string;
             level: string;

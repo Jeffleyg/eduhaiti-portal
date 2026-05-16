@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { buildAuditData } from '../../common/audit-compat';
 
 @Injectable()
 export class HybridAuditService {
@@ -14,12 +15,12 @@ export class HybridAuditService {
     requestId?: string;
   }): Promise<void> {
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'HYBRID_MESSAGE',
         entityId: payload.studentId ?? payload.requestId ?? crypto.randomUUID(),
         action: payload.status.toUpperCase(),
-        changes: JSON.stringify(payload),
-      },
+        changes: payload,
+      }),
     });
   }
 }

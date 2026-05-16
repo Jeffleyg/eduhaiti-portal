@@ -19,6 +19,7 @@ import { ManifestQueryDto } from './dto/manifest-query.dto';
 import { AudioTranscodingService } from './services/audio-transcoding.service';
 import { ManifestService } from './services/manifest.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 
 @Controller('content-delivery')
 export class ContentDeliveryController {
@@ -99,12 +100,12 @@ export class ContentDeliveryController {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'RESOURCE',
         entityId: audioResource.id,
         action: 'CREATE_AUDIO_ALTERNATIVE',
         userId: req.user.sub,
-        changes: JSON.stringify({
+        changes: {
           id: audioResource.id,
           classId: resource.classId,
           sourceResourceId: resource.id,
@@ -112,8 +113,8 @@ export class ContentDeliveryController {
           fileType: 'mp3',
           bitrate: transcoded.bitrate,
           sizeBytes: transcoded.sizeBytes,
-        }),
-      },
+        },
+      }),
     });
 
     return {

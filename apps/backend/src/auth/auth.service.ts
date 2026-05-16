@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -101,6 +102,7 @@ export class AuthService {
         mustChangePassword: true,
         enrollmentNumber: true,
         profilePhoto: true,
+        schoolId: true,
       },
     });
 
@@ -113,7 +115,7 @@ export class AuthService {
       data: { consumedAt: new Date() },
     });
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId };
     const token = await this.jwtService.signAsync(payload);
 
     return {
@@ -141,6 +143,7 @@ export class AuthService {
         isActive: true,
         mustChangePassword: true,
         enrollmentNumber: true,
+            schoolId: true,
         classesAttending: {
           select: { id: true, name: true, level: true },
         },
@@ -200,6 +203,7 @@ export class AuthService {
         tempPasswordExpiresAt: true,
         enrollmentNumber: true,
         profilePhoto: true,
+        schoolId: true,
       },
     });
 
@@ -242,7 +246,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId };
     const token = await this.jwtService.signAsync(payload);
 
     const responseUser = {
@@ -254,6 +258,7 @@ export class AuthService {
       mustChangePassword: user.mustChangePassword,
       enrollmentNumber: user.enrollmentNumber,
       profilePhoto: user.profilePhoto,
+      schoolId: user.schoolId,
     };
 
     await this.logAccessEvent({
@@ -332,7 +337,7 @@ export class AuthService {
         name,
         role,
       },
-      select: { id: true, email: true, role: true, name: true, isActive: true },
+          select: { id: true, email: true, role: true, name: true, isActive: true, schoolId: true },
     });
 
     return user;
@@ -372,16 +377,13 @@ export class AuthService {
   }) {
     try {
       await this.prisma.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'AUTH_ACCESS',
           entityId: params.entityId,
           action: params.action,
           userId: params.userId,
-          changes: JSON.stringify({
-            at: new Date().toISOString(),
-            ...params.details,
-          }),
-        },
+          changes: { at: new Date().toISOString(), ...params.details },
+        }),
       });
     } catch {
       // Do not block authentication flow if audit logging fails.

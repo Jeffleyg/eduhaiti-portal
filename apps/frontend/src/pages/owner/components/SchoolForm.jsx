@@ -53,20 +53,41 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
     const payload = buildPayload()
 
     try {
+      let response
       if (school) {
-        await apiFetch(`/owner/schools/${school.id}`, {
+        response = await apiFetch(`/owner/schools/${school.id}`, {
           method: 'PATCH',
           token,
           body: payload,
         })
+        onSuccess?.({ school: response?.school ?? school, accessLink: null, accessCode: null })
       } else {
-        await apiFetch('/owner/schools', {
+        response = await apiFetch('/owner/schools', {
           method: 'POST',
           token,
           body: payload,
         })
+        const createdSchool = response?.school ?? response
+        let accessLink = null
+        let accessCode = null
+
+        if (createdSchool?.id) {
+          const permissionCode = await apiFetch(`/owner/schools/${createdSchool.id}/permission-codes`, {
+            method: 'POST',
+            token,
+            body: { name: 'Acesso inicial', expiresIn: 30 },
+          })
+
+          accessCode = permissionCode?.code ?? null
+          accessLink = permissionCode?.shareUrl ?? null
+        }
+
+        onSuccess?.({
+          school: createdSchool,
+          accessLink,
+          accessCode,
+        })
       }
-      onSuccess(payload)
     } catch (err) {
       setError(err.message)
     } finally {

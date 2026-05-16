@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../prisma/prisma.service");
+const audit_compat_1 = require("../common/audit-compat");
 const client_1 = require("@prisma/client");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 let AuthService = class AuthService {
@@ -95,6 +96,7 @@ let AuthService = class AuthService {
                 mustChangePassword: true,
                 enrollmentNumber: true,
                 profilePhoto: true,
+                schoolId: true,
             },
         });
         if (!user || !user.isActive) {
@@ -104,7 +106,7 @@ let AuthService = class AuthService {
             where: { id: loginCode.id },
             data: { consumedAt: new Date() },
         });
-        const payload = { sub: user.id, email: user.email, role: user.role };
+        const payload = { sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId };
         const token = await this.jwtService.signAsync(payload);
         return {
             token,
@@ -130,6 +132,7 @@ let AuthService = class AuthService {
                 isActive: true,
                 mustChangePassword: true,
                 enrollmentNumber: true,
+                schoolId: true,
                 classesAttending: {
                     select: { id: true, name: true, level: true },
                 },
@@ -183,6 +186,7 @@ let AuthService = class AuthService {
                 tempPasswordExpiresAt: true,
                 enrollmentNumber: true,
                 profilePhoto: true,
+                schoolId: true,
             },
         });
         if (!user || !user.isActive || !user.passwordHash) {
@@ -221,7 +225,7 @@ let AuthService = class AuthService {
             });
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        const payload = { sub: user.id, email: user.email, role: user.role };
+        const payload = { sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId };
         const token = await this.jwtService.signAsync(payload);
         const responseUser = {
             id: user.id,
@@ -232,6 +236,7 @@ let AuthService = class AuthService {
             mustChangePassword: user.mustChangePassword,
             enrollmentNumber: user.enrollmentNumber,
             profilePhoto: user.profilePhoto,
+            schoolId: user.schoolId,
         };
         await this.logAccessEvent({
             action: 'LOGIN_SUCCESS',
@@ -292,7 +297,7 @@ let AuthService = class AuthService {
                 name,
                 role,
             },
-            select: { id: true, email: true, role: true, name: true, isActive: true },
+            select: { id: true, email: true, role: true, name: true, isActive: true, schoolId: true },
         });
         return user;
     }
@@ -322,16 +327,13 @@ let AuthService = class AuthService {
     async logAccessEvent(params) {
         try {
             await this.prisma.auditLog.create({
-                data: {
+                data: (0, audit_compat_1.buildAuditData)({
                     entityType: 'AUTH_ACCESS',
                     entityId: params.entityId,
                     action: params.action,
                     userId: params.userId,
-                    changes: JSON.stringify({
-                        at: new Date().toISOString(),
-                        ...params.details,
-                    }),
-                },
+                    changes: { at: new Date().toISOString(), ...params.details },
+                }),
             });
         }
         catch {

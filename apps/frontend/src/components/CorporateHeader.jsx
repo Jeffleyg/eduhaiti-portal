@@ -9,13 +9,14 @@ function CorporateHeader() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
+  const roleLabelKey = user?.role === "TEACHER" ? "roleprofessor" : `role${user?.role}`
 
   const getProfilePath = () => {
     switch (user?.role) {
       case "ADMIN":
         return "/admin/profile"
       case "TEACHER":
-        return "/professor/profile"
+        return "/teacher/profile"
       case "STUDENT":
         return "/student/profile"
       default:
@@ -65,7 +66,7 @@ function CorporateHeader() {
           />
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-white/70">EduHaiti Portal</p>
-            <p className="text-sm font-semibold text-white">{t("role" + user?.role)}</p>
+            <p className="text-sm font-semibold text-white">{t(roleLabelKey)}</p>
           </div>
         </div>
 
@@ -98,7 +99,7 @@ function CorporateHeader() {
                 <p className="text-xs text-brand-navy/60">{user?.email}</p>
                 <div className="mt-2 flex gap-2">
                   <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getRoleBadgeColor()}`}>
-                    {t("role" + user?.role)}
+                    {t(roleLabelKey)}
                   </span>
                   {user?.enrollmentNumber && (
                     <span className="inline-block rounded-full bg-brand-navy/10 px-2 py-1 text-xs font-semibold text-brand-navy">

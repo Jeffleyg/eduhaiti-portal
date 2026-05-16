@@ -2,7 +2,11 @@ import { ClassesService } from './classes.service';
 export declare class ClassesController {
     private readonly classesService;
     constructor(classesService: ClassesService);
-    createClass(payload: {
+    createClass(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, payload: {
         name: string;
         level?: string;
         academicYearId: string;
@@ -34,7 +38,11 @@ export declare class ClassesController {
         teacherId: string | null;
         maxStudents: number;
     }>;
-    updateClass(classId: string, payload: {
+    updateClass(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, classId: string, payload: {
         name?: string;
         teacherId?: string;
         maxStudents?: number;
@@ -59,10 +67,18 @@ export declare class ClassesController {
         teacherId: string | null;
         maxStudents: number;
     }>;
-    deleteClass(classId: string): Promise<{
+    deleteClass(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, classId: string): Promise<{
         message: string;
     }>;
-    enrollStudent(classId: string, payload: {
+    enrollStudent(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, classId: string, payload: {
         studentId: string;
     }): Promise<{
         students: {
@@ -81,7 +97,11 @@ export declare class ClassesController {
         teacherId: string | null;
         maxStudents: number;
     }>;
-    removeStudent(classId: string, studentId: string): Promise<{
+    removeStudent(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, classId: string, studentId: string): Promise<{
         students: {
             id: string;
             name: string | null;
@@ -97,7 +117,11 @@ export declare class ClassesController {
         teacherId: string | null;
         maxStudents: number;
     }>;
-    getAllClasses(academicYearId?: string, seriesId?: string): Promise<({
+    getAllClasses(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, academicYearId?: string, seriesId?: string): Promise<({
         series: {
             id: string;
             name: string;
@@ -125,14 +149,22 @@ export declare class ClassesController {
         teacherId: string | null;
         maxStudents: number;
     })[]>;
-    getAcademicYears(): Promise<{
+    getAcademicYears(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }): Promise<{
         id: string;
         isActive: boolean;
         year: string;
         startDate: Date;
         endDate: Date;
     }[]>;
-    getSeries(academicYearId?: string): Promise<{
+    getSeries(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, academicYearId?: string): Promise<{
         id: string;
         name: string;
         academicYear: {
@@ -145,6 +177,7 @@ export declare class ClassesController {
         user?: {
             sub?: string;
             role?: string;
+            schoolId?: string;
         };
     }): Promise<({
         series: {
@@ -170,7 +203,11 @@ export declare class ClassesController {
         teacherId: string | null;
         maxStudents: number;
     })[]>;
-    getClass(classId: string): Promise<{
+    getClass(req: {
+        user?: {
+            schoolId?: string;
+        };
+    }, classId: string): Promise<{
         grades: {
             id: string;
             studentId: string;
@@ -180,6 +217,11 @@ export declare class ClassesController {
         series: {
             id: string;
             name: string;
+        };
+        academicYear: {
+            id: string;
+            schoolId: string;
+            year: string;
         };
         teacher: {
             id: string;

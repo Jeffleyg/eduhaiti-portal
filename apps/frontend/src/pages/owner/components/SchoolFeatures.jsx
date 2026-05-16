@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { apiFetch } from '../../../lib/api.js'
 
 function SchoolFeatures({ schoolId, token }) {
-  const [features, setFeatures] = useState(null)
+  const [features, setFeatures] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     loadFeatures()
-  }, [schoolId])
+  }, [schoolId, token])
 
   const loadFeatures = async () => {
     setLoading(true)
@@ -24,7 +24,7 @@ function SchoolFeatures({ schoolId, token }) {
   }
 
   const handleToggle = async (feature) => {
-    if (!features) return
+    if (!features || typeof features !== 'object') return
 
     setSaving(true)
     try {
@@ -64,10 +64,11 @@ function SchoolFeatures({ schoolId, token }) {
         {featuresList.map(({ key, label, icon }) => (
           <button
             key={key}
+            type="button"
             onClick={() => handleToggle(key)}
             disabled={saving}
             className={`rounded-lg p-2 text-xs font-semibold transition-colors ${
-              features[key]
+              features?.[key]
                 ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500'
                 : 'bg-gray-100 text-gray-600 border border-gray-200'
             }`}

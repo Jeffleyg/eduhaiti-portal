@@ -13,8 +13,8 @@ function LoadMoreList({
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const pageSize = step || initialLimit || 5
-  const nextLabel = continueLabel ?? t("continue") ?? "Continuar"
-  const prevLabel = previousLabel ?? t("previous") ?? "Anterior"
+  const nextLabel = continueLabel ?? t("continue") ?? "Next"
+  const prevLabel = previousLabel ?? t("previous") ?? "Previous"
   const totalPages = Math.max(1, Math.ceil((Array.isArray(items) ? items.length : 0) / pageSize))
 
   useEffect(() => {

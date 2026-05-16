@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { GradeStatus, Role } from '@prisma/client';
+import { GradeStatus, Role, Prisma } from '@prisma/client';
 
 @Injectable()
 export class GradesService {
@@ -195,7 +195,7 @@ export class GradesService {
   }
 
   async findByStudent(studentId: string, academicYearId?: string) {
-    const where: any = { studentId };
+    const where: Prisma.GradeWhereInput = { studentId };
 
     if (academicYearId) {
       where.academicYearId = academicYearId;
@@ -212,7 +212,7 @@ export class GradesService {
   }
 
   async findByClass(classId: string, disciplineId?: string) {
-    const where: any = { classId };
+    const where: Prisma.GradeWhereInput = { classId };
 
     if (disciplineId) {
       where.disciplineId = disciplineId;

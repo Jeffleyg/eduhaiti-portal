@@ -34,7 +34,7 @@ function Login() {
       if (role === "ADMIN") {
         navigate("/admin", { replace: true })
       } else if (role === "TEACHER") {
-        navigate("/professor", { replace: true })
+        navigate("/teacher", { replace: true })
       } else if (role === "OWNER") {
         navigate("/owner", { replace: true })
       } else {

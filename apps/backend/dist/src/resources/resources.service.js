@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResourcesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const audit_compat_1 = require("../common/audit-compat");
 let ResourcesService = class ResourcesService {
     prisma;
     constructor(prisma) {
@@ -34,19 +35,19 @@ let ResourcesService = class ResourcesService {
             },
         });
         await this.prisma.auditLog.create({
-            data: {
+            data: (0, audit_compat_1.buildAuditData)({
                 entityType: 'RESOURCE',
                 entityId: resource.id,
                 action: 'CREATE',
                 userId: uploadedById,
-                changes: JSON.stringify({
+                changes: {
                     id: resource.id,
                     classId,
                     title,
                     filePath,
                     fileType,
-                }),
-            },
+                },
+            }),
         });
         return resource;
     }
@@ -131,18 +132,18 @@ let ResourcesService = class ResourcesService {
             where: { id: resourceId },
         });
         await this.prisma.auditLog.create({
-            data: {
+            data: (0, audit_compat_1.buildAuditData)({
                 entityType: 'RESOURCE',
                 entityId: deleted.id,
                 action: 'DELETE',
-                changes: JSON.stringify({
+                changes: {
                     id: deleted.id,
                     classId: deleted.classId,
                     title: deleted.title,
                     filePath: deleted.filePath,
                     fileType: deleted.fileType,
-                }),
-            },
+                },
+            }),
         });
         return deleted;
     }

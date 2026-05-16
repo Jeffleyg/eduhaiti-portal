@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData, safeParseJson } from '../common/audit-compat';
 
 type InventoryItem = {
   id: string;
@@ -22,13 +23,8 @@ type InventoryItem = {
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private parseItem(changes: string): InventoryItem | null {
-    try {
-      return JSON.parse(changes) as InventoryItem;
-    } catch {
-      return null;
-    }
-  }
+  private parseItem = (changes: unknown): InventoryItem | null =>
+    safeParseJson<InventoryItem>(changes);
 
   private async buildCurrentMap(schoolId?: string) {
     const logs = await this.prisma.auditLog.findMany({
@@ -50,6 +46,8 @@ export class InventoryService {
       if (schoolId && item.schoolId !== schoolId) {
         continue;
       }
+
+      if (!log.entityId) continue;
 
       map.set(log.entityId, { ...item, id: log.entityId });
     }
@@ -90,13 +88,13 @@ export class InventoryService {
     };
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'SCHOOL_INVENTORY',
         entityId: itemId,
         action: 'CREATE',
         userId: payload.actorUserId,
-        changes: JSON.stringify(item),
-      },
+        changes: item,
+      }),
     });
 
     return item;
@@ -139,13 +137,13 @@ export class InventoryService {
     };
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'SCHOOL_INVENTORY',
         entityId: itemId,
         action: 'UPDATE',
         userId: payload.actorUserId,
-        changes: JSON.stringify(next),
-      },
+        changes: next,
+      }),
     });
 
     return next;
@@ -192,13 +190,13 @@ export class InventoryService {
     };
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'SCHOOL_INVENTORY',
         entityId: itemId,
         action: 'ADJUST',
         userId: payload.actorUserId,
-        changes: JSON.stringify(next),
-      },
+        changes: next,
+      }),
     });
 
     return next;
@@ -219,13 +217,13 @@ export class InventoryService {
     };
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'SCHOOL_INVENTORY',
         entityId: itemId,
         action: 'DELETE',
         userId: actorUserId,
-        changes: JSON.stringify(next),
-      },
+        changes: next,
+      }),
     });
 
     return { success: true };

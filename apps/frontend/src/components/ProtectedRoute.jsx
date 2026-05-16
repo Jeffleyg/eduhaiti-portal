@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext.jsx"
 
 const ROLE_MAP = {
+  teacher: ["TEACHER", "ADMIN"],
   professor: ["TEACHER", "ADMIN"],
   student: ["STUDENT", "ADMIN"],
   admin: ["ADMIN"],

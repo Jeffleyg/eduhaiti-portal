@@ -33,6 +33,7 @@ function TopBar({ role }) {
     : t("syncNow")
 
   const survivalReason = isLowBattery ? t("lowBattery") : is2G ? t("slowNetwork") : ""
+  const roleLabelKey = role === "teacher" ? "roleprofessor" : `role${role}`
 
   return (
     <div className="surface-panel flex flex-col gap-4 px-4 py-4 sm:px-5">
@@ -55,7 +56,7 @@ function TopBar({ role }) {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
             {t("dashboardTitle")}
           </p>
-          <h1 className="text-xl font-semibold text-brand-navy sm:text-2xl">{t("role" + role)}</h1>
+          <h1 className="text-xl font-semibold text-brand-navy sm:text-2xl">{t(roleLabelKey)}</h1>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">

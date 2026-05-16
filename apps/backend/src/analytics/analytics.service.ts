@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PaymentStatus, Role } from '@prisma/client';
 import { gzipSync } from 'node:zlib';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 import { ExportFormat } from './dto/export-report.dto';
 
 export type AnalyticsReportType =
@@ -319,12 +320,12 @@ export class AnalyticsService {
         .join('\n');
 
       await this.prisma.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'EARLY_WARNING_ALERT',
           entityId: row.studentId,
           action: 'TRIGGER',
-          changes: JSON.stringify(row),
-        },
+          changes: row,
+        }),
       });
 
       for (const admin of admins) {
@@ -477,7 +478,9 @@ export class AnalyticsService {
       take: 100000,
     });
 
-    const paymentIds = diasporaPaymentIds.map((item) => item.entityId);
+    const paymentIds = diasporaPaymentIds
+      .map((item) => item.entityId)
+      .filter(Boolean) as string[];
     if (paymentIds.length === 0) {
       return {
         remittanceVolume: 0,

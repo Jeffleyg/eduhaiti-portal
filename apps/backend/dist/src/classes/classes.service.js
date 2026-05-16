@@ -18,12 +18,26 @@ let ClassesService = class ClassesService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async create(payload) {
+    async create(payload, schoolId) {
+        const academicYear = await this.prisma.academicYear.findUnique({
+            where: { id: payload.academicYearId },
+            select: { id: true, schoolId: true },
+        });
+        if (!academicYear) {
+            throw new common_1.NotFoundException('Academic year not found');
+        }
+        if (schoolId && academicYear.schoolId !== schoolId) {
+            throw new common_1.ForbiddenException('Academic year does not belong to this school');
+        }
         const series = await this.prisma.series.findUnique({
             where: { id: payload.seriesId },
+            select: { id: true, name: true, academicYearId: true, academicYear: { select: { schoolId: true } } },
         });
         if (!series || series.academicYearId !== payload.academicYearId) {
             throw new common_1.BadRequestException('Series does not belong to the specified academic year');
+        }
+        if (schoolId && series.academicYear.schoolId !== schoolId) {
+            throw new common_1.ForbiddenException('Series does not belong to this school');
         }
         const existing = await this.prisma.class.findFirst({
             where: {
@@ -51,12 +65,16 @@ let ClassesService = class ClassesService {
             },
         });
     }
-    async update(classId, payload) {
+    async update(classId, payload, schoolId) {
         const existing = await this.prisma.class.findUnique({
             where: { id: classId },
+            include: { academicYear: { select: { schoolId: true } } },
         });
         if (!existing) {
             throw new common_1.NotFoundException('Class not found');
+        }
+        if (schoolId && existing.academicYear.schoolId !== schoolId) {
+            throw new common_1.ForbiddenException('Class does not belong to this school');
         }
         if (payload.name && payload.name !== existing.name) {
             const duplicate = await this.prisma.class.findFirst({
@@ -92,13 +110,16 @@ let ClassesService = class ClassesService {
             },
         });
     }
-    async delete(classId) {
+    async delete(classId, schoolId) {
         const existing = await this.prisma.class.findUnique({
             where: { id: classId },
-            include: { students: { select: { id: true } } },
+            include: { students: { select: { id: true } }, academicYear: { select: { schoolId: true } } },
         });
         if (!existing) {
             throw new common_1.NotFoundException('Class not found');
+        }
+        if (schoolId && existing.academicYear.schoolId !== schoolId) {
+            throw new common_1.ForbiddenException('Class does not belong to this school');
         }
         if (existing.students && existing.students.length > 0) {
             throw new common_1.BadRequestException('Cannot delete class with enrolled students');
@@ -108,13 +129,16 @@ let ClassesService = class ClassesService {
         });
         return { message: 'Class deleted successfully' };
     }
-    async enrollStudent(classId, studentId) {
+    async enrollStudent(classId, studentId, schoolId) {
         const classExists = await this.prisma.class.findUnique({
             where: { id: classId },
-            include: { students: { select: { id: true } } },
+            include: { students: { select: { id: true } }, academicYear: { select: { schoolId: true } } },
         });
         if (!classExists) {
             throw new common_1.NotFoundException('Class not found');
+        }
+        if (schoolId && classExists.academicYear.schoolId !== schoolId) {
+            throw new common_1.ForbiddenException('Class does not belong to this school');
         }
         if (classExists.maxStudents &&
             classExists.students.length >= classExists.maxStudents) {
@@ -135,7 +159,17 @@ let ClassesService = class ClassesService {
             },
         });
     }
-    async removeStudent(classId, studentId) {
+    async removeStudent(classId, studentId, schoolId) {
+        const classExists = await this.prisma.class.findUnique({
+            where: { id: classId },
+            select: { id: true, academicYear: { select: { schoolId: true } } },
+        });
+        if (!classExists) {
+            throw new common_1.NotFoundException('Class not found');
+        }
+        if (schoolId && classExists.academicYear.schoolId !== schoolId) {
+            throw new common_1.ForbiddenException('Class does not belong to this school');
+        }
         return this.prisma.class.update({
             where: { id: classId },
             data: {
@@ -160,13 +194,16 @@ let ClassesService = class ClassesService {
             orderBy: { name: 'asc' },
         });
     }
-    async findAll(academicYearId, seriesId) {
+    async findAll(academicYearId, seriesId, schoolId) {
         const where = {};
         if (academicYearId) {
             where.academicYearId = academicYearId;
         }
         if (seriesId) {
             where.seriesId = seriesId;
+        }
+        if (schoolId) {
+            where.academicYear = { ...(where.academicYear ?? {}), schoolId };
         }
         return this.prisma.class.findMany({
             where,
@@ -179,10 +216,11 @@ let ClassesService = class ClassesService {
             orderBy: [{ academicYear: { year: 'desc' } }, { name: 'asc' }],
         });
     }
-    async findById(classId) {
+    async findById(classId, schoolId) {
         const classData = await this.prisma.class.findUnique({
             where: { id: classId },
             include: {
+                academicYear: { select: { id: true, schoolId: true, year: true } },
                 teacher: { select: { id: true, email: true, name: true } },
                 students: { select: { id: true, email: true, name: true } },
                 series: { select: { id: true, name: true } },
@@ -199,11 +237,17 @@ let ClassesService = class ClassesService {
         if (!classData) {
             throw new common_1.NotFoundException('Class not found');
         }
+        if (schoolId && classData.academicYear?.schoolId && classData.academicYear.schoolId !== schoolId) {
+            throw new common_1.NotFoundException('Class not found');
+        }
         return classData;
     }
-    async findByStudent(studentId) {
+    async findByStudent(studentId, schoolId) {
         return this.prisma.class.findMany({
-            where: { students: { some: { id: studentId } } },
+            where: {
+                students: { some: { id: studentId } },
+                ...(schoolId ? { academicYear: { schoolId } } : {}),
+            },
             include: {
                 teacher: { select: { id: true, name: true } },
                 series: { select: { id: true, name: true } },
@@ -212,8 +256,9 @@ let ClassesService = class ClassesService {
             orderBy: { name: 'asc' },
         });
     }
-    async listAcademicYears() {
+    async listAcademicYears(schoolId) {
         return this.prisma.academicYear.findMany({
+            where: schoolId ? { schoolId } : undefined,
             select: {
                 id: true,
                 year: true,
@@ -224,9 +269,13 @@ let ClassesService = class ClassesService {
             orderBy: { year: 'desc' },
         });
     }
-    async listSeries(academicYearId) {
+    async listSeries(academicYearId, schoolId) {
+        const where = academicYearId ? { academicYearId } : {};
+        if (schoolId) {
+            where.academicYear = { schoolId };
+        }
         return this.prisma.series.findMany({
-            where: academicYearId ? { academicYearId } : undefined,
+            where,
             select: {
                 id: true,
                 name: true,

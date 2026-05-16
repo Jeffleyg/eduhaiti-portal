@@ -4,18 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData, safeParseJson } from '../common/audit-compat';
 
 @Injectable()
 export class FamilyAccessService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private parseAuditChanges(changes: string) {
-    try {
-      return JSON.parse(changes) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
+  private parseAuditChanges = (changes: unknown) =>
+    safeParseJson<Record<string, unknown>>(changes);
 
   private normalize(value: string) {
     return value.trim().toLowerCase();
@@ -154,15 +150,13 @@ export class FamilyAccessService {
 
     const parsedNotices = notices
       .map((item) => {
-        try {
-          return {
-            id: item.id,
-            createdAt: item.createdAt,
-            ...(JSON.parse(item.changes) as Record<string, unknown>),
-          };
-        } catch {
-          return null;
-        }
+        const payload = this.parseAuditChanges(item.changes);
+        if (!payload) return null;
+        return {
+          id: item.id,
+          createdAt: item.createdAt,
+          ...payload,
+        };
       })
       .filter(Boolean);
 
@@ -200,19 +194,19 @@ export class FamilyAccessService {
     }
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'FAMILY_CONTACT_REQUEST',
         entityId: student.id,
         action: 'CREATE',
-        changes: JSON.stringify({
+        changes: {
           enrollmentNumber: payload.enrollmentNumber,
           guardianName: payload.guardianName,
           guardianPhone: payload.guardianPhone ?? null,
           subject,
           body,
           urgent: Boolean(payload.urgent),
-        }),
-      },
+        },
+      }),
     });
 
     const admins = await this.prisma.user.findMany({
@@ -253,8 +247,8 @@ export class FamilyAccessService {
     }
 
     const studentIds = Array.from(
-      new Set(requests.map((item) => item.entityId)),
-    );
+      new Set(requests.map((item) => item.entityId).filter(Boolean)),
+    ) as string[];
     const requestIds = requests.map((item) => item.id);
 
     const [students, responses] = await Promise.all([
@@ -286,6 +280,7 @@ export class FamilyAccessService {
     >();
 
     for (const response of responses) {
+      if (!response.entityId) continue;
       if (!latestResponseByRequestId.has(response.entityId)) {
         latestResponseByRequestId.set(response.entityId, response);
       }
@@ -297,7 +292,7 @@ export class FamilyAccessService {
       const responsePayload = response
         ? this.parseAuditChanges(response.changes)
         : null;
-      const student = studentById.get(request.entityId);
+      const student = request.entityId ? studentById.get(request.entityId) : null;
 
       return {
         requestId: request.id,
@@ -368,16 +363,13 @@ export class FamilyAccessService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'FAMILY_CONTACT_REQUEST',
           entityId: request.id,
           action: 'RESPOND',
           userId: payload.actorId,
-          changes: JSON.stringify({
-            responseMessage,
-            notifyFamily,
-          }),
-        },
+          changes: { responseMessage, notifyFamily },
+        }),
       });
 
       if (!notifyFamily) {
@@ -389,29 +381,31 @@ export class FamilyAccessService {
         : 'Solicitacao familiar';
 
       await tx.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'FAMILY_NOTICE',
           entityId: request.entityId,
           action: 'CREATE',
           userId: payload.actorId,
-          changes: JSON.stringify({
+          changes: {
             title: `Resposta da secretaria: ${titleBase}`,
             body: responseMessage,
             severity: requestDetails?.urgent ? 'urgent' : 'normal',
             channel: 'IN_APP',
             sourceRequestId: request.id,
-          }),
-        },
+          },
+        }),
       });
 
-      await tx.message.create({
-        data: {
-          fromId: payload.actorId,
-          toId: request.entityId,
-          subject: `[ESCOLA] Resposta: ${titleBase}`,
-          body: responseMessage,
-        },
-      });
+      if (request.entityId) {
+        await tx.message.create({
+          data: {
+            fromId: payload.actorId,
+            toId: request.entityId,
+            subject: `[ESCOLA] Resposta: ${titleBase}`,
+            body: responseMessage,
+          },
+        });
+      }
     });
 
     return { success: true };
@@ -439,20 +433,20 @@ export class FamilyAccessService {
     const channel = payload.channel ?? 'IN_APP';
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'FAMILY_NOTICE',
         entityId: student.id,
         action: 'CREATE',
         userId: payload.actorId,
-        changes: JSON.stringify({
+        changes: {
           title,
           body,
           severity,
           channel,
           guardianPhone: payload.guardianPhone ?? null,
           smsQueued: channel === 'SMS' || channel === 'BOTH',
-        }),
-      },
+        },
+      }),
     });
 
     if (channel === 'IN_APP' || channel === 'BOTH') {

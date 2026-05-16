@@ -1,11 +1,11 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
   Post,
-  Put,
-  Delete,
   Param,
-  Body,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -24,6 +24,7 @@ export class ClassesController {
   @Roles(Role.ADMIN)
   @Post()
   async createClass(
+    @Req() req: { user?: { schoolId?: string } },
     @Body()
     payload: {
       name: string;
@@ -34,13 +35,14 @@ export class ClassesController {
       maxStudents?: number;
     },
   ) {
-    return this.classesService.create(payload);
+    return this.classesService.create(payload, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Put(':id')
   async updateClass(
+    @Req() req: { user?: { schoolId?: string } },
     @Param('id') classId: string,
     @Body()
     payload: {
@@ -49,70 +51,81 @@ export class ClassesController {
       maxStudents?: number;
     },
   ) {
-    return this.classesService.update(classId, payload);
+    return this.classesService.update(classId, payload, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
-  async deleteClass(@Param('id') classId: string) {
-    return this.classesService.delete(classId);
+  async deleteClass(
+    @Req() req: { user?: { schoolId?: string } },
+    @Param('id') classId: string,
+  ) {
+    return this.classesService.delete(classId, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post(':id/enroll')
   async enrollStudent(
+    @Req() req: { user?: { schoolId?: string } },
     @Param('id') classId: string,
     @Body() payload: { studentId: string },
   ) {
-    return this.classesService.enrollStudent(classId, payload.studentId);
+    return this.classesService.enrollStudent(classId, payload.studentId, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id/students/:studentId')
   async removeStudent(
+    @Req() req: { user?: { schoolId?: string } },
     @Param('id') classId: string,
     @Param('studentId') studentId: string,
   ) {
-    return this.classesService.removeStudent(classId, studentId);
+    return this.classesService.removeStudent(classId, studentId, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get()
   async getAllClasses(
+    @Req() req: { user?: { schoolId?: string } },
     @Query('academicYearId') academicYearId?: string,
     @Query('seriesId') seriesId?: string,
   ) {
-    return this.classesService.findAll(academicYearId, seriesId);
+    return this.classesService.findAll(academicYearId, seriesId, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('meta/academic-years')
-  async getAcademicYears() {
-    return this.classesService.listAcademicYears();
+  async getAcademicYears(@Req() req: { user?: { schoolId?: string } }) {
+    return this.classesService.listAcademicYears(req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('meta/series')
-  async getSeries(@Query('academicYearId') academicYearId?: string) {
-    return this.classesService.listSeries(academicYearId);
+  async getSeries(
+    @Req() req: { user?: { schoolId?: string } },
+    @Query('academicYearId') academicYearId?: string,
+  ) {
+    return this.classesService.listSeries(academicYearId, req.user?.schoolId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('my-classes')
-  async getMyClasses(@Req() req: { user?: { sub?: string; role?: string } }) {
+  async getMyClasses(@Req() req: { user?: { sub?: string; role?: string; schoolId?: string } }) {
     const userId = req.user?.sub;
     const role = req.user?.role;
 
     if (role === 'TEACHER') {
       return this.classesService.findByTeacher(userId ?? '');
-    } else if (role === 'STUDENT') {
-      return this.classesService.findByStudent(userId ?? '');
+    }
+
+    if (role === 'STUDENT') {
+      return this.classesService.findByStudent(userId ?? '', req.user?.schoolId);
     }
 
     return [];
@@ -120,7 +133,10 @@ export class ClassesController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async getClass(@Param('id') classId: string) {
-    return this.classesService.findById(classId);
+  async getClass(
+    @Req() req: { user?: { schoolId?: string } },
+    @Param('id') classId: string,
+  ) {
+    return this.classesService.findById(classId, req.user?.schoolId);
   }
 }

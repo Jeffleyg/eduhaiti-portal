@@ -29,14 +29,14 @@ export class AnalyticsController {
     };
   }
 
-  @Get('dashboard/impacto-diaspora')
+  @Get('dashboard/diaspora-impact')
   async getDiasporaImpact(@Query('schoolId') schoolId?: string) {
     return this.analyticsService.getDiasporaScholarshipImpactDashboard(
       schoolId,
     );
   }
 
-  @Get('dashboard/alerta-precoce')
+  @Get('dashboard/early-alert')
   async getEarlyWarning(
     @Query('schoolId') schoolId?: string,
     @Query('trigger') trigger?: string,

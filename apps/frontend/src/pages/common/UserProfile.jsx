@@ -40,12 +40,12 @@ function UserProfile() {
     {
       label: t("profileAcademicHistory"),
       description: t("profileAcademicHistoryDescription"),
-      onClick: () => navigate("/student/resultats"),
+      onClick: () => navigate("/student/grades"),
     },
     {
       label: t("profileDocuments"),
       description: t("profileDocumentsDescription"),
-      onClick: () => navigate("/student/ressources"),
+      onClick: () => navigate("/student/resources"),
     },
     {
       label: t("profileMessages"),

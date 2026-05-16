@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AcademicRequestStatus, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildAuditData } from '../common/audit-compat';
 import { CreateAcademicRequestDto } from './dto/create-academic-request.dto';
 import { ListAcademicRequestsDto } from './dto/list-academic-requests.dto';
 import { ReviewAcademicRequestDto } from './dto/review-academic-request.dto';
@@ -69,16 +70,16 @@ export class AcademicRequestsService {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'AcademicRequest',
         entityId: request.id,
         action: 'CREATE',
         userId: studentId,
-        changes: JSON.stringify({
+        changes: {
           type: dto.type,
           classId: dto.classId ?? null,
-        }),
-      },
+        },
+      }),
     });
 
     return request;
@@ -239,16 +240,16 @@ export class AcademicRequestsService {
     });
 
     await this.prisma.auditLog.create({
-      data: {
+      data: buildAuditData({
         entityType: 'AcademicRequest',
         entityId: updated.id,
         action: 'REVIEW',
         userId: reviewer.id,
-        changes: JSON.stringify({
+        changes: {
           status: dto.status,
           resolutionComment: normalizedResolutionComment,
-        }),
-      },
+        },
+      }),
     });
 
     return updated;

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { buildAuditData } from '../../common/audit-compat';
 
 type StageLevel = 'log' | 'warn' | 'error';
 
@@ -55,7 +56,7 @@ export class FinanceObservabilityService {
     try {
       const db = options.tx ?? this.prisma;
       await db.auditLog.create({
-        data: {
+        data: buildAuditData({
           entityType: 'PAYMENT_PIPELINE',
           entityId:
             this.stringOrEmpty(payload.idempotencyKey) ||
@@ -63,8 +64,8 @@ export class FinanceObservabilityService {
             this.stringOrEmpty(payload.paymentId) ||
             crypto.randomUUID(),
           action: stage,
-          changes: line,
-        },
+          changes: event,
+        }),
       });
     } catch {
       this.logger.warn(

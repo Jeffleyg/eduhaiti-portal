@@ -77,7 +77,7 @@ function StudentResources() {
       setFeedback(`"${resource.title}" salvo para acesso offline.`)
     } catch (error) {
       console.error("Failed to save offline asset:", error)
-      setFeedback("Nao foi possivel salvar offline. Tente novamente.")
+      setFeedback("Could not save offline. Please try again.")
     } finally {
       setSavingId("")
     }
@@ -116,7 +116,7 @@ function StudentResources() {
               disabled={savingId === resource.id}
               className="rounded-lg bg-brand-navy px-3 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
             >
-              {savingId === resource.id ? "Salvando..." : "Salvar offline"}
+              {savingId === resource.id ? "Saving..." : "Save offline"}
             </button>
           )
         ) : null}
