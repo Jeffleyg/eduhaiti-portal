@@ -162,7 +162,16 @@ function ProfessorAttendance() {
     id: student.id,
     student: (
       <div>
-        <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
+        {loadingAttendance ? (
+          <div className="skeleton h-5 w-44 rounded" />
+        ) : (
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
+            <span className={`badge ${student.classesAttending?.length > 0 ? "bg-emerald-100 text-emerald-700" : "bg-brand-navy/10 text-brand-navy/70"}`}>
+              {student.classesAttending?.length > 0 ? t("enrolled") : t("notEnrolled")}
+            </span>
+          </div>
+        )}
         <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
       </div>
     ),
@@ -216,7 +225,7 @@ function ProfessorAttendance() {
       {error ? <LoadingState type="banner" error={error} message={error} /> : null}
       {message ? <LoadingState type="banner" success={Boolean(message)} message={message} /> : null}
 
-      <section className="grid gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-2">
+      <section className="grid gap-3 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-2">
         <div className="space-y-2">
           <p className="text-sm font-medium text-brand-navy">{t("classLabel")}</p>
           <Select
@@ -240,7 +249,7 @@ function ProfessorAttendance() {
       </section>
 
       {selectedClass ? (
-        <section className="space-y-4 rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <section className="space-y-4 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold text-brand-navy">{sanitizeText(selectedClass.name)}</h3>

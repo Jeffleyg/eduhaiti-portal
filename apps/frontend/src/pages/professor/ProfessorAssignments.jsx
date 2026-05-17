@@ -160,7 +160,7 @@ function ProfessorAssignments() {
 
       <LoadingState type="banner" error={error} success={Boolean(message)} message={message} />
 
-      <div className="rounded-2xl border border-brand-navy/10 bg-white p-6">
+      <div className="module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-6">
         <h3 className="font-semibold text-brand-navy mb-4">Selecione a Turma</h3>
         <select
           value={selectedClass}
@@ -175,7 +175,7 @@ function ProfessorAssignments() {
         </select>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
         <h3 className="font-semibold text-brand-navy">Criar Nova Tarefa</h3>
 
         <div>
@@ -235,9 +235,7 @@ function ProfessorAssignments() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-brand-navy">Tarefas da Turma</h3>
-          <span className="rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
-            {assignments.length}
-          </span>
+          <span className="badge bg-brand-navy/10 text-brand-navy">{assignments.length}</span>
         </div>
 
         {loadingAssignments ? (
@@ -286,13 +284,11 @@ function ProfessorAssignments() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-brand-navy/10 bg-white p-6">
+      <div className="module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-6">
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-semibold text-brand-navy">Entregas da tarefa selecionada</h3>
-          {selectedAssignment ? (
-            <span className="rounded-full bg-brand-sky/20 px-3 py-1 text-xs font-semibold text-brand-navy">
-              {selectedAssignment.submissions?.length ?? 0} entrega(s)
-            </span>
+            {selectedAssignment ? (
+            <span className="badge bg-brand-sky/20 text-brand-navy">{selectedAssignment.submissions?.length ?? 0} entrega(s)</span>
           ) : null}
         </div>
 

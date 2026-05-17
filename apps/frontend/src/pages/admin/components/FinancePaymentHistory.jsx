@@ -38,17 +38,17 @@ function FinancePaymentHistory({ payments, loading, pagination, onPageChange }) 
           <span className="font-semibold text-brand-navy">{Number(payment.amount).toFixed(2)}</span>
         </div>
       ),
-      status: (
-        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusColors[payment.status] || "bg-gray-100 text-gray-800"}`}>
-          {payment.status === "PENDING"
-            ? t("paymentStatusPending")
-            : payment.status === "PARTIAL"
-              ? t("paymentStatusPartial")
-              : payment.status === "PAID"
-                ? t("paymentStatusPaid")
-                : t("paymentStatusOverdue")}
-        </span>
-      ),
+        status: (
+          <span className={`badge ${statusColors[payment.status] || "bg-gray-100 text-gray-800"}`}>
+            {payment.status === "PENDING"
+              ? t("paymentStatusPending")
+              : payment.status === "PARTIAL"
+                ? t("paymentStatusPartial")
+                : payment.status === "PAID"
+                  ? t("paymentStatusPaid")
+                  : t("paymentStatusOverdue")}
+          </span>
+        ),
       dueDate: new Date(payment.dueDate).toLocaleDateString("pt-BR"),
       paidDate: payment.paidDate ? (
         <div className="flex items-center gap-1 text-emerald-700">
@@ -62,7 +62,7 @@ function FinancePaymentHistory({ payments, loading, pagination, onPageChange }) 
   })
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 module-card compact card-compact">
       <div>
         <h3 className="text-sm font-semibold text-brand-navy">{t("paymentHistory")}</h3>
         <p className="text-xs text-brand-navy/60">{t("totalPaymentsCount", { count: payments?.length || 0 })}</p>

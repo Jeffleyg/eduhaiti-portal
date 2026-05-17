@@ -270,8 +270,14 @@ function ProfessorGrades() {
       id: student.id,
       student: (
         <div>
-          <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
-          <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
+          {loadingGrades ? (
+            <div className="skeleton h-5 w-40 rounded" />
+          ) : (
+            <div>
+              <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
+              <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
+            </div>
+          )}
         </div>
       ),
       enrollment: student.enrollmentNumber ?? "-",
@@ -323,7 +329,7 @@ function ProfessorGrades() {
       {error ? <LoadingState type="banner" error={error} message={error} /> : null}
       {message ? <LoadingState type="banner" success={Boolean(message)} message={message} /> : null}
 
-      <section className="grid gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-3">
+      <section className="grid gap-3 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-3">
         <div className="space-y-2">
           <p className="text-sm font-medium text-brand-navy">Turma</p>
           <Select
@@ -361,7 +367,7 @@ function ProfessorGrades() {
         </div>
       </section>
 
-      <form className="space-y-4 rounded-2xl border border-brand-navy/10 bg-white p-4" onSubmit={handleCreateGrade}>
+      <form className="space-y-4 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4" onSubmit={handleCreateGrade}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold text-brand-navy">{t("gradeEntryTitle") || 'Entry'}</h3>
