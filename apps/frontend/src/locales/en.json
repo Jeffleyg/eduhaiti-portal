@@ -162,9 +162,9 @@
   "noStudentsAssigned": "No students assigned to this class.",
   "attendanceRecordTitle": "Attendance records",
   "noAttendanceRecordsForDate": "No records found for the selected date."
-  ,"navUsers": "Users"
-  ,"adminUsersSubtitle": "Create student and teacher accounts."
-  ,"syncStrategyLWW": "Last write wins"
-  ,"lastSyncAt": "Last sync:"
-  ,"withData": "With guardian data"
+  ,"navUsers": "People"
+  ,"adminUsersSubtitle": "Create and manage student and teacher accounts."
+  ,"syncStrategyLWW": "Keep most recent change"
+  ,"lastSyncAt": "Last synced:"
+  ,"withData": "Includes guardian information"
 }
