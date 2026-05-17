@@ -51,7 +51,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
   return (
     <div className="space-y-4">
       {/* Cartão Principal com Foto e Dados */}
-      <div className="rounded-[2rem] border border-brand-navy/10 bg-gradient-to-br from-white via-white to-brand-navy/5 p-6 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.45)]">
+      <div className="module-card compact card-compact rounded-[2rem] border border-brand-navy/10 bg-gradient-to-br from-white via-white to-brand-navy/5 p-6 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.45)]">
         {/* Foto de Perfil */}
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
@@ -89,7 +89,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
           {/* Info ao lado da foto */}
           <div className="flex-1 space-y-3">
             {/* Role Badge */}
-            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getRoleBadgeColor()}`}>
+            <span className={`badge ${getRoleBadgeColor()}`}>
               {getRoleLabel()}
             </span>
 
@@ -98,9 +98,13 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1">
                 {t("name")}
               </p>
-              <p className="text-lg font-bold text-brand-navy break-words">
-                {maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
-              </p>
+              {loading ? (
+                <div className="skeleton h-6 w-48 rounded" />
+              ) : (
+                <p className="text-lg font-bold text-brand-navy break-words">
+                  {maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
+                </p>
+              )}
             </div>
 
             {/* Email em Caixa */}
@@ -109,9 +113,13 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
                 <Mail className="h-3 w-3" />
                 {t("email")}
               </p>
-              <p className="text-sm font-semibold text-brand-navy break-words">
-                {sanitizeText(user?.email) || "-"}
-              </p>
+              {loading ? (
+                <div className="skeleton h-4 w-40 rounded" />
+              ) : (
+                <p className="text-sm font-semibold text-brand-navy break-words">
+                  {sanitizeText(user?.email) || "-"}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -131,7 +139,8 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
           <button
             onClick={onEditClick}
             type="button"
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5 disabled:opacity-50"
             title={t("editProfile")}
           >
             <Edit3 className="h-4 w-4" />
@@ -140,7 +149,8 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
           <button
             onClick={onSettingsClick}
             type="button"
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5 disabled:opacity-50"
             title={t("settings")}
           >
             <Settings className="h-4 w-4" />

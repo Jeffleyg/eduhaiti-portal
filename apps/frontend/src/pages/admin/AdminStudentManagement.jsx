@@ -185,12 +185,12 @@ function AdminStudentManagement() {
             initialLimit={6}
             step={6}
             renderItem={(student) => (
-              <div key={student.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+              <div key={student.id} className="module-card compact card-compact">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-brand-navy">{maskName(student.name, "student")}</p>
-                      <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
+                      <span className={`badge ${
                         student.classesAttending?.length > 0
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-brand-navy/10 text-brand-navy/70"

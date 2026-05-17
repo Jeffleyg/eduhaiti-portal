@@ -99,7 +99,7 @@ function CorporateHeader() {
                 <p className="font-semibold text-brand-navy">{maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}</p>
                 <p className="text-xs text-brand-navy/60">{sanitizeText(user?.email)}</p>
                 <div className="mt-2 flex gap-2">
-                  <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getRoleBadgeColor()}`}>
+                  <span className={`badge ${getRoleBadgeColor()}`}>
                     {t(roleLabelKey)}
                   </span>
                   {user?.enrollmentNumber && (
