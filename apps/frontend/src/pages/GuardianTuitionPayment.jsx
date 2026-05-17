@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { apiFetch } from "../lib/api.js"
 import LoadMoreList from "../components/LoadMoreList.jsx"
 
@@ -115,7 +116,7 @@ function GuardianTuitionPayment() {
 
   return (
     <div className="relative min-h-screen bg-sand px-4 py-10">
-      <div className="mx-auto max-w-3xl space-y-6 rounded-3xl border border-brand-navy/10 bg-white/80 p-6 shadow-xl shadow-brand-navy/10">
+      <div className="mx-auto max-w-3xl space-y-6 module-card compact p-6 shadow-xl shadow-brand-navy/10">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl text-brand-navy">{t("tuitionPaymentTitle")}</h1>
@@ -126,7 +127,7 @@ function GuardianTuitionPayment() {
           </Link>
         </div>
 
-        <section className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-950">
+        <section className="module-card compact p-4 text-sm text-emerald-950 bg-emerald-50/80 border border-emerald-200">
           <h2 className="font-semibold">{t("securePaymentTitle")}</h2>
           <p className="mt-1">{t("securePaymentCopy")}</p>
           <ul className="mt-3 grid gap-2 text-xs md:grid-cols-3">
@@ -139,7 +140,7 @@ function GuardianTuitionPayment() {
         {error ? <p className="text-sm text-brand-red">{error}</p> : null}
         {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
-        <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <section className="module-card compact p-4">
           <h2 className="text-base font-semibold text-brand-navy">{t("lookupChargesTitle")}</h2>
           <form className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={loadPending}>
             <input
@@ -156,13 +157,18 @@ function GuardianTuitionPayment() {
             </button>
           </form>
 
-          {studentInfo ? (
-            <div className="mt-4 rounded-2xl border border-brand-navy/10 bg-sand p-3">
-              <p className="text-sm text-brand-navy">
-                {t("studentLabel")}: <strong>{studentInfo.name}</strong>
-              </p>
-              <p className="text-xs text-brand-navy/70">{t("enrollmentLabel")}: {studentInfo.enrollmentNumber}</p>
-              <p className="text-xs text-brand-navy/70">{t("pendingTotalLabel")}: {totalPending.toFixed(2)} HTG</p>
+            {studentInfo ? (
+            <div className="mt-4 module-card compact bg-sand p-3">
+              <div className="grid grid-cols-12 items-center gap-2">
+                <div className="col-span-7">
+                  <p className="text-sm font-semibold text-brand-navy">{maskName(studentInfo.name, "student")}</p>
+                  <p className="text-xs text-brand-navy/75">{t("enrollmentLabel")}: {studentInfo.enrollmentNumber}</p>
+                </div>
+                <div className="col-span-5 text-right">
+                  <p className="text-sm font-semibold text-brand-navy">{totalPending.toFixed(2)} HTG</p>
+                  <p className="text-xs text-brand-navy/70">{t("pendingTotalLabel")}</p>
+                </div>
+              </div>
             </div>
           ) : null}
 
@@ -173,14 +179,20 @@ function GuardianTuitionPayment() {
                 initialLimit={3}
                 step={3}
                 renderItem={(charge) => (
-                  <div key={charge.id} className="rounded-xl border border-brand-navy/10 bg-white p-3">
-                    <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
-                    <p className="text-xs text-brand-navy/60">{t("status")}: {charge.status}</p>
-                    <p className="text-xs text-brand-navy/60">
-                      {t("dueDate")}: {new Date(charge.dueDate).toLocaleDateString()}
-                    </p>
-                    {charge.description ? <p className="text-xs text-brand-navy/60">{charge.description}</p> : null}
-                  </div>
+                  <div key={charge.id} className="module-card compact p-3 bg-white">
+                      <div className="grid grid-cols-12 items-center gap-2">
+                        <div className="col-span-3">
+                          <p className="text-sm font-semibold text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
+                        </div>
+                        <div className="col-span-6">
+                          <p className="text-xs text-brand-navy/75">{charge.description || t("invoiceDefaultItem")}</p>
+                          <p className="text-xs text-brand-navy/60">{t("dueDate")}: {new Date(charge.dueDate).toLocaleDateString()}</p>
+                        </div>
+                        <div className="col-span-3 text-right">
+                          <span className="badge">{charge.status}</span>
+                        </div>
+                      </div>
+                    </div>
                 )}
               />
             </div>
@@ -330,8 +342,8 @@ function GuardianTuitionPayment() {
                     <head><title>${t("invoiceTitle")} ${escapeHtml(invoice.id)}</title></head>
                     <body>
                       <h2>${t("invoiceTitle")} ${escapeHtml(invoice.id)}</h2>
-                      <p>${t("studentLabel")}: ${escapeHtml(invoice.student?.name || "-")}</p>
-                      <p>${t("enrollmentLabel")}: ${escapeHtml(invoice.student?.enrollmentNumber || "-")}</p>
+                          <p>${t("studentLabel")}: ${escapeHtml(maskName(invoice.student?.name, "student") || "-")}</p>
+                            <p>${t("enrollmentLabel")}: ${escapeHtml(invoice.student?.enrollmentNumber || "-")}</p>
                       <table border="1" cellpadding="8" cellspacing="0">
                         <thead>
                           <tr>

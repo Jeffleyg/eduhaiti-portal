@@ -8,6 +8,10 @@ import CreateTeacherModal from "../../components/CreateTeacherModal.jsx"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+import ListItemCard from "../../components/ListItemCard.jsx"
+import { GraduationCap, Users } from "lucide-react"
+import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
+import { sanitizeText, maskName } from "../../lib/string.js"
 
 const emptyTeacher = {
   email: "",
@@ -34,6 +38,7 @@ function AdminUsers() {
   const [error, setError] = useState("")
   const [showCreateStudent, setShowCreateStudent] = useState(false)
   const [showCreateTeacher, setShowCreateTeacher] = useState(false)
+  const [activeSection, setActiveSection] = useState("students")
 
   useEffect(() => {
     const loadData = async () => {
@@ -132,29 +137,36 @@ function AdminUsers() {
         </div>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-        <button
-          onClick={() => {
-            setShowCreateStudent(true)
-            setError("")
-            setMessage("")
-          }}
-          className="primary-button flex items-center justify-center gap-2"
-        >
-          <span className="text-lg">+</span>
-          {t("createStudentTitle")}
-        </button>
-        <button
-          onClick={() => {
-            setShowCreateTeacher(true)
-            setError("")
-            setMessage("")
-          }}
-          className="primary-button flex items-center justify-center gap-2"
-        >
-          <span className="text-lg">+</span>
-          {t("createTeacherTitle")}
-        </button>
+      <div className="flex items-center justify-between">
+        <AdminSectionToolbar
+          sections={[{ key: "students", label: t("students") }, { key: "teachers", label: t("teachers") }]}
+          active={activeSection}
+          onChange={(k) => setActiveSection(k)}
+        />
+        <div className="ml-4 flex gap-2">
+          <button
+            onClick={() => {
+              setShowCreateStudent(true)
+              setError("")
+              setMessage("")
+            }}
+            className="primary-button flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">+</span>
+            {t("createStudentTitle")}
+          </button>
+          <button
+            onClick={() => {
+              setShowCreateTeacher(true)
+              setError("")
+              setMessage("")
+            }}
+            className="primary-button flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">+</span>
+            {t("createTeacherTitle")}
+          </button>
+        </div>
       </div>
 
       <Modal
@@ -200,9 +212,10 @@ function AdminUsers() {
         />
       </Modal>
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-5 sm:p-6">
+      {activeSection === "students" && (
+        <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-5 sm:p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-brand-navy">{t("studentList")}</h2>
+          <h2 className="text-lg font-semibold text-brand-navy">{t("students")}</h2>
           <span className="inline-block rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
             {students.length}
           </span>
@@ -215,29 +228,40 @@ function AdminUsers() {
             initialLimit={6}
             step={6}
             renderItem={(student) => (
-              <div className="module-card text-sm">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="module-card-title">Aluno</p>
-                    <p className="module-card-value">
-                      {student.name} ({student.enrollmentNumber || "-"})
-                    </p>
+                <ListItemCard
+                id={student.id}
+                icon={<Users className="h-5 w-5 text-brand-sky" />}
+                title={maskName(student.name, "student")}
+                subtitle={sanitizeText(student.email)}
+                status={student.classesAttending?.length > 0 ? t("enrolled") : t("notEnrolled")}
+                statusColor={student.classesAttending?.length > 0 ? "green" : "yellow"}
+                preview={
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-brand-navy/60">{t("adminStudentEnrollmentNumber")}</p>
+                      <p className="font-semibold text-brand-navy">{student.enrollmentNumber || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-brand-navy/60">{t("classes")}</p>
+                      <p className="font-semibold text-brand-navy">{student.classesAttending?.length ?? 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-brand-navy/60">{t("guardians")}</p>
+                      <p className="font-semibold text-brand-navy">{student.fatherName || student.motherName ? t("withData") : "-"}</p>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-emerald-600">Ativo</span>
-                </div>
-                <p className="mt-2 text-brand-navy/70">Email: {student.email}</p>
-                <p className="text-brand-navy/70">
-                  Parentes: {student.fatherName || "-"} / {student.motherName || "-"}
-                </p>
-              </div>
+                }
+              />
             )}
           />
         )}
-      </section>
+        </section>
+      )}
 
-      <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-5 sm:p-6">
+      {activeSection === "teachers" && (
+        <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-5 sm:p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-brand-navy">{t("teacherList")}</h2>
+          <h2 className="text-lg font-semibold text-brand-navy">{t("teachers")}</h2>
           <span className="inline-block rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
             {teachers.length}
           </span>
@@ -250,25 +274,35 @@ function AdminUsers() {
             initialLimit={6}
             step={6}
             renderItem={(teacher) => (
-              <div key={teacher.id} className="module-card text-sm">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="module-card-title">Professor</p>
-                    <p className="module-card-value">
-                      {teacher.name} ({teacher.enrollmentNumber || "-"})
-                    </p>
+                <ListItemCard
+                id={teacher.id}
+                icon={<GraduationCap className="h-5 w-5 text-brand-red" />}
+                title={maskName(teacher.name, "teacher")}
+                subtitle={sanitizeText(teacher.email)}
+                status={t("teacher")}
+                statusColor="blue"
+                preview={
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-brand-navy/60">{t("adminStudentEnrollmentNumber")}</p>
+                      <p className="font-semibold text-brand-navy">{teacher.enrollmentNumber || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-brand-navy/60">{t("classes")}</p>
+                      <p className="font-semibold text-brand-navy">{teacher.classesTeaching?.length ?? teacher.classIds?.length ?? 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-brand-navy/60">{t("subjects")}</p>
+                      <p className="font-semibold text-brand-navy">{(teacher.subjects ?? []).length ? teacher.subjects.join(", ") : "-"}</p>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-emerald-600">Ativo</span>
-                </div>
-                <p className="mt-2 text-brand-navy/70">Email: {teacher.email}</p>
-                <p className="text-brand-navy/70">
-                  Disciplinas: {(teacher.subjects ?? []).length ? teacher.subjects.join(", ") : "-"}
-                </p>
-              </div>
+                }
+              />
             )}
           />
         )}
-      </section>
+        </section>
+      )}
     </div>
   )
 }

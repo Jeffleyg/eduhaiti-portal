@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
@@ -6,6 +8,7 @@ import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function ProfessorForum() {
   const { token } = useAuth()
+  const { t } = useTranslation()
   const [classes, setClasses] = useState([])
   const [selectedClass, setSelectedClass] = useState("")
   const [threads, setThreads] = useState([])
@@ -114,16 +117,16 @@ function ProfessorForum() {
   }
 
   if (loading) {
-    return <div className="text-center text-brand-navy">Carregando...</div>
+    return <div className="text-center text-brand-navy">{t("loading")}</div>
   }
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Forum de Discussao" subtitle="Debates academicos assincronos por turma." />
+      <SectionHeader title={t("forumTitle")} subtitle={t("forumSubtitle")} />
       {error ? <p className="text-sm text-brand-red">{error}</p> : null}
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">Turma</h3>
+      <section className="module-card compact card-compact space-y-4">
+        <h3 className="font-semibold text-brand-navy">{t("classLabel")}</h3>
         <select
           value={selectedClass}
           onChange={(event) => onClassChange(event.target.value)}
@@ -131,35 +134,35 @@ function ProfessorForum() {
         >
           {classes.map((cls) => (
             <option key={cls.id} value={cls.id}>
-              {cls.name}
+              {sanitizeText(cls.name)}
             </option>
           ))}
         </select>
       </section>
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">Criar topico</h3>
+      <section className="module-card compact card-compact space-y-4">
+        <h3 className="font-semibold text-brand-navy">{t("createTopic")}</h3>
         <form className="space-y-3" onSubmit={createThread}>
           <input
             value={newThread.title}
             onChange={(event) => setNewThread((prev) => ({ ...prev, title: event.target.value }))}
-            placeholder="Titulo do topico"
+            placeholder={t("threadTitlePlaceholder")}
             className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
           />
           <textarea
             value={newThread.body}
             onChange={(event) => setNewThread((prev) => ({ ...prev, body: event.target.value }))}
-            placeholder="Mensagem inicial"
+            placeholder={t("threadInitialMessagePlaceholder")}
             rows={3}
             className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
           />
-          <button className="primary-button" type="submit">Publicar topico</button>
+          <button className="primary-button" type="submit">{t("publishThread")}</button>
         </form>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
-          <h3 className="font-semibold text-brand-navy">Topicos</h3>
+        <div className="module-card compact card-compact space-y-3">
+          <h3 className="font-semibold text-brand-navy">{t("topicsTitle")}</h3>
           {threads.length > 0 ? (
             <LoadMoreList
               items={threads}
@@ -177,23 +180,23 @@ function ProfessorForum() {
                     selectedThreadId === thread.id ? "border-brand-red bg-brand-red/5" : "border-brand-navy/10"
                   }`}
                 >
-                  <p className="font-semibold text-brand-navy">{thread.title}</p>
-                  <p className="text-xs text-brand-navy/60">{thread.postsCount} respostas</p>
+                  <p className="font-semibold text-brand-navy">{sanitizeText(thread.title)}</p>
+                  <p className="text-xs text-brand-navy/60">{thread.postsCount} {t("responses")}</p>
                 </button>
               )}
             />
           ) : (
-            <p className="text-sm text-brand-navy/60">Sem topicos nesta turma.</p>
+            <p className="text-sm text-brand-navy/60">{t("noTopicsInClass")}</p>
           )}
         </div>
 
         <div className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
-          <h3 className="font-semibold text-brand-navy">Discussao</h3>
+          <h3 className="font-semibold text-brand-navy">{t("discussionTitle")}</h3>
           {threadDetails ? (
             <>
               <div className="rounded-xl border border-brand-navy/10 bg-sand p-3">
-                <p className="font-semibold text-brand-navy">{threadDetails.thread.title}</p>
-                <p className="text-sm text-brand-navy/70 mt-1">{threadDetails.thread.body}</p>
+                <p className="font-semibold text-brand-navy">{sanitizeText(threadDetails.thread.title)}</p>
+                <p className="text-sm text-brand-navy/70 mt-1">{sanitizeText(threadDetails.thread.body)}</p>
               </div>
 
               <div className="space-y-2">
@@ -204,13 +207,13 @@ function ProfessorForum() {
                     step={5}
                     renderItem={(post) => (
                       <div key={post.id} className="rounded-xl border border-brand-navy/10 p-3">
-                        <p className="text-xs text-brand-navy/60">{post.createdBy?.name ?? "Usuario"}</p>
-                        <p className="text-sm text-brand-navy">{post.body}</p>
+                        <p className="text-xs text-brand-navy/60">{maskName(post.createdBy?.name, "user") || t("user")}</p>
+                        <p className="text-sm text-brand-navy">{sanitizeText(post.body)}</p>
                       </div>
                     )}
                   />
                 ) : (
-                  <p className="text-sm text-brand-navy/60">Sem respostas ainda.</p>
+                  <p className="text-sm text-brand-navy/60">{t("noResponsesYet")}</p>
                 )}
               </div>
 
@@ -219,14 +222,14 @@ function ProfessorForum() {
                   value={newPost}
                   onChange={(event) => setNewPost(event.target.value)}
                   rows={2}
-                  placeholder="Responder ao topico"
+                  placeholder={t("replyPlaceholder")}
                   className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
                 />
-                <button type="submit" className="primary-button">Enviar resposta</button>
+                <button type="submit" className="primary-button">{t("sendResponse")}</button>
               </form>
             </>
           ) : (
-            <p className="text-sm text-brand-navy/60">Selecione um topico para ver a discussao.</p>
+            <p className="text-sm text-brand-navy/60">{t("selectTopicToViewDiscussion")}</p>
           )}
         </div>
       </section>

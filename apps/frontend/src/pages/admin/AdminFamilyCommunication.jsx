@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import { sanitizeText, maskName } from "../../lib/string.js"
+import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 
 function AdminFamilyCommunication() {
   const { token } = useAuth()
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     enrollmentNumber: "",
     title: "",
@@ -21,6 +25,7 @@ function AdminFamilyCommunication() {
   const [responseDrafts, setResponseDrafts] = useState({})
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const [activeSection, setActiveSection] = useState("compose")
 
   const loadRequests = async () => {
     setLoadingRequests(true)
@@ -106,18 +111,27 @@ function AdminFamilyCommunication() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Comunicacao Escola-Familia"
-        subtitle="Envie ocorrencias disciplinares e recados urgentes para os encarregados."
+        title={t("familyCommunicationTitle")}
+        subtitle={t("familyCommunicationSubtitle")}
       />
+
+      <div className="flex items-center justify-between">
+        <AdminSectionToolbar
+          sections={[{ key: "compose", label: t("composeMessage") }, { key: "requests", label: t("familyRequests") }]}
+          active={activeSection}
+          onChange={(k) => setActiveSection(k)}
+        />
+      </div>
 
       {error ? <p className="text-sm text-brand-red">{error}</p> : null}
       {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
 
-      <form onSubmit={submit} className="rounded-2xl border border-brand-navy/10 bg-white p-6 grid gap-3 md:grid-cols-2">
+      {activeSection === "compose" && (
+        <form onSubmit={submit} className="rounded-2xl border border-brand-navy/10 bg-white p-6 grid gap-3 md:grid-cols-2">
         <input
           value={form.enrollmentNumber}
           onChange={(event) => setForm((prev) => ({ ...prev, enrollmentNumber: event.target.value }))}
-          placeholder="Matricula do aluno"
+          placeholder={t("studentEnrollmentPlaceholder")}
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
           required
         />
@@ -127,8 +141,8 @@ function AdminFamilyCommunication() {
           onChange={(event) => setForm((prev) => ({ ...prev, severity: event.target.value }))}
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
         >
-          <option value="normal">Normal</option>
-          <option value="urgent">Urgente</option>
+          <option value="normal">{t("normal")}</option>
+          <option value="urgent">{t("urgent")}</option>
         </select>
 
         <select
@@ -136,22 +150,22 @@ function AdminFamilyCommunication() {
           onChange={(event) => setForm((prev) => ({ ...prev, channel: event.target.value }))}
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
         >
-          <option value="IN_APP">Mensagem interna</option>
-          <option value="SMS">SMS (fila)</option>
-          <option value="BOTH">Mensagem interna + SMS (fila)</option>
+          <option value="IN_APP">{t("inAppMessage")}</option>
+          <option value="SMS">{t("smsQueue")}</option>
+          <option value="BOTH">{t("inAppPlusSmsQueue")}</option>
         </select>
 
         <input
           value={form.guardianPhone}
           onChange={(event) => setForm((prev) => ({ ...prev, guardianPhone: event.target.value }))}
-          placeholder="Telefone do encarregado (para SMS)"
+          placeholder={t("guardianPhonePlaceholder")}
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
         />
 
         <input
           value={form.title}
           onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-          placeholder="Titulo do comunicado"
+          placeholder={t("noticeTitlePlaceholder")}
           className="rounded-xl border border-brand-navy/20 px-3 py-2 md:col-span-2"
           required
         />
@@ -159,29 +173,31 @@ function AdminFamilyCommunication() {
         <textarea
           value={form.body}
           onChange={(event) => setForm((prev) => ({ ...prev, body: event.target.value }))}
-          placeholder="Detalhes da ocorrencia/urgencia"
+          placeholder={t("noticeBodyPlaceholder")}
           rows={5}
           className="rounded-xl border border-brand-navy/20 px-3 py-2 md:col-span-2"
           required
         />
 
         <button type="submit" className="primary-button md:col-span-2" disabled={loading}>
-          {loading ? "Enviando..." : "Enviar comunicado"}
+          {loading ? t("sending") : t("sendNotice")}
         </button>
-      </form>
+        </form>
+      )}
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
+      {activeSection === "requests" && (
+        <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-base font-semibold text-brand-navy">Solicitacoes da familia</h3>
+          <h3 className="text-base font-semibold text-brand-navy">{t("familyRequestsTitle")}</h3>
           <button type="button" className="outline-button" onClick={loadRequests} disabled={loadingRequests}>
-            {loadingRequests ? "Atualizando..." : "Atualizar"}
+            {loadingRequests ? t("updating") : t("refresh")}
           </button>
         </div>
 
         {loadingRequests ? (
-          <p className="text-sm text-brand-navy/60">Carregando solicitacoes...</p>
+          <p className="text-sm text-brand-navy/60">{t("loadingRequests")}</p>
         ) : requests.length === 0 ? (
-          <p className="text-sm text-brand-navy/60">Nenhuma solicitacao recebida.</p>
+          <p className="text-sm text-brand-navy/60">{t("noFamilyRequests")}</p>
         ) : (
           <LoadMoreList
             items={requests}
@@ -191,16 +207,16 @@ function AdminFamilyCommunication() {
               <article key={request.requestId} className="rounded-xl border border-brand-navy/10 p-4 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-brand-navy">{request.subject || "Sem assunto"}</p>
+                    <p className="font-semibold text-brand-navy">{request.subject || t("noSubject")}</p>
                     <p className="text-xs text-brand-navy/70">
-                      Aluno: {request.student?.name || "-"} ({request.enrollmentNumber || "-"})
+                      {t("studentLabel")} {maskName(request.student?.name, "student")} ({request.enrollmentNumber || "-"})
                     </p>
                     <p className="text-xs text-brand-navy/70">
-                      Responsavel: {request.guardianName || "-"}
-                      {request.guardianPhone ? ` | Tel: ${request.guardianPhone}` : ""}
+                      {t("guardianLabel")} {maskName(request.guardianName, "guardian")}
+                      {request.guardianPhone ? ` | ${t("phoneLabel")} ${request.guardianPhone}` : ""}
                     </p>
                     <p className="text-xs text-brand-navy/60">
-                      Recebido em: {new Date(request.createdAt).toLocaleString("pt-BR")}
+                      {t("receivedAt")} {new Date(request.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <span
@@ -210,17 +226,17 @@ function AdminFamilyCommunication() {
                         : "bg-amber-50 text-amber-700"
                     }`}
                   >
-                    {request.status === "RESPONDED" ? "Respondido" : "Pendente"}
+                    {request.status === "RESPONDED" ? t("responded") : t("pending")}
                   </span>
                 </div>
 
-                <p className="text-sm text-brand-navy/80 whitespace-pre-wrap">{request.body}</p>
+                <p className="text-sm text-brand-navy/80 whitespace-pre-wrap">{sanitizeText(request.body)}</p>
 
                 {request.response ? (
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-xs font-semibold text-emerald-800">Resposta enviada</p>
+                    <p className="text-xs font-semibold text-emerald-800">{t("responseSent")}</p>
                     <p className="mt-1 text-sm text-emerald-900 whitespace-pre-wrap">
-                      {request.response.responseMessage}
+                      {sanitizeText(request.response.responseMessage)}
                     </p>
                     <p className="mt-1 text-xs text-emerald-700">
                       {new Date(request.response.respondedAt).toLocaleString("pt-BR")}
@@ -236,7 +252,7 @@ function AdminFamilyCommunication() {
                           [request.requestId]: event.target.value,
                         }))
                       }
-                      placeholder="Escreva a resposta para esta familia"
+                      placeholder={t("familyResponsePlaceholder")}
                       rows={3}
                       className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
                     />
@@ -246,7 +262,7 @@ function AdminFamilyCommunication() {
                       onClick={() => handleRespond(request.requestId)}
                       disabled={respondingRequestId === request.requestId}
                     >
-                      {respondingRequestId === request.requestId ? "Enviando resposta..." : "Responder familia"}
+                      {respondingRequestId === request.requestId ? t("sendingResponse") : t("respondFamily")}
                     </button>
                   </div>
                 )}
@@ -254,7 +270,8 @@ function AdminFamilyCommunication() {
             )}
           />
         )}
-      </section>
+        </section>
+      )}
     </div>
   )
 }

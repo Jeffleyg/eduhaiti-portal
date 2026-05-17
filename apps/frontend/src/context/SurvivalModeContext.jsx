@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { SurvivalModeContext } from "./SurvivalModeStore.js"
+import { survivalModeStateManager } from "../lib/survival-mode-state.js"
 
 function readConnectionSnapshot() {
   const connection =
@@ -122,6 +123,11 @@ export function SurvivalModeProvider({ children }) {
       disableBackgroundSync: isSurvivalMode,
     }
   }, [batteryLevel, isCharging, connection.effectiveType])
+
+  // Sync survival mode state to global state manager for non-React modules
+  useEffect(() => {
+    survivalModeStateManager.setSurvivalMode(value.isSurvivalMode)
+  }, [value.isSurvivalMode])
 
   return <SurvivalModeContext.Provider value={value}>{children}</SurvivalModeContext.Provider>
 }

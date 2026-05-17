@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import { sanitizeText, maskName } from "../../lib/string.js"
 
 function ProfessorLessonPlans() {
   const { token } = useAuth()
@@ -117,7 +118,7 @@ function ProfessorLessonPlans() {
         <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={submitPlan}>
           <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="rounded-2xl border px-3 py-2 bg-sand">
             {(classes ?? []).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>{sanitizeText(c.name)}</option>
             ))}
           </select>
 
@@ -174,7 +175,7 @@ function ProfessorLessonPlans() {
             repository.slice(0, 12).map((plan) => (
               <div key={plan.id} className="rounded-xl border p-3">
                 <p className="font-semibold text-brand-navy">{plan.title}</p>
-                <p className="text-xs text-brand-navy/70">Turma: {plan.class?.name ?? "-"} | Autor: {plan.createdBy?.name ?? "Professor"}</p>
+                <p className="text-xs text-brand-navy/70">Turma: {sanitizeText(plan.class?.name ?? "-")} | Autor: {maskName(plan.createdBy?.name, "teacher")}</p>
                 {plan.methodology ? <p className="text-sm mt-1">{plan.methodology}</p> : null}
                 {Array.isArray(plan.tags) && plan.tags.length ? <p className="text-xs text-brand-navy/60">Tags: {plan.tags.join(", ")}</p> : null}
               </div>

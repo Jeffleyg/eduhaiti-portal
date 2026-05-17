@@ -37,6 +37,7 @@ const studentNav = [
   { to: "/student", icon: LayoutDashboard, labelKey: "navOverview" },
   { to: "/student/profile", icon: Users, labelKey: "navProfile" },
   { to: "/student/grades", icon: BookOpen, labelKey: "navResults" },
+  { to: "/student/transcript", icon: GraduationCap, labelKey: "navTranscript" },
   { to: "/student/schedule", icon: CalendarDays, labelKey: "navSchedule" },
   { to: "/student/resources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/student/assignments", icon: ClipboardCheck, labelKey: "navHomework" },
@@ -113,12 +114,12 @@ function Sidebar({ role }) {
             to={item.to}
             end={item.to === "/teacher" || item.to === "/student" || item.to === "/owner"}
             title={t(item.labelKey)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive ? "bg-brand-navy text-white shadow-md shadow-brand-navy/20" : "text-brand-navy/70 hover:bg-white"
-              } ${collapsed ? "justify-center px-0" : ""}`
-            }
-          >
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                  isActive ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"
+                    } ${collapsed ? "justify-center px-0" : ""}`
+                  }
+                  >
             <item.icon className="h-4 w-4" />
             {!collapsed ? t(item.labelKey) : null}
           </NavLink>

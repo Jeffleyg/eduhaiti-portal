@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
@@ -184,81 +185,68 @@ function AdminStudentManagement() {
             initialLimit={6}
             step={6}
             renderItem={(student) => (
-              <div key={student.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="flex-1">
+              <div key={student.id} className="module-card compact card-compact p-3">
+                <div className="grid grid-cols-12 items-center gap-2">
+                  <div className="col-span-7">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-brand-navy">{student.name}</p>
-                      <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
+                      <p className="font-semibold text-brand-navy text-sm">{maskName(student.name, "student")}</p>
+                      <span className={`badge ${
                         student.classesAttending?.length > 0
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-brand-navy/10 text-brand-navy/70"
-                      }`}>
-                        {student.classesAttending?.length > 0 ? t("enrolled") : t("notEnrolled")}
-                      </span>
+                      } text-xs py-0.5 px-2`}>{student.classesAttending?.length > 0 ? t("enrolled") : t("notEnrolled")}</span>
                     </div>
-                    <p className="text-xs text-brand-navy/60">{student.email}</p>
-                    <p className="text-xs text-brand-navy/60">
-                      {t("adminStudentEnrollmentNumber")}: {student.enrollmentNumber}
-                    </p>
+                    <p className="text-xs text-brand-navy/75">{sanitizeText(student.email)}</p>
+                    <p className="text-xs text-brand-navy/75">{t("adminStudentEnrollmentNumber")}: {student.enrollmentNumber}</p>
                     {student.classesAttending?.length > 0 ? (
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-1 flex flex-wrap gap-2">
                         {student.classesAttending.map((cls) => (
-                          <div key={cls.id} className="flex items-center justify-between gap-2">
-                            <span className="text-xs text-brand-navy/70">
-                              {cls.name} ({cls.level})
-                            </span>
-                            <button
-                              className="text-xs text-brand-red hover:underline"
-                              onClick={() => removeStudentFromClass(student.id, cls.id)}
-                              disabled={loading}
-                            >
-                              {t("adminRemove")}
-                            </button>
-                          </div>
+                          <span key={cls.id} className="text-xs text-brand-navy/70">{cls.name} ({cls.level})</span>
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-2 text-xs text-brand-navy/50">{t("adminNotEnrolled")}</p>
+                      <p className="mt-1 text-xs text-brand-navy/50">{t("adminNotEnrolled")}</p>
                     )}
                   </div>
 
-                  {selectedStudent?.id === student.id ? (
-                    <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-                      <select
-                        value={selectedClassId}
-                        onChange={(e) => setSelectedClassId(e.target.value)}
-                        className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-                      >
-                        <option value="">{t("adminSelectClass")}</option>
-                        {classes.map((cls) => (
-                          <option key={cls.id} value={cls.id}>
-                            {cls.name} ({cls.level})
-                          </option>
-                        ))}
-                      </select>
+                  <div className="col-span-5 flex items-center justify-end gap-2">
+                    {selectedStudent?.id === student.id ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={selectedClassId}
+                          onChange={(e) => setSelectedClassId(e.target.value)}
+                          className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+                        >
+                          <option value="">{t("adminSelectClass")}</option>
+                          {classes.map((cls) => (
+                            <option key={cls.id} value={cls.id}>
+                              {cls.name} ({cls.level})
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="primary-button"
+                          onClick={() => enrollStudent(student.id, selectedClassId)}
+                          disabled={loading}
+                        >
+                          {t("adminEnroll")}
+                        </button>
+                        <button
+                          className="outline-button"
+                          onClick={() => setSelectedStudent(null)}
+                        >
+                          {t("adminCancel")}
+                        </button>
+                      </div>
+                    ) : (
                       <button
                         className="primary-button"
-                        onClick={() => enrollStudent(student.id, selectedClassId)}
-                        disabled={loading}
+                        onClick={() => setSelectedStudent(student)}
                       >
-                        {t("adminEnroll")}
+                        {t("adminAddToClass")}
                       </button>
-                      <button
-                        className="outline-button"
-                        onClick={() => setSelectedStudent(null)}
-                      >
-                        {t("adminCancel")}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      className="primary-button"
-                      onClick={() => setSelectedStudent(student)}
-                    >
-                      {t("adminAddToClass")}
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}

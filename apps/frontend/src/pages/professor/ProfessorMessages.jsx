@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function ProfessorMessages() {
@@ -83,7 +84,7 @@ function ProfessorMessages() {
   return (
     <div>
       <SectionHeader title={t("navMessages")} subtitle={t("messagesSubtitle")} />
-      <div className="mb-6 rounded-3xl bg-white px-5 py-5">
+      <div className="mb-6 module-card compact card-compact">
         <h3 className="text-base font-semibold text-brand-navy">{t("composeMessage")}</h3>
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {feedback ? <p className="mt-2 text-sm text-emerald-600">{feedback}</p> : null}
@@ -98,7 +99,7 @@ function ProfessorMessages() {
               <option value="">{t("selectRecipient")}</option>
               {recipients.map((recipient) => (
                 <option key={recipient.id} value={recipient.id}>
-                  {(recipient.name ?? recipient.email) + " (" + t("role" + recipient.role.toLowerCase()) + ")"}
+                  {maskName(recipient.name ?? recipient.email, recipient.role ? recipient.role.toLowerCase() : "user") + " (" + t("role" + recipient.role.toLowerCase()) + ")"}
                 </option>
               ))}
             </select>
@@ -136,14 +137,14 @@ function ProfessorMessages() {
         <button
           type="button"
           onClick={() => setTab("inbox")}
-          className={`rounded-2xl px-3 py-2 text-sm ${tab === "inbox" ? "bg-brand-navy text-white" : "bg-white text-brand-navy"}`}
+          className={`rounded-2xl px-3 py-2 text-sm ${tab === "inbox" ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"}`}
         >
           {t("inbox")}
         </button>
         <button
           type="button"
           onClick={() => setTab("sent")}
-          className={`rounded-2xl px-3 py-2 text-sm ${tab === "sent" ? "bg-brand-navy text-white" : "bg-white text-brand-navy"}`}
+          className={`rounded-2xl px-3 py-2 text-sm ${tab === "sent" ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"}`}
         >
           {t("sentMessages")}
         </button>
@@ -156,16 +157,16 @@ function ProfessorMessages() {
             initialLimit={5}
             step={5}
             renderItem={(message) => (
-              <div key={message.id} className="rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
+              <div key={message.id} className="module-card compact card-compact">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-brand-navy">
                     {tab === "inbox"
-                      ? message.from?.name ?? message.from?.email
-                      : message.to?.name ?? message.to?.email}
+                      ? maskName(message.from?.name ?? message.from?.email, message.from?.role ? message.from.role.toLowerCase() : "user")
+                      : maskName(message.to?.name ?? message.to?.email, message.to?.role ? message.to.role.toLowerCase() : "user")}
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-brand-navy/70">{message.subject}</p>
-                <p className="mt-1 text-xs text-brand-navy/50">{message.body}</p>
+                <p className="mt-2 text-sm text-brand-navy/70">{sanitizeText(message.subject)}</p>
+                <p className="mt-1 text-xs text-brand-navy/50">{sanitizeText(message.body)}</p>
               </div>
             )}
           />

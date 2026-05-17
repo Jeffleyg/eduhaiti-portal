@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
+import { sanitizeText } from "../../lib/string.js"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
@@ -8,6 +10,7 @@ function StudentLessonPlans() {
   const [classes, setClasses] = useState([])
   const [plansByClass, setPlansByClass] = useState({})
   const [loading, setLoading] = useState(true)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const load = async () => {
@@ -37,17 +40,17 @@ function StudentLessonPlans() {
     load()
   }, [token])
 
-  if (loading) return <div className="text-center text-brand-navy">Carregando...</div>
+  if (loading) return <div className="text-center text-brand-navy">{t("loading")}</div>
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Planos de Aula" subtitle="Acesse os planos de aula da(s) sua(s) turma(s)." />
+      <SectionHeader title={t("lessonPlansTitle") || "Lesson plans"} subtitle={t("lessonPlansSubtitle") || "Access lesson plans for your classes."} />
 
       <div className="space-y-3">
         {classes.length ? (
           classes.map((c) => (
             <div key={c.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-              <p className="font-semibold text-brand-navy">{c.name}</p>
+              <p className="font-semibold text-brand-navy">{sanitizeText(c.name)}</p>
               <div className="mt-3 space-y-2">
                 {(plansByClass[c.id] ?? []).length ? (
                   (plansByClass[c.id] ?? []).map((p) => (
@@ -59,14 +62,14 @@ function StudentLessonPlans() {
                       {Array.isArray(p.tags) && p.tags.length ? <p className="text-xs text-brand-navy/60">Tags: {p.tags.join(", ")}</p> : null}
                     </div>
                   ))
-                ) : (
-                  <p className="text-sm text-brand-navy/60">Nenhum plano publicado para esta turma.</p>
+                  ) : (
+                  <p className="text-sm text-brand-navy/60">{t("noLessonPlansForClass") || 'No plans published for this class.'}</p>
                 )}
               </div>
             </div>
           ))
         ) : (
-          <p className="text-sm text-brand-navy/60">Você não está atribuído a nenhuma turma.</p>
+          <p className="text-sm text-brand-navy/60">{t("notAssignedToAnyClass") || 'You are not assigned to any class.'}</p>
         )}
       </div>
     </div>

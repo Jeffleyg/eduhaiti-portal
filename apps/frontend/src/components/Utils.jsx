@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { HelpCircle } from "lucide-react"
 
 /**
@@ -108,7 +109,9 @@ export function Divider({ label, className = "" }) {
 /**
  * Spinner/Loading indicator
  */
-export function Spinner({ size = "md", label = "Carregando..." }) {
+export function Spinner({ size = "md", label }) {
+  const { t } = useTranslation()
+  const resolvedLabel = label ?? t("loading")
   const sizes = {
     sm: "w-4 h-4",
     md: "w-8 h-8",
@@ -122,7 +125,7 @@ export function Spinner({ size = "md", label = "Carregando..." }) {
         role="status"
         aria-label={label}
       />
-      {label && <span className="text-sm text-gray-600">{label}</span>}
+      {resolvedLabel && <span className="text-sm text-gray-600">{resolvedLabel}</span>}
     </div>
   )
 }

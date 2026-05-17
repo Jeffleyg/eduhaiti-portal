@@ -41,7 +41,7 @@ function TopBar({ role }) {
         <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 rounded-lg p-2 text-brand-navy/70 hover:bg-brand-navy/10 transition-colors"
+          className="flex items-center gap-2 rounded-lg p-2 text-brand-navy/85 hover:bg-brand-navy/10 transition-colors"
           type="button"
           title={t("back")}
         >
@@ -53,10 +53,8 @@ function TopBar({ role }) {
           className="h-9 w-auto rounded-lg border border-brand-navy/10 bg-white px-2 py-1 sm:h-10"
         />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
-            {t("dashboardTitle")}
-          </p>
-          <h1 className="text-xl font-semibold text-brand-navy sm:text-2xl">{t(roleLabelKey)}</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-brand-navy">{t("dashboardTitle")}</h1>
+          <p className="mt-1 text-sm text-brand-navy/85">{t(roleLabelKey)}</p>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -72,7 +70,7 @@ function TopBar({ role }) {
         <div className="flex flex-wrap items-center gap-2">
 
         <button
-          className="inline-flex items-center gap-2 rounded-full border border-brand-sky/30 bg-brand-sky/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-brand-navy disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full border border-brand-sky/20 bg-brand-sky/10 px-3 py-1.5 text-sm font-medium text-brand-navy disabled:opacity-60"
           type="button"
           onClick={() => syncNow(role)}
           disabled={isSyncing}
@@ -83,12 +81,12 @@ function TopBar({ role }) {
 
         <LanguageSelector />
 
-        <label className="inline-flex items-center gap-2 rounded-full border border-brand-navy/20 bg-white px-3 py-2 text-xs font-semibold text-brand-navy">
-          {t("syncMode")}
+        <label className="inline-flex items-center gap-2 rounded-full border border-brand-navy/10 bg-white px-2 py-1 text-xs font-medium text-brand-navy">
+          <span className="text-xs text-brand-navy/85">{t("syncMode")}</span>
           <select
             value={conflictStrategy}
             onChange={(event) => setConflictStrategy(event.target.value)}
-            className="bg-transparent text-xs outline-none"
+            className="bg-transparent text-sm outline-none"
           >
             <option value="lww">{t("syncStrategyLWW")}</option>
             <option value="manual">{t("syncStrategyManual")}</option>
@@ -96,8 +94,8 @@ function TopBar({ role }) {
         </label>
         </div>
 
-        <span className="text-xs text-brand-navy/60 sm:text-right">
-          {t("lastSyncAt")} {formatLastUpdated(lastRunAt, currentLanguage)}
+        <span className="text-sm text-brand-navy/85 sm:text-right">
+          <strong className="font-semibold text-brand-navy/80">{t("lastSyncAt")}</strong> {formatLastUpdated(lastRunAt, currentLanguage)}
         </span>
       </div>
       {error ? <span className="text-xs text-brand-red sm:text-right">{error}</span> : null}
@@ -107,7 +105,7 @@ function TopBar({ role }) {
         </span>
       ) : null}
         {syncHistory.length > 0 ? (
-          <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/70">
+          <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/85">
             <p className="font-semibold text-brand-navy/80">{t("syncHistory")}</p>
             {syncHistory.slice(0, 3).map((item) => (
               <p key={item.id}>

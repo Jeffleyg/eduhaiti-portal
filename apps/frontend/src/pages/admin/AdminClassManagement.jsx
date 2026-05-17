@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+import ListItemCard from "../../components/ListItemCard.jsx"
+import { CalendarDays } from "lucide-react"
 
 const initialForm = {
   name: "",
@@ -218,7 +221,7 @@ function AdminClassManagement() {
             <option value="">{t("adminAllSeries")}</option>
             {availableSeries.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name}
+                {sanitizeText(item.name)}
               </option>
             ))}
           </select>
@@ -252,9 +255,9 @@ function AdminClassManagement() {
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
           >
             <option value="">{t("adminNoTeacher")}</option>
-            {teachers.map((teacher) => (
+                {teachers.map((teacher) => (
               <option key={teacher.id} value={teacher.id}>
-                {teacher.name ?? teacher.email}
+                {maskName(teacher.name, "teacher") || sanitizeText(teacher.email)}
               </option>
             ))}
           </select>
@@ -295,29 +298,30 @@ function AdminClassManagement() {
               initialLimit={6}
               step={6}
               renderItem={(classItem) => (
-                <div
-                  key={classItem.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <p className="font-semibold text-brand-navy">{classItem.name}</p>
-                    <p className="text-xs text-brand-navy/60">
-                      {classItem.level} • {classItem.series?.name} • {classItem.academicYear?.year}
-                    </p>
-                    <p className="text-xs text-brand-navy/60">
-                      {t("teacher")}: {classItem.teacher?.name ?? t("adminNoTeacher")} • {t("students")}: {classItem.students?.length ?? 0}/{classItem.maxStudents}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button className="outline-button" onClick={() => startEdit(classItem)} disabled={loading}>
-                      {t("adminEdit")}
-                    </button>
-                    <button className="outline-button" onClick={() => deleteClass(classItem.id)} disabled={loading}>
-                      {t("adminDelete")}
-                    </button>
-                  </div>
-                </div>
+                <ListItemCard
+                  id={classItem.id}
+                  icon={<CalendarDays className="h-5 w-5 text-brand-sky" />}
+                  title={sanitizeText(classItem.name)}
+                  subtitle={`${classItem.level || t("adminClassLevel")}${classItem.series?.name ? ` • ${sanitizeText(classItem.series.name)}` : ""}${classItem.academicYear?.year ? ` • ${classItem.academicYear.year}` : ""}`}
+                  preview={
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      <div>
+                        <p className="text-xs text-brand-navy/60">{t("teacher")}</p>
+                        <p className="font-semibold text-brand-navy">{maskName(classItem.teacher?.name, "teacher") || t("adminNoTeacher")}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-brand-navy/60">{t("students")}</p>
+                        <p className="font-semibold text-brand-navy">{classItem.students?.length ?? 0}/{classItem.maxStudents}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-brand-navy/60">{t("adminMaxStudents")}</p>
+                        <p className="font-semibold text-brand-navy">{classItem.maxStudents ?? 30}</p>
+                      </div>
+                    </div>
+                  }
+                  onEdit={() => startEdit(classItem)}
+                  onDelete={() => deleteClass(classItem.id)}
+                />
               )}
             />
           )}

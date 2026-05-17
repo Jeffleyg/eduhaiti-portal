@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
+import { maskName } from "../../lib/string.js"
 
 const reviewStatuses = ["IN_REVIEW", "APPROVED", "REJECTED"]
 const filterStatuses = ["", "PENDING", "IN_REVIEW", "APPROVED", "REJECTED"]
@@ -157,7 +158,7 @@ function ProfessorAcademicRequests() {
                     <div>
                       <p className="font-semibold text-brand-navy">{item.title}</p>
                       <p className="text-xs text-brand-navy/60">
-                        {item.student?.name || item.student?.email} | {item.class?.name || "-"}
+                        {maskName(item.student?.name ?? item.student?.email, "student") || item.student?.email} | {item.class?.name || "-"}
                       </p>
                       <p className="text-xs text-brand-navy/60">{t(`academicRequestType_${item.type}`)}</p>
                     </div>

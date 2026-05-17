@@ -15,7 +15,7 @@ function DataTable({ columns, rows }) {
           {rows.map((row, index) => (
             <tr key={index} className="border-t border-brand-navy/10">
               {columns.map((column) => (
-                <td key={column.key} className="px-4 py-3 text-brand-navy/80">
+                <td key={column.key} className="px-4 py-3 text-brand-navy/85">
                   {row[column.key]}
                 </td>
               ))}

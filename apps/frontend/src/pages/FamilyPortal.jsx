@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { apiFetch } from "../lib/api.js"
 import LoadMoreList from "../components/LoadMoreList.jsx"
 
@@ -115,30 +116,28 @@ function FamilyPortal() {
 
         {overview ? (
           <>
-            <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+            <section className="module-card compact p-3">
               <h3 className="font-semibold text-brand-navy">{t("studentProfileTitle")}</h3>
-              <p className="text-sm text-brand-navy">{overview.student?.name}</p>
-              <p className="text-xs text-brand-navy/70">{t("enrollmentLabel")}: {overview.student?.enrollmentNumber}</p>
-              <p className="text-xs text-brand-navy/70">
-                {t("classesLabel")}: {(overview.student?.classes ?? []).map((item) => item.name).join(", ") || "-"}
-              </p>
+              <p className="text-sm font-semibold text-brand-navy">{maskName(overview.student?.name, "student")}</p>
+              <p className="text-xs text-brand-navy/75">{t("enrollmentLabel")}: {overview.student?.enrollmentNumber}</p>
+              <p className="text-xs text-brand-navy/75">{t("classesLabel")}: {(overview.student?.classes ?? []).map((item) => sanitizeText(item.name)).join(", ") || "-"}</p>
             </section>
 
             <section className="grid gap-4 lg:grid-cols-2">
               <div className="rounded-2xl border border-brand-navy/10 bg-white p-4">
                 <h3 className="font-semibold text-brand-navy">{t("academicPerformanceTitle")}</h3>
-                <div className="mt-3 space-y-2">
-                  {(overview.grades ?? []).length ? (
-                    overview.grades.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-brand-navy/10 p-3 text-sm">
-                        <p className="font-semibold text-brand-navy">{item.discipline?.name} - {item.class?.name}</p>
-                        <p className="text-brand-navy/70">{t("gradeLabel")}: {item.score}/{item.maxScore}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-brand-navy/60">{t("noGradesPublished")}</p>
-                  )}
-                </div>
+                  <div className="mt-2 space-y-2">
+                    {(overview.grades ?? []).length ? (
+                      overview.grades.map((item) => (
+                        <div key={item.id} className="module-card compact p-2">
+                          <p className="font-semibold text-sm text-brand-navy">{sanitizeText(item.discipline?.name)} - {sanitizeText(item.class?.name)}</p>
+                          <p className="text-xs text-brand-navy/75">{t("gradeLabel")}: {item.score}/{item.maxScore}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-brand-navy/60">{t("noGradesPublished")}</p>
+                    )}
+                  </div>
               </div>
 
               <div className="rounded-2xl border border-brand-navy/10 bg-white p-4">
@@ -154,32 +153,32 @@ function FamilyPortal() {
 
                     return (
                       <>
-                        <div className="flex gap-3">
-                          <div className="rounded-xl border border-brand-navy/10 bg-sand p-3 text-sm">
+                        <div className="flex gap-2">
+                          <div className="module-card compact p-2 bg-sand text-sm">
                             <p className="font-semibold text-brand-navy">{t("presentLabel")}</p>
-                            <p className="text-brand-navy/70">{presentCount}</p>
+                            <p className="text-brand-navy/75">{presentCount}</p>
                           </div>
-                          <div className="rounded-xl border border-brand-navy/10 bg-sand p-3 text-sm">
+                          <div className="module-card compact p-2 bg-sand text-sm">
                             <p className="font-semibold text-brand-navy">{t("absentLabel")}</p>
-                            <p className="text-brand-navy/70">{absentCount}</p>
+                            <p className="text-brand-navy/75">{absentCount}</p>
                           </div>
-                          <div className="rounded-xl border border-brand-navy/10 bg-sand p-3 text-sm">
+                          <div className="module-card compact p-2 bg-sand text-sm">
                             <p className="font-semibold text-brand-navy">{t("lastRecordLabel")}</p>
-                            <p className="text-brand-navy/70">{lastRecord ? new Date(lastRecord.date).toLocaleString("pt-BR") : "-"}</p>
+                            <p className="text-brand-navy/75">{lastRecord ? new Date(lastRecord.date).toLocaleString("pt-BR") : "-"}</p>
                           </div>
                         </div>
 
-                        <div className="mt-3">
+                        <div className="mt-2">
                           <LoadMoreList
                             items={atts}
                             initialLimit={4}
                             step={4}
                             renderItem={(item) => (
-                              <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
-                                <p className="font-semibold text-brand-navy">
-                                  {new Date(item.date).toLocaleDateString("pt-BR")} - {item.class?.name}
+                              <div className="module-card compact p-2 text-sm">
+                                <p className="font-semibold text-brand-navy text-sm">
+                                  {new Date(item.date).toLocaleDateString("pt-BR")} - {sanitizeText(item.class?.name)}
                                 </p>
-                                <p className="text-brand-navy/70">{t("status")}: {item.status}</p>
+                                <p className="text-brand-navy/75">{t("status")}: {item.status}</p>
                                 {item.remarks ? <p className="text-brand-navy/60">{t("remarksLabel")}: {item.remarks}</p> : null}
                               </div>
                             )}
@@ -202,9 +201,9 @@ function FamilyPortal() {
                       initialLimit={3}
                       step={3}
                       renderItem={(item) => (
-                        <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
+                        <div className="module-card compact p-2 text-sm">
                           <p className="font-semibold text-brand-navy">{item.title}</p>
-                          <p className="text-brand-navy/70">{item.content}</p>
+                          <p className="text-brand-navy/75">{item.content}</p>
                         </div>
                       )}
                     />
@@ -223,9 +222,9 @@ function FamilyPortal() {
                       initialLimit={3}
                       step={3}
                       renderItem={(item) => (
-                        <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
+                        <div className="module-card compact p-2 text-sm">
                           <p className="font-semibold text-brand-navy">{String(item.title ?? "Recado")}</p>
-                          <p className="text-brand-navy/70">{String(item.body ?? "")}</p>
+                          <p className="text-brand-navy/75">{String(item.body ?? "")}</p>
                           <p className="text-xs text-brand-navy/60">{new Date(item.createdAt).toLocaleString("pt-BR")}</p>
                         </div>
                       )}

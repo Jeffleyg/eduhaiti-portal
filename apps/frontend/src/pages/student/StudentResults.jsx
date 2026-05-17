@@ -6,6 +6,7 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentResults() {
@@ -55,7 +56,7 @@ function StudentResults() {
   ]
 
   const rows = (grades ?? []).map((grade) => ({
-    subject: grade.discipline?.name ?? grade.subject,
+    subject: sanitizeText(grade.discipline?.name ?? grade.subject),
     grade: `${grade.score}/${grade.maxScore}`,
     status: grade.status === "DRAFT" ? t("gradeDraft") : t("gradePublished"),
   }))
@@ -89,12 +90,12 @@ function StudentResults() {
       doc.setFontSize(16)
       doc.text(t("transcriptTitle"), 14, 16)
       doc.setFontSize(11)
-      doc.text(`${t("student")}: ${user?.name ?? user?.email ?? "-"}`, 14, 25)
+      doc.text(`${t("student")}: ${maskName(user?.name ?? user?.email, "student")}`, 14, 25)
       doc.text(`${t("academicYear")}: ${selectedYear?.year ?? "-"}`, 14, 31)
 
       const tableRows = (report.grades ?? []).map((item) => [
-        item.discipline?.name ?? "-",
-        item.class?.name ?? "-",
+        sanitizeText(item.discipline?.name ?? "-"),
+        sanitizeText(item.class?.name ?? "-"),
         `${item.score}/${item.maxScore}`,
         `${((item.score / item.maxScore) * 100).toFixed(1)}%`,
       ])
@@ -145,8 +146,8 @@ function StudentResults() {
         </button>
       </div>
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="mb-4 font-semibold text-brand-navy">{t("myResultsByDiscipline")}</h3>
+      <section className="module-card compact p-3">
+        <h3 className="mb-2 font-semibold text-brand-navy">{t("myResultsByDiscipline")}</h3>
         <DataTablePaginated columns={columns} rows={rows.length > 0 ? rows : []} pageSize={10} />
       </section>
 
@@ -154,18 +155,18 @@ function StudentResults() {
         <h3 className="text-lg font-semibold text-brand-navy">{t("myEvolution")}</h3>
         <p className="text-sm text-brand-navy/70">Media geral no periodo: {Number(evolution?.overallAverage ?? 0).toFixed(2)}/20</p>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-brand-navy/10 p-4">
-            <h4 className="font-semibold text-brand-navy mb-2">Linha do tempo mensal</h4>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="module-card compact p-3">
+            <h4 className="font-semibold text-brand-navy mb-1">Linha do tempo</h4>
             {evolution?.timeline?.length ? (
               <LoadMoreList
                 items={evolution.timeline}
                 initialLimit={4}
                 step={4}
                 renderItem={(point) => (
-                  <div key={point.period} className="flex items-center justify-between text-sm">
-                    <span className="text-brand-navy/70">{point.period}</span>
-                    <span className="font-semibold text-brand-navy">{point.average.toFixed(2)}/20</span>
+                  <div key={point.period} className="flex items-center justify-between text-sm py-1">
+                    <span className="text-brand-navy/75">{point.period}</span>
+                    <span className="font-semibold text-brand-navy text-sm">{point.average.toFixed(2)}/20</span>
                   </div>
                 )}
               />
@@ -174,17 +175,17 @@ function StudentResults() {
             )}
           </div>
 
-          <div className="rounded-xl border border-brand-navy/10 p-4">
-            <h4 className="font-semibold text-brand-navy mb-2">Media por disciplina</h4>
+          <div className="module-card compact p-3">
+            <h4 className="font-semibold text-brand-navy mb-1">Média por disciplina</h4>
             {evolution?.byDiscipline?.length ? (
               <LoadMoreList
                 items={evolution.byDiscipline}
                 initialLimit={4}
                 step={4}
                 renderItem={(item) => (
-                  <div key={item.disciplineId} className="flex items-center justify-between text-sm">
-                    <span className="text-brand-navy/70">{item.disciplineName}</span>
-                    <span className="font-semibold text-brand-navy">{item.average.toFixed(2)}/20</span>
+                  <div key={item.disciplineId} className="flex items-center justify-between text-sm py-1">
+                    <span className="text-brand-navy/75">{item.disciplineName}</span>
+                    <span className="font-semibold text-brand-navy text-sm">{item.average.toFixed(2)}/20</span>
                   </div>
                 )}
               />
