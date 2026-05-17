@@ -137,14 +137,14 @@ function ProfessorMessages() {
         <button
           type="button"
           onClick={() => setTab("inbox")}
-          className={`rounded-2xl px-3 py-2 text-sm ${tab === "inbox" ? "bg-brand-navy text-white" : "bg-white text-brand-navy"}`}
+          className={`rounded-2xl px-3 py-2 text-sm ${tab === "inbox" ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"}`}
         >
           {t("inbox")}
         </button>
         <button
           type="button"
           onClick={() => setTab("sent")}
-          className={`rounded-2xl px-3 py-2 text-sm ${tab === "sent" ? "bg-brand-navy text-white" : "bg-white text-brand-navy"}`}
+          className={`rounded-2xl px-3 py-2 text-sm ${tab === "sent" ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"}`}
         >
           {t("sentMessages")}
         </button>
