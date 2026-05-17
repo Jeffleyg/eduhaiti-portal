@@ -115,9 +115,9 @@ function Sidebar({ role }) {
             title={t(item.labelKey)}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive ? "bg-brand-navy text-white shadow-sm" : "text-brand-navy/80 hover:bg-white/60"
+                  isActive ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"
                 } ${collapsed ? "justify-center px-0" : ""}`
-              }
+          >
           >
             <item.icon className="h-4 w-4" />
             {!collapsed ? t(item.labelKey) : null}
