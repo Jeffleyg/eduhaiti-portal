@@ -410,7 +410,6 @@ input[type="radio"] {
   .module-card.compact {
     @apply p-3;
   }
-  }
 
   .module-card-title {
     @apply text-sm font-semibold uppercase tracking-[0.08em] text-brand-navy/70;
@@ -424,4 +423,4 @@ input[type="radio"] {
   .badge {
     @apply inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-semibold bg-white border border-brand-navy/10 text-brand-navy;
   }
-}
+ 
