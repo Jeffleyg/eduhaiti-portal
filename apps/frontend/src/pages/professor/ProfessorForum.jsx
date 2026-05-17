@@ -125,7 +125,7 @@ function ProfessorForum() {
       <SectionHeader title={t("forumTitle")} subtitle={t("forumSubtitle")} />
       {error ? <p className="text-sm text-brand-red">{error}</p> : null}
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
+      <section className="module-card compact card-compact space-y-4">
         <h3 className="font-semibold text-brand-navy">{t("classLabel")}</h3>
         <select
           value={selectedClass}
@@ -140,7 +140,7 @@ function ProfessorForum() {
         </select>
       </section>
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
+      <section className="module-card compact card-compact space-y-4">
         <h3 className="font-semibold text-brand-navy">{t("createTopic")}</h3>
         <form className="space-y-3" onSubmit={createThread}>
           <input
@@ -161,7 +161,7 @@ function ProfessorForum() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
+        <div className="module-card compact card-compact space-y-3">
           <h3 className="font-semibold text-brand-navy">{t("topicsTitle")}</h3>
           {threads.length > 0 ? (
             <LoadMoreList

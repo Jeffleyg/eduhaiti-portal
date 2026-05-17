@@ -84,7 +84,7 @@ function ProfessorMessages() {
   return (
     <div>
       <SectionHeader title={t("navMessages")} subtitle={t("messagesSubtitle")} />
-      <div className="mb-6 rounded-3xl bg-white px-5 py-5">
+      <div className="mb-6 module-card compact card-compact">
         <h3 className="text-base font-semibold text-brand-navy">{t("composeMessage")}</h3>
         {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         {feedback ? <p className="mt-2 text-sm text-emerald-600">{feedback}</p> : null}
@@ -157,7 +157,7 @@ function ProfessorMessages() {
             initialLimit={5}
             step={5}
             renderItem={(message) => (
-              <div key={message.id} className="rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
+              <div key={message.id} className="module-card compact card-compact">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-brand-navy">
                     {tab === "inbox"

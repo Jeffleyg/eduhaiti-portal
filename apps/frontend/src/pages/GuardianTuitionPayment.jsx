@@ -116,7 +116,7 @@ function GuardianTuitionPayment() {
 
   return (
     <div className="relative min-h-screen bg-sand px-4 py-10">
-      <div className="mx-auto max-w-3xl space-y-6 rounded-3xl border border-brand-navy/10 bg-white/80 p-6 shadow-xl shadow-brand-navy/10">
+      <div className="mx-auto max-w-3xl space-y-6 module-card compact p-6 shadow-xl shadow-brand-navy/10">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl text-brand-navy">{t("tuitionPaymentTitle")}</h1>
@@ -127,7 +127,7 @@ function GuardianTuitionPayment() {
           </Link>
         </div>
 
-        <section className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-950">
+        <section className="module-card compact p-4 text-sm text-emerald-950 bg-emerald-50/80 border border-emerald-200">
           <h2 className="font-semibold">{t("securePaymentTitle")}</h2>
           <p className="mt-1">{t("securePaymentCopy")}</p>
           <ul className="mt-3 grid gap-2 text-xs md:grid-cols-3">
@@ -140,7 +140,7 @@ function GuardianTuitionPayment() {
         {error ? <p className="text-sm text-brand-red">{error}</p> : null}
         {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
-        <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <section className="module-card compact p-4">
           <h2 className="text-base font-semibold text-brand-navy">{t("lookupChargesTitle")}</h2>
           <form className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={loadPending}>
             <input
@@ -157,8 +157,8 @@ function GuardianTuitionPayment() {
             </button>
           </form>
 
-          {studentInfo ? (
-            <div className="mt-4 rounded-2xl border border-brand-navy/10 bg-sand p-3">
+            {studentInfo ? (
+            <div className="mt-4 module-card compact bg-sand p-3">
               <p className="text-sm text-brand-navy">
                 {t("studentLabel")}: <strong>{maskName(studentInfo.name, "student")}</strong>
               </p>
@@ -174,9 +174,9 @@ function GuardianTuitionPayment() {
                 initialLimit={3}
                 step={3}
                 renderItem={(charge) => (
-                  <div key={charge.id} className="rounded-xl border border-brand-navy/10 bg-white p-3">
+                  <div key={charge.id} className="module-card compact p-3 bg-white">
                     <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
-                    <p className="text-xs text-brand-navy/60">{t("status")}: {charge.status}</p>
+                    <p className="text-xs text-brand-navy/60">{t("status")}: <span className="badge">{charge.status}</span></p>
                     <p className="text-xs text-brand-navy/60">
                       {t("dueDate")}: {new Date(charge.dueDate).toLocaleDateString()}
                     </p>

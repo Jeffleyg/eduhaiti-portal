@@ -91,7 +91,7 @@ function ProfessorDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-brand-navy/10 bg-white p-5">
+        <div className="module-card compact card-compact p-5">
           <SectionHeader title={t("myClasses")} />
           <div className="space-y-3">
             {classes.length > 0 ? (
@@ -100,9 +100,9 @@ function ProfessorDashboard() {
                 initialLimit={4}
                 step={4}
                 renderItem={(cls) => (
-                  <div key={cls.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
+                  <div key={cls.id} className="module-card compact flex items-center justify-between bg-sand px-4 py-3 text-sm">
                     <span className="font-semibold text-brand-navy">{sanitizeText(cls.name)}</span>
-                      <span className="text-brand-navy/70">{cls.students?.length ?? 0} {t("students")}</span>
+                      <span className="badge">{cls.students?.length ?? 0} {t("students")}</span>
                   </div>
                 )}
               />
@@ -112,12 +112,12 @@ function ProfessorDashboard() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-brand-navy/10 bg-white p-5">
+        <div className="module-card compact card-compact p-5">
           <SectionHeader title={t("recentMessages")} />
           <div className="space-y-3">
             {recentMessages.length > 0 ? (
               recentMessages.map((message) => (
-                <div key={message.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
+                <div key={message.id} className="module-card compact flex items-center justify-between bg-sand px-4 py-3 text-sm">
                   <div>
                     <p className="font-semibold text-brand-navy">{maskName(message.from?.name, message.from?.role ? message.from.role.toLowerCase() : "user") || sanitizeText(message.from?.email)}</p>
                     <p className="text-brand-navy/70">{sanitizeText(message.subject)}</p>
@@ -131,7 +131,7 @@ function ProfessorDashboard() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-brand-navy/10 bg-white p-5">
+      <div className="module-card compact card-compact p-5">
         <SectionHeader title="Gamificacao da Turma" subtitle="Ranking parcial de engajamento" />
         <div className="space-y-2">
               {leaderboard.length ? (
