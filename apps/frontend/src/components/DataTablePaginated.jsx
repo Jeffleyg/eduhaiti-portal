@@ -94,7 +94,7 @@ function DataTablePaginated({
                 onClick={() => onRowClick?.(row)}
               >
                 {columns.map((column) => (
-                  <td key={column.key} className="px-4 py-3 text-brand-navy/80">
+                  <td key={column.key} className="px-4 py-3 text-brand-navy/85">
                     {row[column.key]}
                   </td>
                 ))}

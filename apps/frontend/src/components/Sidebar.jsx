@@ -37,6 +37,7 @@ const studentNav = [
   { to: "/student", icon: LayoutDashboard, labelKey: "navOverview" },
   { to: "/student/profile", icon: Users, labelKey: "navProfile" },
   { to: "/student/grades", icon: BookOpen, labelKey: "navResults" },
+  { to: "/student/transcript", icon: GraduationCap, labelKey: "navTranscript" },
   { to: "/student/schedule", icon: CalendarDays, labelKey: "navSchedule" },
   { to: "/student/resources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/student/assignments", icon: ClipboardCheck, labelKey: "navHomework" },

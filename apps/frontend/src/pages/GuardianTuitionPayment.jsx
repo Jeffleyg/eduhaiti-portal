@@ -159,11 +159,16 @@ function GuardianTuitionPayment() {
 
             {studentInfo ? (
             <div className="mt-4 module-card compact bg-sand p-3">
-              <p className="text-sm text-brand-navy">
-                {t("studentLabel")}: <strong>{maskName(studentInfo.name, "student")}</strong>
-              </p>
-              <p className="text-xs text-brand-navy/70">{t("enrollmentLabel")}: {studentInfo.enrollmentNumber}</p>
-              <p className="text-xs text-brand-navy/70">{t("pendingTotalLabel")}: {totalPending.toFixed(2)} HTG</p>
+              <div className="grid grid-cols-12 items-center gap-2">
+                <div className="col-span-7">
+                  <p className="text-sm font-semibold text-brand-navy">{maskName(studentInfo.name, "student")}</p>
+                  <p className="text-xs text-brand-navy/75">{t("enrollmentLabel")}: {studentInfo.enrollmentNumber}</p>
+                </div>
+                <div className="col-span-5 text-right">
+                  <p className="text-sm font-semibold text-brand-navy">{totalPending.toFixed(2)} HTG</p>
+                  <p className="text-xs text-brand-navy/70">{t("pendingTotalLabel")}</p>
+                </div>
+              </div>
             </div>
           ) : null}
 
@@ -175,13 +180,19 @@ function GuardianTuitionPayment() {
                 step={3}
                 renderItem={(charge) => (
                   <div key={charge.id} className="module-card compact p-3 bg-white">
-                    <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
-                    <p className="text-xs text-brand-navy/60">{t("status")}: <span className="badge">{charge.status}</span></p>
-                    <p className="text-xs text-brand-navy/60">
-                      {t("dueDate")}: {new Date(charge.dueDate).toLocaleDateString()}
-                    </p>
-                    {charge.description ? <p className="text-xs text-brand-navy/60">{charge.description}</p> : null}
-                  </div>
+                      <div className="grid grid-cols-12 items-center gap-2">
+                        <div className="col-span-3">
+                          <p className="text-sm font-semibold text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
+                        </div>
+                        <div className="col-span-6">
+                          <p className="text-xs text-brand-navy/75">{charge.description || t("invoiceDefaultItem")}</p>
+                          <p className="text-xs text-brand-navy/60">{t("dueDate")}: {new Date(charge.dueDate).toLocaleDateString()}</p>
+                        </div>
+                        <div className="col-span-3 text-right">
+                          <span className="badge">{charge.status}</span>
+                        </div>
+                      </div>
+                    </div>
                 )}
               />
             </div>

@@ -157,16 +157,16 @@ function StudentMessages() {
             initialLimit={5}
             step={5}
             renderItem={(message) => (
-              <div key={message.id} className="rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
-                <div className="flex items-center justify-between">
-                    <p className="font-semibold text-brand-navy">
-                      {tab === "inbox"
-                        ? maskName(message.from?.name ?? message.from?.email, message.from?.role ? message.from.role.toLowerCase() : "user")
-                        : maskName(message.to?.name ?? message.to?.email, message.to?.role ? message.to.role.toLowerCase() : "user")}
-                    </p>
-                  </div>
-                  <p className="mt-2 text-sm text-brand-navy/70">{sanitizeText(message.subject)}</p>
-                  <p className="mt-1 text-xs text-brand-navy/50">{sanitizeText(message.body)}</p>
+              <div key={message.id} className="module-card compact p-3 bg-white border border-brand-navy/8">
+                <div>
+                  <p className="font-semibold text-sm text-brand-navy">
+                    {tab === "inbox"
+                      ? maskName(message.from?.name ?? message.from?.email, message.from?.role ? message.from.role.toLowerCase() : "user")
+                      : maskName(message.to?.name ?? message.to?.email, message.to?.role ? message.to.role.toLowerCase() : "user")}
+                  </p>
+                  <p className="mt-1 text-xs text-brand-navy/75">{sanitizeText(message.subject)}</p>
+                  <p className="mt-1 text-xs text-brand-navy/60 line-clamp-2">{sanitizeText(message.body)}</p>
+                </div>
               </div>
             )}
           />

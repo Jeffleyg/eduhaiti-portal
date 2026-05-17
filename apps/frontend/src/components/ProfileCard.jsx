@@ -49,33 +49,22 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
   }
 
   return (
-    <div className="space-y-4">
-      {/* Cartão Principal com Foto e Dados */}
-      <div className="module-card compact card-compact rounded-[2rem] border border-brand-navy/10 bg-gradient-to-br from-white via-white to-brand-navy/5 p-6 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.45)]">
-        {/* Foto de Perfil */}
-        <div className="flex items-center gap-4">
-          <div className="relative shrink-0">
-            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-brand-navy to-brand-sky shadow-lg ring-1 ring-brand-navy/10">
+    <div>
+      {/* Compact dashboard-like card */}
+      <div className="module-card compact card-compact rounded-xl border border-brand-navy/8 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-12 gap-3 items-center">
+          <div className="col-span-3">
+            <div className="relative mx-auto h-16 w-16 overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-brand-navy to-brand-sky ring-1 ring-brand-navy/8">
               {previewPhoto ? (
                 <img src={previewPhoto} alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")} className="h-full w-full object-cover" />
               ) : user?.profilePhoto ? (
                 <img src={apiAssetUrl(user.profilePhoto)} alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-navy to-brand-sky">
-                  <User className="h-12 w-12 text-white/60" />
+                <div className="flex h-full w-full items-center justify-center bg-brand-navy">
+                  <User className="h-6 w-6 text-white/80" />
                 </div>
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-brand-navy p-2 text-white transition-colors hover:bg-brand-navy/90 disabled:opacity-50"
-              title={t("uploadPhoto")}
-            >
-              <Camera className="h-4 w-4" />
-            </button>
             <input
               ref={fileInputRef}
               type="file"
@@ -86,100 +75,65 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
             />
           </div>
 
-          {/* Info ao lado da foto */}
-          <div className="flex-1 space-y-3">
-            {/* Role Badge */}
-            <span className={`badge ${getRoleBadgeColor()}`}>
-              {getRoleLabel()}
-            </span>
-
-            {/* Nome em Caixa */}
-            <div className="rounded-xl border border-brand-navy/10 bg-white/60 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1">
-                {t("name")}
-              </p>
-              {loading ? (
-                <div className="skeleton h-6 w-48 rounded" />
-              ) : (
-                <p className="text-lg font-bold text-brand-navy break-words">
-                  {maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
-                </p>
-              )}
+          <div className="col-span-6">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-brand-navy">
+                {loading ? <span className="skeleton h-5 w-32 rounded" /> : maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
+              </h2>
+              <span className={`badge ${getRoleBadgeColor()} text-xs py-0.5 px-2`}>{getRoleLabel()}</span>
             </div>
+            <p className="text-xs text-brand-navy/75">{loading ? <span className="skeleton h-4 w-40 rounded" /> : sanitizeText(user?.email) || "-"}</p>
+          </div>
 
-            {/* Email em Caixa */}
-            <div className="rounded-xl border border-brand-navy/10 bg-white/60 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1 flex items-center gap-1">
-                <Mail className="h-3 w-3" />
-                {t("email")}
-              </p>
-              {loading ? (
-                <div className="skeleton h-4 w-40 rounded" />
-              ) : (
-                <p className="text-sm font-semibold text-brand-navy break-words">
-                  {sanitizeText(user?.email) || "-"}
-                </p>
-              )}
-            </div>
+          <div className="col-span-3 flex items-center justify-end gap-2">
+            <button
+              onClick={onEditClick}
+              type="button"
+              disabled={loading}
+              className="rounded-full p-2 text-brand-navy/80 hover:bg-brand-navy/5 transition-colors disabled:opacity-50"
+              title={t("editProfile")}
+            >
+              <Edit3 className="h-4 w-4" />
+              <span className="sr-only">{t("edit")}</span>
+            </button>
+            <button
+              onClick={onSettingsClick}
+              type="button"
+              disabled={loading}
+              className="rounded-full p-2 text-brand-navy/80 hover:bg-brand-navy/5 transition-colors disabled:opacity-50"
+              title={t("settings")}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">{t("settings")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="rounded-full p-2 text-brand-navy/80 hover:bg-brand-navy/5 transition-colors disabled:opacity-50"
+              title={t("uploadPhoto")}
+            >
+              <Camera className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
-        {/* Matrícula se for estudante */}
-        {user?.role === "STUDENT" && user?.enrollmentNumber ? (
-          <div className="mt-4 rounded-xl border border-brand-navy/10 bg-white/60 px-3 py-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45 mb-1">
-              {t("enrollmentNumber")}
-            </p>
-            <p className="font-semibold text-brand-navy">{user.enrollmentNumber}</p>
-          </div>
-        ) : null}
-
-        {/* Botões de Ação */}
-        <div className="mt-6 flex gap-2 border-t border-brand-navy/10 pt-4">
-          <button
-            onClick={onEditClick}
-            type="button"
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5 disabled:opacity-50"
-            title={t("editProfile")}
-          >
-            <Edit3 className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("edit")}</span>
-          </button>
-          <button
-            onClick={onSettingsClick}
-            type="button"
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand-navy/20 bg-white/80 px-3 py-2 text-sm font-semibold text-brand-navy transition-all hover:bg-white hover:border-brand-navy/40 hover:-translate-y-0.5 disabled:opacity-50"
-            title={t("settings")}
-          >
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("settings")}</span>
-          </button>
-        </div>
       </div>
 
-      {/* Dados Institucionais - Estudante */}
+      {/* Institutional data inline for dashboard compactness */}
       {user?.role === "STUDENT" && (
-        <div className="rounded-2xl border border-brand-navy/10 bg-white/60 p-4 shadow-sm">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/45">
-            {t("institutionalData")}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-brand-navy/60">{t("status")}</p>
-              <p className="font-semibold text-emerald-700">{t("active")}</p>
-            </div>
-            <div>
-              <p className="text-xs text-brand-navy/60">{t("registrationDate")}</p>
-              <p className="font-semibold text-brand-navy">
-                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-brand-navy/60">{t("academicStatus")}</p>
-              <p className="font-semibold text-brand-navy">{t("regular")}</p>
-            </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-brand-navy/8 bg-white/95 px-3 py-2 text-xs text-brand-navy/85">
+            <p className="font-semibold">{t("status")}</p>
+            <p className="text-emerald-700 text-sm">{t("active")}</p>
+          </div>
+          <div className="rounded-xl border border-brand-navy/8 bg-white/95 px-3 py-2 text-xs text-brand-navy/85">
+            <p className="font-semibold">{t("registrationDate")}</p>
+            <p className="text-sm">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}</p>
+          </div>
+          <div className="rounded-xl border border-brand-navy/8 bg-white/95 px-3 py-2 text-xs text-brand-navy/85">
+            <p className="font-semibold">{t("academicStatus")}</p>
+            <p className="text-sm">{t("regular")}</p>
           </div>
         </div>
       )}

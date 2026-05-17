@@ -41,7 +41,7 @@ function TopBar({ role }) {
         <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 rounded-lg p-2 text-brand-navy/70 hover:bg-brand-navy/10 transition-colors"
+          className="flex items-center gap-2 rounded-lg p-2 text-brand-navy/85 hover:bg-brand-navy/10 transition-colors"
           type="button"
           title={t("back")}
         >
@@ -54,7 +54,7 @@ function TopBar({ role }) {
         />
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-brand-navy">{t("dashboardTitle")}</h1>
-          <p className="mt-1 text-sm text-brand-navy/70">{t(roleLabelKey)}</p>
+          <p className="mt-1 text-sm text-brand-navy/85">{t(roleLabelKey)}</p>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -82,7 +82,7 @@ function TopBar({ role }) {
         <LanguageSelector />
 
         <label className="inline-flex items-center gap-2 rounded-full border border-brand-navy/10 bg-white px-2 py-1 text-xs font-medium text-brand-navy">
-          <span className="text-xs text-brand-navy/70">{t("syncMode")}</span>
+          <span className="text-xs text-brand-navy/85">{t("syncMode")}</span>
           <select
             value={conflictStrategy}
             onChange={(event) => setConflictStrategy(event.target.value)}
@@ -94,7 +94,7 @@ function TopBar({ role }) {
         </label>
         </div>
 
-        <span className="text-sm text-brand-navy/60 sm:text-right">
+        <span className="text-sm text-brand-navy/85 sm:text-right">
           <strong className="font-semibold text-brand-navy/80">{t("lastSyncAt")}</strong> {formatLastUpdated(lastRunAt, currentLanguage)}
         </span>
       </div>
@@ -105,7 +105,7 @@ function TopBar({ role }) {
         </span>
       ) : null}
         {syncHistory.length > 0 ? (
-          <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/70">
+          <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/85">
             <p className="font-semibold text-brand-navy/80">{t("syncHistory")}</p>
             {syncHistory.slice(0, 3).map((item) => (
               <p key={item.id}>

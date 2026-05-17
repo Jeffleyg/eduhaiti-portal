@@ -95,10 +95,12 @@ function StudentSchedule() {
               initialLimit={4}
               step={4}
               renderItem={(cls) => (
-                <div key={cls.id} className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
-                  <div>
-                    <p className="font-semibold text-brand-navy">{sanitizeText(cls.name)}</p>
-                    <p className="text-sm text-brand-navy/60">{maskName(cls.teacher?.name, "teacher") || sanitizeText(cls.teacher?.email)}</p>
+                <div key={cls.id} className="module-card compact p-3 bg-white border border-brand-navy/8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-brand-navy">{sanitizeText(cls.name)}</p>
+                      <p className="text-xs text-brand-navy/75">{maskName(cls.teacher?.name, "teacher") || sanitizeText(cls.teacher?.email)}</p>
+                    </div>
                   </div>
                 </div>
               )}

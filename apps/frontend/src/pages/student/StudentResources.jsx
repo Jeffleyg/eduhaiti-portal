@@ -91,36 +91,38 @@ function StudentResources() {
   }
 
   const renderResourceCard = (resource) => (
-    <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between gap-3">
-      <div>
-        <p className="font-semibold text-brand-navy">{resource.title}</p>
-        {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.description}</p>}
-        <p className="text-xs text-brand-navy/50 mt-1">Por: {maskName(resource.uploadedBy?.name, "user")}</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline whitespace-nowrap">
-          {disableImages ? "TXT-DOWNLOAD" : "Download"}
-        </a>
-        {canCacheResource(resource) ? (
-          isSavedOffline(resource.id) ? (
-            <button
-              type="button"
-              onClick={() => handleRemoveOffline(resource)}
-              className="rounded-lg border border-brand-navy/20 px-3 py-1 text-xs font-semibold text-brand-navy hover:bg-brand-navy/5"
-            >
-              Remover offline
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => handleSaveOffline(resource)}
-              disabled={savingId === resource.id}
-              className="rounded-lg bg-brand-navy px-3 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {savingId === resource.id ? "Saving..." : "Save offline"}
-            </button>
-          )
-        ) : null}
+    <div key={resource.id} className="module-card compact p-3 bg-white border border-brand-navy/8">
+      <div className="grid grid-cols-12 items-center gap-2">
+        <div className="col-span-8">
+          <p className="font-semibold text-sm text-brand-navy">{resource.title}</p>
+          {disableImages ? null : <p className="text-xs text-brand-navy/70">{resource.description}</p>}
+          <p className="text-xs text-brand-navy/60 mt-1">Por: {maskName(resource.uploadedBy?.name, "user")}</p>
+        </div>
+        <div className="col-span-4 flex items-center justify-end gap-2">
+          <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red text-sm font-semibold hover:underline whitespace-nowrap">
+            {disableImages ? "TXT" : "Download"}
+          </a>
+          {canCacheResource(resource) ? (
+            isSavedOffline(resource.id) ? (
+              <button
+                type="button"
+                onClick={() => handleRemoveOffline(resource)}
+                className="rounded-md border border-brand-navy/20 px-2 py-1 text-xs font-semibold text-brand-navy hover:bg-brand-navy/5"
+              >
+                Remover
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSaveOffline(resource)}
+                disabled={savingId === resource.id}
+                className="rounded-md bg-brand-navy px-2 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {savingId === resource.id ? "..." : "Salvar"}
+              </button>
+            )
+          ) : null}
+        </div>
       </div>
     </div>
   )
