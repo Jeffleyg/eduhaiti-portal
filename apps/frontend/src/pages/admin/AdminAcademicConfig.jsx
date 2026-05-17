@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
-import Sidebar from "../../components/Sidebar.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionCard from "../../components/SectionCard.jsx"
@@ -10,6 +9,7 @@ import PeriodForm from "../../components/admin/PeriodForm.jsx"
 import PeriodsList from "../../components/admin/PeriodsList.jsx"
 import SettingsForm from "../../components/admin/SettingsForm.jsx"
 import Feedback from "../../components/Feedback.jsx"
+import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
 
 const initialPeriod = {
   name: "",
@@ -29,12 +29,14 @@ function AdminAcademicConfig() {
   const { t } = useTranslation()
   const { token, user } = useAuth()
   const [schoolId, setSchoolId] = useState("")
+  const [schoolLocked, setSchoolLocked] = useState(false)
   const [periodForm, setPeriodForm] = useState(initialPeriod)
   const [settingsForm, setSettingsForm] = useState(initialSettings)
   const [periods, setPeriods] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
+  const [activeSection, setActiveSection] = useState("context")
 
   const clearFeedback = () => {
     setError("")
@@ -44,6 +46,7 @@ function AdminAcademicConfig() {
   useEffect(() => {
     if (user?.schoolId) {
       setSchoolId(user.schoolId)
+      setSchoolLocked(true)
     }
   }, [user?.schoolId])
 
@@ -178,30 +181,49 @@ function AdminAcademicConfig() {
 
   return (
     <div className="flex gap-6">
-      <Sidebar role="admin" />
       <main className="flex-1 space-y-6">
         <SectionHeader title={t("academicAdminTitle")} subtitle={t("academicAdminSubtitle")} />
 
         <Feedback error={error} message={message} />
 
-        <SectionCard>
-          <SchoolContext t={t} schoolId={schoolId} setSchoolId={setSchoolId} loadPeriods={loadPeriods} loadSettings={loadSettings} loading={loading} locked={Boolean(user?.schoolId)} />
-        </SectionCard>
+        <div className="flex items-center justify-between">
+          <AdminSectionToolbar
+            sections={[
+              { key: "context", label: t("schoolContext") },
+              { key: "periods", label: t("periods") },
+              { key: "settings", label: t("settings") },
+            ]}
+            active={activeSection}
+            onChange={(k) => setActiveSection(k)}
+          />
+        </div>
 
-        <SectionCard>
-          <PeriodForm t={t} periodForm={periodForm} setPeriodForm={setPeriodForm} createPeriod={createPeriod} loading={loading} />
-        </SectionCard>
+        {activeSection === "context" && (
+          <SectionCard>
+            <SchoolContext t={t} schoolId={schoolId} setSchoolId={setSchoolId} loadPeriods={loadPeriods} loadSettings={loadSettings} loading={loading} locked={schoolLocked} />
+          </SectionCard>
+        )}
 
-        <SectionCard>
-          <h3 className="text-base font-semibold text-brand-navy">{t("academicPeriodsList")}</h3>
-          <div className="mt-4">
-            <PeriodsList t={t} periods={periods} togglePeriod={togglePeriod} removePeriod={removePeriod} />
-          </div>
-        </SectionCard>
+        {activeSection === "periods" && (
+          <>
+            <SectionCard>
+              <PeriodForm t={t} periodForm={periodForm} setPeriodForm={setPeriodForm} createPeriod={createPeriod} loading={loading} />
+            </SectionCard>
 
-        <SectionCard>
-          <SettingsForm t={t} settingsForm={settingsForm} setSettingsForm={setSettingsForm} saveSettings={saveSettings} loading={loading} />
-        </SectionCard>
+            <SectionCard>
+              <h3 className="text-base font-semibold text-brand-navy">{t("academicPeriodsList")}</h3>
+              <div className="mt-4">
+                <PeriodsList t={t} periods={periods} togglePeriod={togglePeriod} removePeriod={removePeriod} />
+              </div>
+            </SectionCard>
+          </>
+        )}
+
+        {activeSection === "settings" && (
+          <SectionCard>
+            <SettingsForm t={t} settingsForm={settingsForm} setSettingsForm={setSettingsForm} saveSettings={saveSettings} loading={loading} />
+          </SectionCard>
+        )}
       </main>
     </div>
   )

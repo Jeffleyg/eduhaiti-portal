@@ -1,31 +1,42 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
-import DataTable from "../../components/DataTable.jsx"
+import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import LoadingState from "../../components/LoadingState.jsx"
+import SkeletonLoader from "../../components/SkeletonLoader.jsx"
+import Button from "../../components/Button.jsx"
+import Input from "../../components/Input.jsx"
+import Select from "../../components/Select.jsx"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 
-const statusOptions = [
-  { value: "PRESENT", label: "Presente" },
-  { value: "ABSENT", label: "Ausente" },
-  { value: "LATE", label: "Atrasado" },
-  { value: "EXCUSED", label: "Justificado" },
-]
+// status labels are resolved inside the component with i18n
 
 function ProfessorAttendance() {
   const { t } = useTranslation()
   const { token } = useAuth()
+  const statusOptions = [
+    { value: "PRESENT", label: t("attendancePresent") },
+    { value: "ABSENT", label: t("attendanceAbsent") },
+    { value: "LATE", label: t("attendanceLate") },
+    { value: "EXCUSED", label: t("attendanceExcused") },
+  ]
   const [classes, setClasses] = useState([])
   const [selectedClassId, setSelectedClassId] = useState("")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
   const [attendance, setAttendance] = useState([])
   const [markings, setMarkings] = useState({})
   const [loading, setLoading] = useState(true)
+  const [loadingAttendance, setLoadingAttendance] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
-  const selectedClass = classes.find((item) => item.id === selectedClassId)
+  const selectedClass = useMemo(
+    () => classes.find((item) => item.id === selectedClassId),
+    [classes, selectedClassId],
+  )
 
   const loadClassAttendance = async (classId, dateValue) => {
     if (!classId) {
@@ -34,13 +45,18 @@ function ProfessorAttendance() {
       return
     }
 
-    const records = await apiFetch(`/attendance/class/${classId}?date=${dateValue}`, { token })
-    const prepared = {}
-    ;(records ?? []).forEach((record) => {
-      prepared[record.studentId] = record.status
-    })
-    setAttendance(records ?? [])
-    setMarkings(prepared)
+    setLoadingAttendance(true)
+    try {
+      const records = await apiFetch(`/attendance/class/${classId}?date=${dateValue}`, { token })
+      const prepared = {}
+      ;(records ?? []).forEach((record) => {
+        prepared[record.studentId] = record.status
+      })
+      setAttendance(records ?? [])
+      setMarkings(prepared)
+    } finally {
+      setLoadingAttendance(false)
+    }
   }
 
   useEffect(() => {
@@ -49,13 +65,15 @@ function ProfessorAttendance() {
       setError("")
       try {
         const classesData = await apiFetch("/classes/my-classes", { token })
-        setClasses(classesData ?? [])
-        if (classesData?.length) {
-          setSelectedClassId(classesData[0].id)
-          await loadClassAttendance(classesData[0].id, selectedDate)
+        const preparedClasses = classesData ?? []
+        setClasses(preparedClasses)
+        if (preparedClasses.length) {
+          const firstClassId = preparedClasses[0].id
+          setSelectedClassId(firstClassId)
+          await loadClassAttendance(firstClassId, selectedDate)
         }
-      } catch (error) {
-        setError(error.message)
+      } catch (fetchError) {
+        setError(fetchError.message)
       } finally {
         setLoading(false)
       }
@@ -70,8 +88,8 @@ function ProfessorAttendance() {
     setError("")
     try {
       await loadClassAttendance(classId, selectedDate)
-    } catch (err) {
-      setError(err.message)
+    } catch (loadError) {
+      setError(loadError.message)
     }
   }
 
@@ -81,8 +99,8 @@ function ProfessorAttendance() {
     setError("")
     try {
       await loadClassAttendance(selectedClassId, value)
-    } catch (err) {
-      setError(err.message)
+    } catch (loadError) {
+      setError(loadError.message)
     }
   }
 
@@ -92,7 +110,7 @@ function ProfessorAttendance() {
 
   const submitAttendance = async () => {
     if (!selectedClassId) {
-      setError("Selecione uma turma.")
+      setError(t("selectClassRequired"))
       return
     }
 
@@ -102,13 +120,14 @@ function ProfessorAttendance() {
       .filter((item) => Boolean(item.status))
 
     if (!toSend.length) {
-      setError("Marque ao menos um aluno.")
+      setError(t("markAtLeastOneStudent"))
       return
     }
 
     setSubmitting(true)
     setError("")
     setMessage("")
+
     try {
       await Promise.all(
         toSend.map((item) =>
@@ -124,90 +143,140 @@ function ProfessorAttendance() {
           }),
         ),
       )
-      setMessage("Presenca lancada com sucesso.")
+      setMessage(t("attendanceSavedSuccess"))
       await loadClassAttendance(selectedClassId, selectedDate)
-    } catch (err) {
-      setError(err.message)
+    } catch (submitError) {
+      setError(submitError.message)
     } finally {
       setSubmitting(false)
     }
   }
 
-  if (loading) {
-    return <div className="text-center text-brand-navy">{t("loading")}</div>
-  }
-
-  const columns = [
+  const markingColumns = [
     { key: "student", label: t("student") },
-    { key: "date", label: "Data" },
+    { key: "enrollment", label: t("enrollmentNumber") },
     { key: "status", label: t("attendanceStatus") },
   ]
 
-  const rows = (attendance ?? []).map((record) => ({
-    student: record.student?.name ?? record.student?.email,
-    date: new Date(record.date).toLocaleDateString("pt-BR"),
+  const markingRows = (selectedClass?.students ?? []).map((student) => ({
+    id: student.id,
+    student: (
+      <div>
+        <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
+        <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
+      </div>
+    ),
+    enrollment: student.enrollmentNumber ?? "-",
+    status: (
+      <div className="flex flex-wrap gap-2">
+        {statusOptions.map((option) => {
+          const isActive = markings[student.id] === option.value
+          return (
+            <Button
+              key={option.value}
+              type="button"
+              variant={isActive ? "success" : "outline"}
+              size="sm"
+              onClick={() => handleMarkingChange(student.id, option.value)}
+            >
+              {option.label}
+            </Button>
+          )
+        })}
+      </div>
+    ),
+  }))
+
+  const attendanceColumns = [
+    { key: "student", label: t("student") },
+    { key: "date", label: t("date") },
+    { key: "status", label: t("attendanceStatus") },
+  ]
+
+  const attendanceRows = (attendance ?? []).map((record) => ({
+    id: record.id,
+    student: maskName(record.student?.name ?? record.student?.email, "student"),
+    date: new Date(record.date).toLocaleDateString(),
     status: record.status,
   }))
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <SectionHeader title={t("navAttendance")} subtitle={t("attendanceSubtitle")} />
+        <SkeletonLoader type="dashboard" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
       <SectionHeader title={t("navAttendance")} subtitle={t("attendanceSubtitle")} />
 
-      {error ? <p className="text-sm text-brand-red">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
+      {error ? <LoadingState type="banner" error={error} message={error} /> : null}
+      {message ? <LoadingState type="banner" success={Boolean(message)} message={message} /> : null}
 
-      <section className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
-        <div className="grid gap-3 md:grid-cols-2">
-          <select
+      <section className="grid gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-brand-navy">{t("classLabel")}</p>
+          <Select
             value={selectedClassId}
-            onChange={(event) => handleClassChange(event.target.value)}
-            className="rounded-xl border border-brand-navy/20 px-3 py-2"
-          >
-            <option value="">Selecione a turma</option>
-            {classes.map((cls) => (
-              <option key={cls.id} value={cls.id}>{cls.name}</option>
-            ))}
-          </select>
-
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(event) => handleDateChange(event.target.value)}
-            className="rounded-xl border border-brand-navy/20 px-3 py-2"
+            onValueChange={handleClassChange}
+            options={classes.map((cls) => ({ value: cls.id, label: sanitizeText(cls.name) }))}
+            placeholder={t("selectClass")}
+            aria-label={t("selectClass")}
           />
         </div>
 
-        {selectedClass?.students?.length ? (
-          <div className="space-y-2">
-            {selectedClass.students.map((student) => (
-              <div key={student.id} className="grid gap-2 md:grid-cols-[1fr_220px] md:items-center rounded-xl border border-brand-navy/10 p-3">
-                <div>
-                  <p className="font-semibold text-brand-navy">{student.name ?? student.email}</p>
-                  <p className="text-xs text-brand-navy/60">{student.enrollmentNumber ?? "-"}</p>
-                </div>
-                <select
-                  value={markings[student.id] ?? ""}
-                  onChange={(event) => handleMarkingChange(student.id, event.target.value)}
-                  className="rounded-xl border border-brand-navy/20 px-3 py-2"
-                >
-                  <option value="">Sem marcacao</option>
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-brand-navy/60">{t("noData")}</p>
-        )}
-
-        <button type="button" className="primary-button" onClick={submitAttendance} disabled={submitting || !selectedClassId}>
-          {submitting ? "Salvando..." : "Lancar presenca"}
-        </button>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-brand-navy">{t("date")}</p>
+          <Input
+            type="date"
+            value={selectedDate}
+            onChange={(event) => void handleDateChange(event.target.value)}
+            className="mt-0 bg-white"
+          />
+        </div>
       </section>
 
-      <DataTable columns={columns} rows={rows.length > 0 ? rows : []} />
+      {selectedClass ? (
+        <section className="space-y-4 rounded-2xl border border-brand-navy/10 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-brand-navy">{sanitizeText(selectedClass.name)}</h3>
+              <p className="text-sm text-brand-navy/60">{new Date(selectedDate).toLocaleDateString("pt-BR")}</p>
+            </div>
+            <Button type="button" variant="primary" onClick={submitAttendance} loading={submitting} disabled={submitting || !selectedClassId}>
+              {t("submitAttendance")}
+            </Button>
+          </div>
+
+          {selectedClass?.students?.length ? (
+            <DataTablePaginated
+              columns={markingColumns}
+              rows={markingRows}
+              loading={loadingAttendance}
+              pageSize={10}
+              totalCount={selectedClass.students.length}
+              emptyMessage={t("noStudentsAssigned")}
+            />
+          ) : (
+            <p className="text-sm text-brand-navy/60">{t("noData")}</p>
+          )}
+        </section>
+      ) : null}
+
+      <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+        <h3 className="mb-4 font-semibold text-brand-navy">{t("attendanceRecordTitle")}</h3>
+        <DataTablePaginated
+          columns={attendanceColumns}
+          rows={attendanceRows}
+          loading={loadingAttendance && attendanceRows.length === 0}
+          pageSize={10}
+          totalCount={attendanceRows.length}
+          emptyMessage={t("noAttendanceRecordsForDate")}
+        />
+      </section>
     </div>
   )
 }

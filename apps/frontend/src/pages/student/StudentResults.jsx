@@ -6,6 +6,7 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentResults() {
@@ -55,7 +56,7 @@ function StudentResults() {
   ]
 
   const rows = (grades ?? []).map((grade) => ({
-    subject: grade.discipline?.name ?? grade.subject,
+    subject: sanitizeText(grade.discipline?.name ?? grade.subject),
     grade: `${grade.score}/${grade.maxScore}`,
     status: grade.status === "DRAFT" ? t("gradeDraft") : t("gradePublished"),
   }))
@@ -89,12 +90,12 @@ function StudentResults() {
       doc.setFontSize(16)
       doc.text(t("transcriptTitle"), 14, 16)
       doc.setFontSize(11)
-      doc.text(`${t("student")}: ${user?.name ?? user?.email ?? "-"}`, 14, 25)
+      doc.text(`${t("student")}: ${maskName(user?.name ?? user?.email, "student")}`, 14, 25)
       doc.text(`${t("academicYear")}: ${selectedYear?.year ?? "-"}`, 14, 31)
 
       const tableRows = (report.grades ?? []).map((item) => [
-        item.discipline?.name ?? "-",
-        item.class?.name ?? "-",
+        sanitizeText(item.discipline?.name ?? "-"),
+        sanitizeText(item.class?.name ?? "-"),
         `${item.score}/${item.maxScore}`,
         `${((item.score / item.maxScore) * 100).toFixed(1)}%`,
       ])

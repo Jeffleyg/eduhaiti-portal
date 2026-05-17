@@ -11,6 +11,56 @@ import { UpdateAcademicPeriodDto } from './dto/update-academic-period.dto';
 export class AcademicPeriodsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveSchoolId(schoolRef: string) {
+    const normalized = schoolRef.trim();
+
+    if (!normalized) {
+      throw new BadRequestException('School identifier is required');
+    }
+
+    // Try exact match by ID or name
+    const exactMatches = await this.prisma.school.findMany({
+      where: {
+        OR: [
+          { id: normalized },
+          { name: { equals: normalized, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, name: true },
+    });
+
+    if (exactMatches.length === 1) {
+      return exactMatches[0].id;
+    }
+
+    if (exactMatches.length > 1) {
+      throw new BadRequestException(
+        'Multiple schools match that identifier. Please use the school ID.',
+      );
+    }
+
+    // Try partial match by name
+    const partialMatches = await this.prisma.school.findMany({
+      where: {
+        name: { contains: normalized, mode: 'insensitive' },
+      },
+      select: { id: true, name: true },
+      take: 10,
+    });
+
+    if (partialMatches.length === 1) {
+      return partialMatches[0].id;
+    }
+
+    if (partialMatches.length > 1) {
+      throw new BadRequestException(
+        'Multiple schools match that name. Please use the school ID.',
+      );
+    }
+
+    throw new NotFoundException(`School ${schoolRef} not found`);
+  }
+
   private async ensureNoOverlap(
     schoolId: string,
     startDate: Date,
@@ -35,8 +85,10 @@ export class AcademicPeriodsService {
   }
 
   async listBySchool(schoolId: string) {
+    const resolvedSchoolId = await this.resolveSchoolId(schoolId);
+
     return this.prisma.academicPeriod.findMany({
-      where: { schoolId },
+      where: { schoolId: resolvedSchoolId },
       orderBy: { startDate: 'asc' },
     });
   }
@@ -53,11 +105,13 @@ export class AcademicPeriodsService {
       throw new BadRequestException('endDate must be greater than startDate');
     }
 
-    await this.ensureNoOverlap(dto.schoolId, startDate, endDate);
+    const schoolId = await this.resolveSchoolId(dto.schoolId);
+
+    await this.ensureNoOverlap(schoolId, startDate, endDate);
 
     return this.prisma.academicPeriod.create({
       data: {
-        schoolId: dto.schoolId,
+        schoolId,
         name: dto.name,
         startDate,
         endDate,

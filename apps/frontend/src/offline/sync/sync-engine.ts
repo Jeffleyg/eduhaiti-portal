@@ -16,6 +16,8 @@ interface SyncEngineOptions {
   onApplyRemoteDelta: (entity: SyncEntity, records: DeltaRecord[]) => Promise<void>
 }
 
+const NON_SYNCABLE_ENTITIES = new Set<SyncEntity>(["grade", "attendance"])
+
 function computeBackoffMs(attempt: number, baseRetryMs: number, maxRetryMs: number): number {
   const pure = Math.min(baseRetryMs * 2 ** attempt, maxRetryMs)
   const jitter = Math.floor(Math.random() * Math.max(250, Math.floor(pure * 0.1)))
@@ -59,6 +61,10 @@ export class OfflineFirstSyncEngine {
       clientTimestamp?: string
     },
   ): Promise<void> {
+    if (NON_SYNCABLE_ENTITIES.has(action.entityType)) {
+      throw new Error(`Offline sync is disabled for ${action.entityType}`)
+    }
+
     await this.store.enqueue({
       ...action,
       clientTimestamp: action.clientTimestamp ?? new Date().toISOString(),
@@ -89,7 +95,27 @@ export class OfflineFirstSyncEngine {
     try {
       const batch = await this.store.listReadyBatch(this.maxBatchSize)
       if (batch.length > 0) {
-        await this.pushBatch(batch)
+        const unsupported = batch.filter((action) => NON_SYNCABLE_ENTITIES.has(action.entityType))
+        const supported = batch.filter((action) => !NON_SYNCABLE_ENTITIES.has(action.entityType))
+
+        for (const action of unsupported) {
+          await this.store.writeAudit({
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+            eventType: "push_failed",
+            actionId: action.actionId,
+            payloadJson: JSON.stringify({
+              entityType: action.entityType,
+              reason: "offline_sync_disabled_for_entity",
+            }),
+          })
+
+          await this.store.removeFromOutbox(action.actionId)
+        }
+
+        if (supported.length > 0) {
+          await this.pushBatch(supported)
+        }
       }
 
       await this.pullDelta()

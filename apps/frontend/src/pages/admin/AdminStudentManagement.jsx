@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
@@ -188,7 +189,7 @@ function AdminStudentManagement() {
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-brand-navy">{student.name}</p>
+                      <p className="font-semibold text-brand-navy">{maskName(student.name, "student")}</p>
                       <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
                         student.classesAttending?.length > 0
                           ? "bg-emerald-100 text-emerald-700"
@@ -197,7 +198,7 @@ function AdminStudentManagement() {
                         {student.classesAttending?.length > 0 ? t("enrolled") : t("notEnrolled")}
                       </span>
                     </div>
-                    <p className="text-xs text-brand-navy/60">{student.email}</p>
+                    <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
                     <p className="text-xs text-brand-navy/60">
                       {t("adminStudentEnrollmentNumber")}: {student.enrollmentNumber}
                     </p>

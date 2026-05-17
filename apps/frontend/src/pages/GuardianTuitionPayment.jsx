@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { apiFetch } from "../lib/api.js"
 import LoadMoreList from "../components/LoadMoreList.jsx"
 
@@ -159,7 +160,7 @@ function GuardianTuitionPayment() {
           {studentInfo ? (
             <div className="mt-4 rounded-2xl border border-brand-navy/10 bg-sand p-3">
               <p className="text-sm text-brand-navy">
-                {t("studentLabel")}: <strong>{studentInfo.name}</strong>
+                {t("studentLabel")}: <strong>{maskName(studentInfo.name, "student")}</strong>
               </p>
               <p className="text-xs text-brand-navy/70">{t("enrollmentLabel")}: {studentInfo.enrollmentNumber}</p>
               <p className="text-xs text-brand-navy/70">{t("pendingTotalLabel")}: {totalPending.toFixed(2)} HTG</p>
@@ -330,8 +331,8 @@ function GuardianTuitionPayment() {
                     <head><title>${t("invoiceTitle")} ${escapeHtml(invoice.id)}</title></head>
                     <body>
                       <h2>${t("invoiceTitle")} ${escapeHtml(invoice.id)}</h2>
-                      <p>${t("studentLabel")}: ${escapeHtml(invoice.student?.name || "-")}</p>
-                      <p>${t("enrollmentLabel")}: ${escapeHtml(invoice.student?.enrollmentNumber || "-")}</p>
+                          <p>${t("studentLabel")}: ${escapeHtml(maskName(invoice.student?.name, "student") || "-")}</p>
+                            <p>${t("enrollmentLabel")}: ${escapeHtml(invoice.student?.enrollmentNumber || "-")}</p>
                       <table border="1" cellpadding="8" cellspacing="0">
                         <thead>
                           <tr>

@@ -21,6 +21,7 @@ function DataTablePaginated({
   columns = [],
   rows = [],
   itemsPerPage = 10,
+  pageSize = null,
   totalCount = null,
   loading = false,
   emptyMessage = null,
@@ -29,12 +30,13 @@ function DataTablePaginated({
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [displayRows, setDisplayRows] = useState([])
+  const pageLimit = pageSize ?? itemsPerPage
 
   // Calcular paginação
   const actualTotal = totalCount ?? rows.length
-  const totalPages = Math.max(1, Math.ceil(rows.length / itemsPerPage))
-  const start = (page - 1) * itemsPerPage
-  const end = start + itemsPerPage
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageLimit))
+  const start = (page - 1) * pageLimit
+  const end = start + pageLimit
 
   // Ajustar página se necessário
   useEffect(() => {
@@ -46,7 +48,7 @@ function DataTablePaginated({
   // Atualizar linhas exibidas
   useEffect(() => {
     setDisplayRows(rows.slice(start, end))
-  }, [rows, page, itemsPerPage])
+  }, [rows, page, pageLimit, start, end])
 
   // Estado vazio
   if (!loading && rows.length === 0) {
@@ -60,7 +62,7 @@ function DataTablePaginated({
 
   // Estado de carregamento
   if (loading) {
-    return <SkeletonLoader type="table" count={itemsPerPage} />
+    return <SkeletonLoader type="table" count={pageLimit} />
   }
 
   const safePage = Math.min(page, totalPages)

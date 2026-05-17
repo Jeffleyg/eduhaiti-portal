@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { apiFetch } from "../lib/api.js"
 import LoadMoreList from "../components/LoadMoreList.jsx"
 
@@ -117,10 +118,10 @@ function FamilyPortal() {
           <>
             <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
               <h3 className="font-semibold text-brand-navy">{t("studentProfileTitle")}</h3>
-              <p className="text-sm text-brand-navy">{overview.student?.name}</p>
+              <p className="text-sm text-brand-navy">{maskName(overview.student?.name, "student")}</p>
               <p className="text-xs text-brand-navy/70">{t("enrollmentLabel")}: {overview.student?.enrollmentNumber}</p>
               <p className="text-xs text-brand-navy/70">
-                {t("classesLabel")}: {(overview.student?.classes ?? []).map((item) => item.name).join(", ") || "-"}
+                {t("classesLabel")}: {(overview.student?.classes ?? []).map((item) => sanitizeText(item.name)).join(", ") || "-"}
               </p>
             </section>
 
@@ -131,7 +132,7 @@ function FamilyPortal() {
                   {(overview.grades ?? []).length ? (
                     overview.grades.map((item) => (
                       <div key={item.id} className="rounded-xl border border-brand-navy/10 p-3 text-sm">
-                        <p className="font-semibold text-brand-navy">{item.discipline?.name} - {item.class?.name}</p>
+                        <p className="font-semibold text-brand-navy">{sanitizeText(item.discipline?.name)} - {sanitizeText(item.class?.name)}</p>
                         <p className="text-brand-navy/70">{t("gradeLabel")}: {item.score}/{item.maxScore}</p>
                       </div>
                     ))
@@ -177,7 +178,7 @@ function FamilyPortal() {
                             renderItem={(item) => (
                               <div className="rounded-xl border border-brand-navy/10 p-3 text-sm">
                                 <p className="font-semibold text-brand-navy">
-                                  {new Date(item.date).toLocaleDateString("pt-BR")} - {item.class?.name}
+                                  {new Date(item.date).toLocaleDateString("pt-BR")} - {sanitizeText(item.class?.name)}
                                 </p>
                                 <p className="text-brand-navy/70">{t("status")}: {item.status}</p>
                                 {item.remarks ? <p className="text-brand-navy/60">{t("remarksLabel")}: {item.remarks}</p> : null}

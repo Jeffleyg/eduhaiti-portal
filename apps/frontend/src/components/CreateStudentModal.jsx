@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useTranslation } from 'react-i18next'
+import { sanitizeText } from '../lib/string.js'
 import { useCallback, useMemo } from 'react'
 import FormField from './form/FormField'
 import SelectField from './form/SelectField'
@@ -77,7 +78,7 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
     () =>
       classes.map((item) => ({
         value: item.id,
-        label: `${item.name} (${item.level})`,
+        label: `${sanitizeText(item.name)} (${sanitizeText(item.level)})`,
       })),
     [classes]
   )

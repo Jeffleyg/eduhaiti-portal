@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { sanitizeText } from "../../lib/string.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+import ListItemCard from "../../components/ListItemCard.jsx"
+import { BookOpen } from "lucide-react"
+import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
 
 const initialForm = {
   name: "",
@@ -18,6 +22,7 @@ function AdminDisciplineManagement() {
   const [selectedSeriesId, setSelectedSeriesId] = useState("")
   const [disciplines, setDisciplines] = useState([])
   const [form, setForm] = useState(initialForm)
+  const [activeSection, setActiveSection] = useState("list")
   const [editingId, setEditingId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -155,19 +160,28 @@ function AdminDisciplineManagement() {
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
       <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
-        <h3 className="text-base font-semibold text-brand-navy">{t("adminSelectSeries")}</h3>
-        <select
-          value={selectedSeriesId}
-          onChange={(event) => handleSeriesChange(event.target.value)}
-          className="mt-3 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-        >
-          <option value="">{t("adminSelectSeriesOption")}</option>
-          {series.map((ser) => (
-            <option key={ser.id} value={ser.id}>
-              {ser.name} ({ser.academicYear?.year})
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-brand-navy">{t("adminSelectSeries")}</h3>
+          <AdminSectionToolbar
+            sections={[{ key: "list", label: t("list") }, { key: "filters", label: t("filters") }, { key: "create", label: t("create") }]}
+            active={activeSection}
+            onChange={(k) => setActiveSection(k)}
+          />
+        </div>
+        {activeSection !== "list" && (
+          <select
+            value={selectedSeriesId}
+            onChange={(event) => handleSeriesChange(event.target.value)}
+            className="mt-3 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+          >
+            <option value="">{t("adminSelectSeriesOption")}</option>
+            {series.map((ser) => (
+              <option key={ser.id} value={ser.id}>
+                {sanitizeText(ser.name)} ({ser.academicYear?.year})
+              </option>
+            ))}
+          </select>
+        )}
       </section>
 
       {selectedSeriesId && (
@@ -235,35 +249,30 @@ function AdminDisciplineManagement() {
                   initialLimit={6}
                   step={6}
                   renderItem={(discipline) => (
-                    <div
-                      key={discipline.id}
-                      className="flex flex-col gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:flex-row md:items-center md:justify-between"
-                    >
-                      <div>
-                        <p className="font-semibold text-brand-navy">{discipline.name}</p>
-                        <p className="text-xs text-brand-navy/60">
-                          {discipline.code && `${t("adminDisciplineCode")}: ${discipline.code} | `}
-                          {t("adminDisciplineCredits")}: {discipline.credits}
-                        </p>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          className="outline-button"
-                          onClick={() => startEdit(discipline)}
-                          disabled={loading}
-                        >
-                          {t("adminEdit")}
-                        </button>
-                        <button
-                          className="outline-button"
-                          onClick={() => deleteDiscipline(discipline.id)}
-                          disabled={loading}
-                        >
-                          {t("adminDelete")}
-                        </button>
-                      </div>
-                    </div>
+                    <ListItemCard
+                      id={discipline.id}
+                      icon={<BookOpen className="h-5 w-5 text-brand-red" />}
+                      title={sanitizeText(discipline.name)}
+                      subtitle={discipline.code || t("adminDisciplineCode")}
+                      preview={
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          <div>
+                            <p className="text-xs text-brand-navy/60">{t("adminDisciplineCode")}</p>
+                            <p className="font-semibold text-brand-navy">{sanitizeText(discipline.code) || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-brand-navy/60">{t("adminDisciplineCredits")}</p>
+                            <p className="font-semibold text-brand-navy">{discipline.credits}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-brand-navy/60">{t("adminSelectSeries")}</p>
+                            <p className="font-semibold text-brand-navy">{sanitizeText(discipline.series?.name) || "-"}</p>
+                          </div>
+                        </div>
+                      }
+                      onEdit={() => startEdit(discipline)}
+                      onDelete={() => deleteDiscipline(discipline.id)}
+                    />
                   )}
                 />
               )}

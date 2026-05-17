@@ -1,6 +1,7 @@
 import { Camera, Mail, User, Settings, Edit3 } from "lucide-react"
 import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { apiAssetUrl } from "../lib/api.js"
 
 function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClick }) {
@@ -56,9 +57,9 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
           <div className="relative shrink-0">
             <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-brand-navy to-brand-sky shadow-lg ring-1 ring-brand-navy/10">
               {previewPhoto ? (
-                <img src={previewPhoto} alt={user?.name} className="h-full w-full object-cover" />
+                <img src={previewPhoto} alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")} className="h-full w-full object-cover" />
               ) : user?.profilePhoto ? (
-                <img src={apiAssetUrl(user.profilePhoto)} alt={user?.name} className="h-full w-full object-cover" />
+                <img src={apiAssetUrl(user.profilePhoto)} alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-navy to-brand-sky">
                   <User className="h-12 w-12 text-white/60" />
@@ -98,7 +99,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
                 {t("name")}
               </p>
               <p className="text-lg font-bold text-brand-navy break-words">
-                {user?.name || "-"}
+                {maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
               </p>
             </div>
 
@@ -109,7 +110,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
                 {t("email")}
               </p>
               <p className="text-sm font-semibold text-brand-navy break-words">
-                {user?.email || "-"}
+                {sanitizeText(user?.email) || "-"}
               </p>
             </div>
           </div>

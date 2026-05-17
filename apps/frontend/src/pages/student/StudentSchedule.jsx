@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
@@ -35,7 +36,7 @@ function StudentSchedule() {
         const byClass = new Map(todayRecords.map((item) => [item.classId, item]))
         const todayByClass = (myClasses ?? []).map((cls) => ({
           classId: cls.id,
-          className: cls.name,
+          className: sanitizeText(cls.name),
           status: byClass.get(cls.id)?.status ?? "SEM_MARCACAO",
           date: byClass.get(cls.id)?.date ?? null,
         }))
@@ -72,7 +73,7 @@ function StudentSchedule() {
 
   const historyRows = attendanceHistory.map((item) => ({
     date: new Date(item.date).toLocaleDateString("pt-BR"),
-    class: item.class?.name ?? "-",
+    class: sanitizeText(item.class?.name) || "-",
     status: item.status,
   }))
 
@@ -96,8 +97,8 @@ function StudentSchedule() {
               renderItem={(cls) => (
                 <div key={cls.id} className="flex items-center justify-between rounded-2xl border border-brand-navy/10 bg-white px-4 py-4">
                   <div>
-                    <p className="font-semibold text-brand-navy">{cls.name}</p>
-                    <p className="text-sm text-brand-navy/60">{cls.teacher?.name ?? cls.teacher?.email}</p>
+                    <p className="font-semibold text-brand-navy">{sanitizeText(cls.name)}</p>
+                    <p className="text-sm text-brand-navy/60">{maskName(cls.teacher?.name, "teacher") || sanitizeText(cls.teacher?.email)}</p>
                   </div>
                 </div>
               )}
