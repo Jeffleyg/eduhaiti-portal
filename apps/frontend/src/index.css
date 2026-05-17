@@ -423,4 +423,5 @@ input[type="radio"] {
   .badge {
     @apply inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-semibold bg-white border border-brand-navy/10 text-brand-navy;
   }
- 
+}
+
