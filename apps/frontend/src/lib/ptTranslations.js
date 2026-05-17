@@ -141,7 +141,7 @@ const ptTranslation = {
   studentCreated: "Aluno criado com sucesso",
   teacherCreated: "Professor criado com sucesso",
   navUsers: "Pessoas",
-  roleadmin: "Perfil Admin",
+  roleadmin: "Administrador",
   selectLanguage: "Selecionar idioma",
   syncMode: "Modo de sincronização",
   syncStrategyLWW: "Manter alteração mais recente",
