@@ -109,7 +109,7 @@ export class AcademicPeriodsService {
 
     await this.ensureNoOverlap(schoolId, startDate, endDate);
 
-    return this.prisma.academicPeriod.create({
+    const created = await this.prisma.academicPeriod.create({
       data: {
         schoolId,
         name: dto.name,
@@ -118,6 +118,34 @@ export class AcademicPeriodsService {
         description: dto.description,
       },
     });
+
+    // Ensure there is a corresponding AcademicYear so other parts of the
+    // system (classes, series, etc.) that rely on AcademicYear entries will
+    // see the newly created period. If an AcademicYear with the same year
+    // string already exists, ignore the error.
+    try {
+      const existingYear = await this.prisma.academicYear.findUnique({
+        where: { year: dto.name },
+        select: { id: true, schoolId: true },
+      });
+
+      if (!existingYear) {
+        await this.prisma.academicYear.create({
+          data: {
+            schoolId,
+            year: dto.name,
+            startDate,
+            endDate,
+            isActive: true,
+          },
+        });
+      }
+    } catch (err) {
+      // Ignore unique constraint or other creation errors here so the
+      // primary operation (creating the period) succeeds for the admin UI.
+    }
+
+    return created;
   }
 
   async update(periodId: string, dto: UpdateAcademicPeriodDto) {

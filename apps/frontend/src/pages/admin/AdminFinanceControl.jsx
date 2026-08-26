@@ -10,6 +10,7 @@ import FinancePaymentHistory from "./components/FinancePaymentHistory.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import Button from "../../components/Button.jsx"
 import { CreditCard, Handshake, History } from "lucide-react"
+import PixAccountManager from "../../components/PixAccountManager.jsx"
 
 function AdminFinanceControl() {
   const { t } = useTranslation()
@@ -149,6 +150,13 @@ function AdminFinanceControl() {
         >
           {t("btnHistory")}
         </Button>
+        <Button
+          type="button"
+          variant={activeSection === "pix" ? "primary" : "outline"}
+          onClick={() => setActiveSection("pix")}
+        >
+          {t("btnPix")}
+        </Button>
       </div>
 
       {/* Sections rendered by active button */}
@@ -216,6 +224,21 @@ function AdminFinanceControl() {
               setTimeout(loadDashboard, 0)
             }}
           />
+        </div>
+      )}
+
+      {activeSection === "pix" && (
+        <div className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6 mt-4">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-lg bg-emerald-100 p-2">
+              <CreditCard className="h-5 w-5 text-emerald-700" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-brand-navy">{t("pixAccountTitle")}</h2>
+              <p className="text-xs text-brand-navy/60">{t("pixAccountSubtitle")}</p>
+            </div>
+          </div>
+          <PixAccountManager token={token} />
         </div>
       )}
     </div>

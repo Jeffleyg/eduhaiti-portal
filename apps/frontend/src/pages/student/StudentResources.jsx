@@ -100,16 +100,16 @@ function StudentResources() {
         </div>
         <div className="col-span-4 flex items-center justify-end gap-2">
           <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red text-sm font-semibold hover:underline whitespace-nowrap">
-            {disableImages ? "TXT" : "Download"}
+            {disableImages ? t("txt") : t("download")}
           </a>
           {canCacheResource(resource) ? (
-            isSavedOffline(resource.id) ? (
+              isSavedOffline(resource.id) ? (
               <button
                 type="button"
                 onClick={() => handleRemoveOffline(resource)}
                 className="rounded-md border border-brand-navy/20 px-2 py-1 text-xs font-semibold text-brand-navy hover:bg-brand-navy/5"
               >
-                Remover
+                {t("remove")}
               </button>
             ) : (
               <button
@@ -118,7 +118,7 @@ function StudentResources() {
                 disabled={savingId === resource.id}
                 className="rounded-md bg-brand-navy px-2 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
-                {savingId === resource.id ? "..." : "Salvar"}
+                {savingId === resource.id ? "..." : t("save")}
               </button>
             )
           ) : null}
@@ -165,7 +165,7 @@ function StudentResources() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
+        <h3 className="font-semibold text-brand-navy">{t("digitalLibraryTitle")}</h3>
         {libraryResources.length > 0 ? (
           <LoadMoreList
             items={libraryResources}

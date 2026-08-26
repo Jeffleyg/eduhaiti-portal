@@ -194,34 +194,65 @@ let GradesService = class GradesService {
     }
     async getStudentReport(studentId, academicYearId) {
         const grades = await this.prisma.grade.findMany({
-            where: {
-                studentId,
-                academicYearId,
-                status: 'PUBLISHED',
-            },
+            where: { studentId, academicYearId, status: 'PUBLISHED' },
             include: {
-                discipline: { select: { id: true, name: true } },
-                class: { select: { id: true, name: true } },
+                discipline: { select: { id: true, name: true, code: true, credits: true } },
+                class: { select: { id: true, name: true, teacher: { select: { id: true, name: true } } } },
             },
             orderBy: { discipline: { name: 'asc' } },
         });
-        const summary = {};
-        grades.forEach((grade) => {
-            const key = grade.discipline.name;
-            if (!summary[key]) {
-                summary[key] = [];
-            }
-            summary[key].push({
-                score: grade.score,
-                maxScore: grade.maxScore,
-                percentage: (grade.score / grade.maxScore) * 100,
+        const enrichedGrades = [];
+        for (const g of grades) {
+            const agg = await this.prisma.grade.aggregate({
+                where: {
+                    classId: g.classId,
+                    disciplineId: g.disciplineId,
+                    status: 'PUBLISHED',
+                },
+                _min: { score: true },
+                _max: { score: true },
+                _avg: { score: true },
+                _count: { _all: true },
             });
+            enrichedGrades.push({
+                id: g.id,
+                score: g.score,
+                maxScore: g.maxScore,
+                percentage: g.maxScore > 0 ? (g.score / g.maxScore) * 100 : 0,
+                discipline: g.discipline,
+                class: g.class,
+                classStats: {
+                    min: agg._min?.score ?? null,
+                    max: agg._max?.score ?? null,
+                    avg: agg._avg?.score ?? null,
+                    samples: agg._count?._all ?? 0,
+                },
+                appreciation: null,
+            });
+        }
+        const summary = {};
+        for (const eg of enrichedGrades) {
+            const key = eg.discipline.name;
+            summary[key] = summary[key] ?? [];
+            summary[key].push({ score: eg.score, maxScore: eg.maxScore, percentage: eg.percentage });
+        }
+        const attendanceTotal = await this.prisma.attendance.count({
+            where: { studentId, class: { academicYearId } },
+        });
+        const attendancePresent = await this.prisma.attendance.count({
+            where: { studentId, class: { academicYearId }, status: 'PRESENT' },
+        });
+        const student = await this.prisma.user.findUnique({
+            where: { id: studentId },
+            select: { id: true, name: true, enrollmentNumber: true, school: { select: { id: true, name: true, address: true, logo: true } } },
         });
         return {
             studentId,
             academicYearId,
-            grades,
+            student,
+            grades: enrichedGrades,
             summary,
+            attendance: { total: attendanceTotal, present: attendancePresent },
         };
     }
     async listAcademicYearsForStudent(studentId) {

@@ -109,7 +109,7 @@ function ProfessorAssignments() {
       setFormData({ title: "", description: "", dueDate: "" })
       setFile(null)
       await fetchAssignments(selectedClass)
-      setFeedback("Tarefa criada com sucesso.")
+      setFeedback(t("taskCreatedSuccess"))
     } catch (error) {
       setError(error.message)
     } finally {
@@ -137,7 +137,7 @@ function ProfessorAssignments() {
         link.click()
         link.remove()
       }
-      setMessage(action === "open" ? "Entrega aberta para leitura." : "Download da entrega iniciado.")
+      setMessage(action === "open" ? t("submissionOpened") : t("submissionDownloadStarted"))
     } catch (submissionError) {
       setError(submissionError.message)
     } finally {
@@ -148,7 +148,7 @@ function ProfessorAssignments() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <SectionHeader title="Gerenciar Tarefas" subtitle="Crie e acompanhe tarefas da turma" />
+        <SectionHeader title={t("manageAssignmentsTitle")} subtitle={t("manageAssignmentsSubtitle")} />
         <SkeletonLoader type="card" count={3} />
       </div>
     )
@@ -156,12 +156,12 @@ function ProfessorAssignments() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Gerenciar Tarefas" subtitle="Crie e acompanhe tarefas da turma" />
+      <SectionHeader title={t("manageAssignmentsTitle")} subtitle={t("manageAssignmentsSubtitle")} />
 
       <LoadingState type="banner" error={error} success={Boolean(message)} message={message} />
 
       <div className="module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-6">
-        <h3 className="font-semibold text-brand-navy mb-4">Selecione a Turma</h3>
+        <h3 className="font-semibold text-brand-navy mb-4">{t("selectClass")}</h3>
         <select
           value={selectedClass}
           onChange={handleClassChange}
@@ -176,33 +176,33 @@ function ProfessorAssignments() {
       </div>
 
       <form onSubmit={handleSubmit} className="module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">Criar Nova Tarefa</h3>
+        <h3 className="font-semibold text-brand-navy">{t("createNewTask")}</h3>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">Título</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("title")}</label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
             className="w-full px-4 py-2 border border-brand-navy/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="Ex: Exercício de Matemática"
+            placeholder={t("assignmentTitlePlaceholder")}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">Descrição</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("description")}</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full px-4 py-2 border border-brand-navy/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="Instruções e detalhes da tarefa"
+            placeholder={t("assignmentDescriptionPlaceholder")}
             rows={4}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">Data de Expiração</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("assignmentDueDate")}</label>
           <input
             type="datetime-local"
             value={formData.dueDate}
@@ -213,7 +213,7 @@ function ProfessorAssignments() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">Arquivo (opcional)</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("assignmentFileOptional")}</label>
           <input
             type="file"
             onChange={(e) => setFile(e.target.files?.[0])}
@@ -228,13 +228,13 @@ function ProfessorAssignments() {
           disabled={creating || !formData.title || !formData.dueDate}
           className="w-full py-3 bg-gradient-to-r from-brand-red to-brand-red hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-all"
         >
-          {creating ? "Criando..." : "Criar Tarefa"}
+          {creating ? t("creating") : t("createTaskAction")}
         </button>
       </form>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-brand-navy">Tarefas da Turma</h3>
+          <h3 className="font-semibold text-brand-navy">{t("classAssignmentsTitle")}</h3>
           <span className="badge bg-brand-navy/10 text-brand-navy">{assignments.length}</span>
         </div>
 
@@ -252,23 +252,23 @@ function ProfessorAssignments() {
                   id={assignment.id}
                   icon={<FileText className="h-5 w-5 text-brand-red" />}
                   title={assignment.title}
-                  subtitle={assignment.description || "Sem descrição"}
+                  subtitle={assignment.description || t("noDescription")}
                   status={`${submittedCount} entrega(s)`}
                   statusColor={submittedCount > 0 ? "green" : "yellow"}
                   preview={
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div>
-                        <p className="text-xs text-brand-navy/60">Prazo</p>
+                        <p className="text-xs text-brand-navy/60">{t("deadline")}</p>
                         <p className="font-semibold text-brand-navy">
                           {new Date(assignment.dueDate).toLocaleDateString("pt-BR")}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-brand-navy/60">Entregas</p>
+                        <p className="text-xs text-brand-navy/60">{t("deliveries")}</p>
                         <p className="font-semibold text-brand-navy">{submittedCount}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-brand-navy/60">Turma</p>
+                        <p className="text-xs text-brand-navy/60">{t("classLabel")}</p>
                         <p className="font-semibold text-brand-navy">{sanitizeText(classes.find((item) => item.id === selectedClass)?.name ?? "-")}</p>
                       </div>
                     </div>
@@ -280,20 +280,20 @@ function ProfessorAssignments() {
             })}
           </div>
         ) : (
-          <p className="text-center text-brand-navy/60">Nenhuma tarefa criada ainda</p>
+          <p className="text-center text-brand-navy/60">{t("noAssignmentsCreated")}</p>
         )}
       </div>
 
       <div className="module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-6">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-semibold text-brand-navy">Entregas da tarefa selecionada</h3>
+          <h3 className="font-semibold text-brand-navy">{t("selectedAssignmentDeliveries")}</h3>
             {selectedAssignment ? (
-            <span className="badge bg-brand-sky/20 text-brand-navy">{selectedAssignment.submissions?.length ?? 0} entrega(s)</span>
+            <span className="badge bg-brand-sky/20 text-brand-navy">{selectedAssignment.submissions?.length ?? 0} {t("deliveriesCount")}</span>
           ) : null}
         </div>
 
         {!selectedAssignment ? (
-          <p className="mt-4 text-sm text-brand-navy/60">Selecione uma tarefa para ver e baixar as entregas.</p>
+          <p className="mt-4 text-sm text-brand-navy/60">{t("selectAssignmentToViewDeliveries")}</p>
         ) : selectedAssignment.submissions?.length > 0 ? (
           <div className="mt-4 space-y-3">
             {selectedAssignment.submissions.map((submission) => (
@@ -306,13 +306,13 @@ function ProfessorAssignments() {
                     <div>
                       <p className="font-semibold text-brand-navy">{maskName(submission.student?.name ?? submission.student?.email, "student")}</p>
                       <p className="text-xs text-brand-navy/60">
-                        Entregue em {new Date(submission.submittedAt).toLocaleString("pt-BR")}
+                        {t("submittedAt")} {new Date(submission.submittedAt).toLocaleString("fr-FR")}
                       </p>
                       {submission.grade !== null && submission.grade !== undefined ? (
-                        <p className="text-xs font-semibold text-brand-navy">Nota: {submission.grade}</p>
+                        <p className="text-xs font-semibold text-brand-navy">{t("grade")} : {submission.grade}</p>
                       ) : null}
                       {submission.feedback ? (
-                        <p className="mt-1 text-xs text-brand-navy/70">Feedback: {sanitizeText(submission.feedback)}</p>
+                        <p className="mt-1 text-xs text-brand-navy/70">{t("feedback")} : {sanitizeText(submission.feedback)}</p>
                       ) : null}
                     </div>
                   </div>
@@ -325,7 +325,7 @@ function ProfessorAssignments() {
                       disabled={loadingFileId === submission.id || !submission.filePath}
                     >
                       <FileText className="h-4 w-4" />
-                      Ler
+                      {t("read")}
                     </button>
                     <button
                       type="button"
@@ -334,7 +334,7 @@ function ProfessorAssignments() {
                       disabled={loadingFileId === submission.id || !submission.filePath}
                     >
                       <Download className="h-4 w-4" />
-                      {loadingFileId === submission.id ? "Baixando..." : "Baixar"}
+                      {loadingFileId === submission.id ? t("downloading") : t("download")}
                     </button>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ function ProfessorAssignments() {
             ))}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-brand-navy/60">Ainda não há entregas para esta tarefa.</p>
+          <p className="mt-4 text-sm text-brand-navy/60">{t("noSubmissionsYet")}</p>
         )}
       </div>
     </div>

@@ -79,7 +79,7 @@ function StudentDashboard() {
         setLastUpdatedAt(updatedAt)
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err)
-        setError(err.message || "Erro ao carregar dados")
+        setError(err.message || t("errorOccurred"))
       } finally {
         setLoading(false)
       }
@@ -136,11 +136,11 @@ function StudentDashboard() {
       </div>
 
       <div className="rounded-2xl border border-brand-navy/10 bg-white p-5">
-        <SectionHeader title="Gamificacao" subtitle="Pontuacao por presenca e entregas antecipadas" />
+        <SectionHeader title={t("gamificationTitle")} subtitle={t("gamificationSubtitle")} />
         <div className="grid gap-4 md:grid-cols-3">
-          <StatCard label="Pontos" value={gamification?.points ?? 0} />
-          <StatCard label="Entregas antecipadas" value={gamification?.earlySubmissions ?? 0} />
-          <StatCard label="Turmas com presenca exemplar" value={gamification?.perfectAttendanceClasses ?? 0} />
+          <StatCard label={t("pointsLabel")} value={gamification?.points ?? 0} />
+          <StatCard label={t("earlySubmissionsLabel")} value={gamification?.earlySubmissions ?? 0} />
+          <StatCard label={t("perfectAttendanceClassesLabel")} value={gamification?.perfectAttendanceClasses ?? 0} />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {(gamification?.badges ?? []).length ? (
@@ -150,7 +150,7 @@ function StudentDashboard() {
               </span>
             ))
           ) : (
-            <p className="text-sm text-brand-navy/60">Continue participando para desbloquear medalhas.</p>
+            <p className="text-sm text-brand-navy/60">{t("keepParticipatingToUnlockBadges")}</p>
           )}
         </div>
       </div>

@@ -20,7 +20,7 @@ export default function SchoolContext({ t, schoolId, setSchoolId, loadPeriods, l
             <Input
               value={schoolId}
               onChange={(e) => setSchoolId(e.target.value)}
-              placeholder={t("academicSchoolIdPlaceholder") || "school-uuid or name"}
+              placeholder={t("academicSchoolIdPlaceholder")}
             />
           </label>
         )}

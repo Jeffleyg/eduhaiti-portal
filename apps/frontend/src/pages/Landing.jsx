@@ -77,9 +77,9 @@ function Landing() {
             <div className="space-y-6">
               <span className="chip">{t("trust")}</span>
               <h1 className="text-4xl font-semibold leading-tight text-brand-navy md:text-5xl">
-                {t("tagline")}
+                {t("tagline", { lng: "fr" })}
               </h1>
-              <p className="max-w-xl text-lg text-brand-navy/85">{t("subtitle")}</p>
+              <p className="max-w-xl text-lg text-brand-navy/85">{t("subtitle", { lng: "fr" })}</p>
               <div className="flex flex-wrap gap-4">
                 <Link className="primary-button" to="/login">
                   {t("cta")}

@@ -52,7 +52,7 @@ function DataTablePaginated({
 
   // Estado vazio
   if (!loading && rows.length === 0) {
-    const message = emptyMessage || t("noData") || "Nenhum dado disponível"
+    const message = emptyMessage || t("noData")
     return (
       <div className="rounded-2xl border border-brand-navy/10 bg-white p-8 text-center text-sm text-brand-navy/60">
         {message}

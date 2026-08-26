@@ -39,59 +39,59 @@ function TopBar({ role }) {
     <div className="surface-panel flex flex-col gap-4 px-4 py-4 sm:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 rounded-lg p-2 text-brand-navy/85 hover:bg-brand-navy/10 transition-colors"
-          type="button"
-          title={t("back")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <img
-          src="/LogoEdu.png"
-          alt={t("brand")}
-          className="h-9 w-auto rounded-lg border border-brand-navy/10 bg-white px-2 py-1 sm:h-10"
-        />
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-brand-navy">{t("dashboardTitle")}</h1>
-          <p className="mt-1 text-sm text-brand-navy/85">{t(roleLabelKey)}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="btn btn-ghost btn-sm rounded-full px-2.5 py-2 text-brand-navy/85"
+            type="button"
+            title={t("back")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <img
+            src="/LogoEdu.png"
+            alt={t("brand")}
+            className="h-10 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 shadow-sm"
+          />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-navy/45">EduHaiti</p>
+            <h1 className="font-display text-2xl font-semibold text-brand-navy sm:text-3xl">{t("dashboardTitle")}</h1>
+            <p className="mt-1 text-sm text-brand-navy/70">{t(roleLabelKey)}</p>
+          </div>
         </div>
-      </div>
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {isSurvivalMode ? (
-          <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-            {t("survivalMode")}: {survivalReason}
-          </span>
-        ) : null}
-      </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {isSurvivalMode ? (
+            <span className="badge border-amber-200 bg-amber-50 text-amber-800">
+              {t("survivalMode")}: {survivalReason}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-
-        <button
-          className="inline-flex items-center gap-2 rounded-full border border-brand-sky/20 bg-brand-sky/10 px-3 py-1.5 text-sm font-medium text-brand-navy disabled:opacity-60"
-          type="button"
-          onClick={() => syncNow(role)}
-          disabled={isSyncing}
-          title={currentTask ? `${t("syncingTask")}: ${currentTask}` : t("syncNow")}
-        >
-          {syncLabel}
-        </button>
-
-        <LanguageSelector />
-
-        <label className="inline-flex items-center gap-2 rounded-full border border-brand-navy/10 bg-white px-2 py-1 text-xs font-medium text-brand-navy">
-          <span className="text-xs text-brand-navy/85">{t("syncMode")}</span>
-          <select
-            value={conflictStrategy}
-            onChange={(event) => setConflictStrategy(event.target.value)}
-            className="bg-transparent text-sm outline-none"
+          <button
+            className="btn btn-secondary btn-sm"
+            type="button"
+            onClick={() => syncNow(role)}
+            disabled={isSyncing}
+            title={currentTask ? `${t("syncingTask")}: ${currentTask}` : t("syncNow")}
           >
-            <option value="lww">{t("syncStrategyLWW")}</option>
-            <option value="manual">{t("syncStrategyManual")}</option>
-          </select>
-        </label>
+            {syncLabel}
+          </button>
+
+          <LanguageSelector />
+
+          <label className="btn btn-secondary btn-sm rounded-full px-3">
+            <span className="text-xs text-brand-navy/70">{t("syncMode")}</span>
+            <select
+              value={conflictStrategy}
+              onChange={(event) => setConflictStrategy(event.target.value)}
+              className="bg-transparent text-sm outline-none"
+            >
+              <option value="lww">{t("syncStrategyLWW")}</option>
+              <option value="manual">{t("syncStrategyManual")}</option>
+            </select>
+          </label>
         </div>
 
         <span className="text-sm text-brand-navy/85 sm:text-right">
@@ -104,8 +104,8 @@ function TopBar({ role }) {
           {t("syncConflictsDetected", { count: lastSyncConflicts.length })}
         </span>
       ) : null}
-        {syncHistory.length > 0 ? (
-          <div className="rounded-xl border border-brand-navy/10 bg-sand px-3 py-2 text-xs text-brand-navy/85">
+      {syncHistory.length > 0 ? (
+        <div className="rounded-2xl border border-brand-navy/10 bg-sand/80 px-3 py-2 text-xs text-brand-navy/85">
             <p className="font-semibold text-brand-navy/80">{t("syncHistory")}</p>
             {syncHistory.slice(0, 3).map((item) => (
               <p key={item.id}>

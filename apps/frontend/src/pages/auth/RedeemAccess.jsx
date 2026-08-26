@@ -117,7 +117,7 @@ function RedeemAccess() {
         })
       }, 2000)
     } catch (err) {
-      setError(err.message || "Código inválido ou expirado")
+      setError(err.message || t("invalidOrExpiredCode"))
     } finally {
       setLoading(false)
     }

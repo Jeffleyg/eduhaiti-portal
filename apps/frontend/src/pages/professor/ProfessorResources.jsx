@@ -97,11 +97,11 @@ function ProfessorResources() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title={t("manageResourcesTitle") || 'Manage resources'}
+        title={t("manageResourcesTitle")}
         subtitle={
           disableImages
-            ? t("manageResourcesSubtitleTextMode") || 'Text mode active: simplified interface for low consumption.'
-            : t("manageResourcesSubtitle") || 'Share PDFs, slides and documents with your class'
+            ? t("manageResourcesSubtitleTextMode")
+            : t("manageResourcesSubtitle")
         }
       />
 
@@ -121,10 +121,10 @@ function ProfessorResources() {
       </div>
 
       <form onSubmit={handleSubmit} className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">{t("uploadNewResource") || 'Upload new resource'}</h3>
+        <h3 className="font-semibold text-brand-navy">{t("uploadNewResource")}</h3>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("title") || 'Title'}</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("title")}</label>
           <input
             type="text"
             value={formData.title}
@@ -136,7 +136,7 @@ function ProfessorResources() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("description") || 'Description (optional)'}</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("description")}</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -171,7 +171,7 @@ function ProfessorResources() {
       </form>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-brand-navy">Recursos da Turma</h3>
+        <h3 className="font-semibold text-brand-navy">{t("classResourcesTitle")}</h3>
         {resources.length > 0 ? (
           <LoadMoreList
             items={resources}
@@ -184,18 +184,18 @@ function ProfessorResources() {
                   {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>}
                 </div>
                 <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
-                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
+                  {t("download")}
                 </a>
               </div>
             )}
           />
         ) : (
-          <p className="text-center text-brand-navy/60">{t("noResourcesYet") || 'No resources uploaded yet'}</p>
+          <p className="text-center text-brand-navy/60">{t("noResourcesYet")}</p>
         )}
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
+        <h3 className="font-semibold text-brand-navy">{t("digitalLibraryTitle")}</h3>
         {libraryResources.length > 0 ? (
           <LoadMoreList
             items={libraryResources}
@@ -205,16 +205,16 @@ function ProfessorResources() {
               <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-brand-navy">{resource.title}</p>
-                  <p className="text-xs text-brand-navy/60">Turma: {sanitizeText(resource.class?.name) || "-"}</p>
+                  <p className="text-xs text-brand-navy/60">{t("classLabel")}: {sanitizeText(resource.class?.name) || "-"}</p>
                 </div>
                 <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
-                  Download
+                  {t("download")}
                 </a>
               </div>
             )}
           />
         ) : (
-          <p className="text-center text-brand-navy/60">{t("noLibraryItems") || 'No items in the series library.'}</p>
+          <p className="text-center text-brand-navy/60">{t("noLibraryItems")}</p>
         )}
       </div>
     </div>

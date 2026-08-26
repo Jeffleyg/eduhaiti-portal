@@ -19,6 +19,7 @@ import { DiasporaRemittanceDto } from './dto/diaspora-remittance.dto';
 import { GuardianTuitionPaymentDto } from './dto/guardian-tuition-payment.dto';
 import { MobileMoneyPaymentDto } from './dto/mobile-money-payment.dto';
 import { MobileMoneyProvider } from './interfaces/mobile-money.interface';
+import { PixPaymentDto } from './dto/pix-payment.dto';
 import { MonCashProvider } from './providers/moncash.provider';
 import { NatCashProvider } from './providers/natcash.provider';
 import { DidAuthService } from './services/did-auth.service';
@@ -26,6 +27,7 @@ import { ExchangeRateService } from './services/exchange-rate.service';
 import { FinanceObservabilityService } from './services/finance-observability.service';
 import { IdempotencyService } from './services/idempotency.service';
 import { ImmutableLedgerService } from './services/immutable-ledger.service';
+import { PixAccountService } from './services/pix-account.service';
 
 @Injectable()
 export class FinanceIntegrationService {
@@ -42,10 +44,136 @@ export class FinanceIntegrationService {
     private readonly hybridOutboundSms: HybridOutboundSmsService,
     private readonly didAuth: DidAuthService,
     private readonly ledger: ImmutableLedgerService,
+    private readonly pixAccountService: PixAccountService,
   ) {
     this.providers = {
       moncash: this.monCashProvider,
       natcash: this.natCashProvider,
+    };
+  }
+
+  async processPixPayment(dto: PixPaymentDto, tx?: Prisma.TransactionClient) {
+    const db = tx ?? this.prisma;
+
+    const student = await db.user.findFirst({
+      where: {
+        enrollmentNumber: dto.studentEnrollmentNumber,
+        role: Role.STUDENT,
+      },
+      select: { id: true, enrollmentNumber: true, name: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student enrollment not found');
+    }
+
+    const schoolId = await this.resolveSchoolId(db);
+
+    // Get primary PIX account for the school
+    const pixAccount = await db.pixAccount.findFirst({
+      where: {
+        schoolId,
+        isPrimary: true,
+        isActive: true,
+      },
+    });
+
+    if (!pixAccount) {
+      throw new NotFoundException(
+        'PIX account not configured for this school',
+      );
+    }
+
+    // Create receipt/invoice for PIX payment
+    const receiptNumber = `PIX-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 9)
+      .toUpperCase()}`;
+
+    // Validate and update payment
+    let payment: {
+      id: string;
+      amount: number;
+      status: PaymentStatus;
+      dueDate: Date;
+    } | null = null;
+
+    if (dto.tuitionPaymentId) {
+      const existing = await db.payment.findFirst({
+        where: {
+          id: dto.tuitionPaymentId,
+          studentId: student.id,
+          schoolId,
+        },
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          dueDate: true,
+        },
+      });
+
+      if (!existing) {
+        throw new NotFoundException(
+          'Tuition charge not found for this student',
+        );
+      }
+
+      if (existing.status === PaymentStatus.PAID) {
+        throw new BadRequestException('Tuition charge is already paid');
+      }
+
+      const nextStatus =
+        dto.amountHtg >= existing.amount
+          ? PaymentStatus.PAID
+          : PaymentStatus.PARTIAL;
+
+      payment = await db.payment.update({
+        where: { id: existing.id },
+        data: {
+          status: nextStatus,
+          paidDate: new Date(),
+          receiptNumber,
+          description: [
+            existing.status === PaymentStatus.OVERDUE
+              ? 'Overdue tuition payment (PIX)'
+              : 'Tuition payment (PIX)',
+            `pixKey=${pixAccount.keyType}`,
+          ].join('; '),
+        },
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          dueDate: true,
+        },
+      });
+    }
+
+    // Log the PIX payment
+    await this.observability.logPaymentStage(
+      'CREDIT_COMPLETED',
+      {
+        channel: 'pix',
+        studentEnrollmentNumber: student.enrollmentNumber,
+        amountHtg: dto.amountHtg,
+        pixKeyType: pixAccount.keyType,
+        receiptNumber,
+        paymentId: payment?.id,
+      },
+      { persistAudit: true },
+    );
+
+    return {
+      success: true,
+      receiptNumber,
+      amount: dto.amountHtg,
+      pixKey: pixAccount.key,
+      pixKeyType: pixAccount.keyType,
+      accountHolder: pixAccount.accountHolderName,
+      studentName: student.name,
+      studentEnrollment: student.enrollmentNumber,
+      message: 'PIX payment processed. Transfer the amount to the provided PIX key.',
     };
   }
 
@@ -487,6 +615,34 @@ export class FinanceIntegrationService {
       charges: pending,
       totalPendingHtg: pending.reduce((sum, item) => sum + item.amount, 0),
     };
+  }
+
+  async getPrimaryPixAccountForEnrollment(studentEnrollmentNumber: string) {
+    const enrollment = studentEnrollmentNumber.trim();
+    if (!enrollment) {
+      throw new BadRequestException('studentEnrollmentNumber is required');
+    }
+
+    const student = await this.prisma.user.findFirst({
+      where: { enrollmentNumber: enrollment, role: Role.STUDENT },
+      select: {
+        id: true,
+        schoolId: true,
+        classesAttending: { select: { academicYear: { select: { schoolId: true } } }, take: 1 },
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student enrollment not found');
+    }
+
+    const schoolId = student.schoolId ?? student.classesAttending?.[0]?.academicYear?.schoolId;
+
+    if (!schoolId) {
+      throw new NotFoundException('School not found for this student');
+    }
+
+    return this.pixAccountService.getPrimaryPixAccount(schoolId);
   }
 
   async createTuitionCharge(dto: CreateTuitionChargeDto, adminUserId: string) {

@@ -8,8 +8,17 @@ function LanguageSelector({ onLanguageChange }) {
   const { i18n, t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [languages] = useState(getSupportedLanguages())
-  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language)
+  // Only allow French and Haitian Creole as selectable languages
+  const allowed = ["fr", "ht"]
+  const allowedLanguages = getSupportedLanguages().filter((l) => allowed.includes(l.code))
+  const [languages] = useState(allowedLanguages)
+
+  const initialPreferred =
+    (typeof localStorage !== "undefined" && localStorage.getItem("preferredLanguage")) ||
+    i18n.language ||
+    "fr"
+
+  const [selectedLanguage, setSelectedLanguage] = useState(initialPreferred)
   const dropdownRef = useRef(null)
 
   const currentLanguageName =
@@ -31,6 +40,14 @@ function LanguageSelector({ onLanguageChange }) {
   useEffect(() => {
     setSelectedLanguage(i18n.language)
   }, [i18n.language])
+
+  // Ensure i18n is using the selected language on mount
+  useEffect(() => {
+    if (i18n.language !== selectedLanguage) {
+      i18n.changeLanguage(selectedLanguage).catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleLanguageSelect = async (languageCode) => {
     if (languageCode === selectedLanguage) {

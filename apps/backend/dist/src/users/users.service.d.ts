@@ -5,6 +5,7 @@ import { CreateTeacherDto } from './dto/create-teacher.dto';
 export declare class UsersService {
     private readonly prisma;
     private readonly emailService;
+    private readonly logger;
     constructor(prisma: PrismaService, emailService: EmailService);
     findById(userId: string): import(".prisma/client").Prisma.Prisma__UserClient<{
         id: string;

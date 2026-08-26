@@ -1,13 +1,13 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
   IsString,
   MinLength,
   ValidateNested,
+  Matches,
 } from 'class-validator';
 import { Gender } from '@prisma/client';
 
@@ -40,7 +40,9 @@ export class CreateTeacherDto {
   @MinLength(2)
   lastName: string;
 
-  @IsDateString()
+  @Matches(/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/, {
+    message: 'dateOfBirth must be a valid date (YYYY-MM-DD) or ISO 8601 string',
+  })
   dateOfBirth: string;
 
   @IsString()

@@ -12,12 +12,14 @@ import { IdempotencyService } from './services/idempotency.service';
 import { ImmutableLedgerService } from './services/immutable-ledger.service';
 import { WebhookAlertService } from './services/webhook-alert.service';
 import { WebhookSignatureService } from './services/webhook-signature.service';
+import { PixAccountService } from './services/pix-account.service';
 
 @Module({
   imports: [PrismaModule, HybridGatewayModule],
   controllers: [FinanceIntegrationController],
   providers: [
     FinanceIntegrationService,
+    PixAccountService,
     MonCashProvider,
     NatCashProvider,
     ExchangeRateService,

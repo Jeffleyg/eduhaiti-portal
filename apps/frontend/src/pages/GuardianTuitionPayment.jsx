@@ -1,28 +1,9 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../lib/string.js"
 import { apiFetch } from "../lib/api.js"
 import LoadMoreList from "../components/LoadMoreList.jsx"
 
-const escapeHtml = (value) =>
-  String(value ?? "").replace(/[&<>\"']/g, (character) => {
-    const replacements = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    }
-
-    return replacements[character] ?? character
-  })
-
-const buildIdempotencyKey = () =>
-  globalThis.crypto?.randomUUID?.() ?? `pay-${Date.now()}-${Math.random().toString(16).slice(2)}`
-
 function GuardianTuitionPayment() {
-  const { t } = useTranslation()
   const [enrollmentNumber, setEnrollmentNumber] = useState("")
   const [lookupLoading, setLookupLoading] = useState(false)
   const [payLoading, setPayLoading] = useState(false)
@@ -30,7 +11,6 @@ function GuardianTuitionPayment() {
   const [message, setMessage] = useState("")
   const [studentInfo, setStudentInfo] = useState(null)
   const [charges, setCharges] = useState([])
-  const [confirmPaymentDetails, setConfirmPaymentDetails] = useState(false)
 
   const [paymentForm, setPaymentForm] = useState({
     provider: "moncash",
@@ -42,16 +22,16 @@ function GuardianTuitionPayment() {
   })
 
   const providers = [
-    { id: "moncash", label: t("provider_moncash") },
-    { id: "natcash", label: t("provider_natcash") },
-    { id: "pix", label: t("provider_pix") },
-    { id: "card", label: t("provider_card") },
-    { id: "zelle", label: t("provider_zelle") },
-    { id: "paypal", label: t("provider_paypal") },
-    { id: "picpay", label: t("provider_picpay") },
-    { id: "tap_tap_send", label: t("provider_taptapsend") },
-    { id: "wise", label: t("provider_wise") },
-    { id: "boleto", label: t("provider_boleto") },
+    { id: "moncash", label: "MonCash" },
+    { id: "natcash", label: "Natcash" },
+    { id: "pix", label: "PIX" },
+    { id: "card", label: "Cartão (Crédito/Débito)" },
+    { id: "zelle", label: "Zelle" },
+    { id: "paypal", label: "PayPal" },
+    { id: "picpay", label: "PicPay" },
+    { id: "tap_tap_send", label: "Tap Tap Send" },
+    { id: "wise", label: "Wise" },
+    { id: "boleto", label: "Boleto" },
   ]
 
   const totalPending = useMemo(
@@ -69,7 +49,7 @@ function GuardianTuitionPayment() {
       const data = await apiFetch(`/finance/tuition/${encodeURIComponent(enrollmentNumber.trim())}/pending`)
       setStudentInfo(data.student)
       setCharges(data.charges ?? [])
-      setMessage(t("tuitionChargesLoaded"))
+      setMessage("Cobrancas carregadas com sucesso.")
     } catch (err) {
       setError(err.message)
       setStudentInfo(null)
@@ -86,7 +66,7 @@ function GuardianTuitionPayment() {
     setMessage("")
 
     try {
-      const idempotencyKey = buildIdempotencyKey()
+      const idempotencyKey = crypto.randomUUID()
       const result = await apiFetch("/finance/tuition/pay", {
         method: "POST",
         body: {
@@ -101,9 +81,8 @@ function GuardianTuitionPayment() {
         },
       })
 
-      setMessage(t("paymentConfirmedReceipt", { receiptNumber: result.receiptNumber }))
+      setMessage(`Pagamento confirmado. Recibo: ${result.receiptNumber}`)
       setPaymentForm((prev) => ({ ...prev, amountHtg: "", tuitionPaymentId: "" }))
-      setConfirmPaymentDetails(false)
       const refreshed = await apiFetch(`/finance/tuition/${encodeURIComponent(enrollmentNumber.trim())}/pending`)
       setStudentInfo(refreshed.student)
       setCharges(refreshed.charges ?? [])
@@ -116,59 +95,44 @@ function GuardianTuitionPayment() {
 
   return (
     <div className="relative min-h-screen bg-sand px-4 py-10">
-      <div className="mx-auto max-w-3xl space-y-6 module-card compact p-6 shadow-xl shadow-brand-navy/10">
+      <div className="mx-auto max-w-3xl space-y-6 rounded-3xl border border-brand-navy/10 bg-white/80 p-6 shadow-xl shadow-brand-navy/10">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl text-brand-navy">{t("tuitionPaymentTitle")}</h1>
-            <p className="mt-1 text-sm text-brand-navy/70">{t("tuitionPaymentSubtitle")}</p>
+            <h1 className="font-display text-3xl text-brand-navy">Pagamento de Escolaridade</h1>
+            <p className="mt-1 text-sm text-brand-navy/70">
+              Area para responsaveis consultarem e pagarem mensalidades.
+            </p>
           </div>
           <Link to="/" className="outline-button">
-            {t("back")}
+            Voltar
           </Link>
         </div>
-
-        <section className="module-card compact p-4 text-sm text-emerald-950 bg-emerald-50/80 border border-emerald-200">
-          <h2 className="font-semibold">{t("securePaymentTitle")}</h2>
-          <p className="mt-1">{t("securePaymentCopy")}</p>
-          <ul className="mt-3 grid gap-2 text-xs md:grid-cols-3">
-            <li className="rounded-xl bg-white/80 px-3 py-2">{t("securePaymentItemOne")}</li>
-            <li className="rounded-xl bg-white/80 px-3 py-2">{t("securePaymentItemTwo")}</li>
-            <li className="rounded-xl bg-white/80 px-3 py-2">{t("securePaymentItemThree")}</li>
-          </ul>
-        </section>
 
         {error ? <p className="text-sm text-brand-red">{error}</p> : null}
         {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
-        <section className="module-card compact p-4">
-          <h2 className="text-base font-semibold text-brand-navy">{t("lookupChargesTitle")}</h2>
+        <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+          <h2 className="text-base font-semibold text-brand-navy">1. Consultar cobrancas</h2>
           <form className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={loadPending}>
             <input
               value={enrollmentNumber}
               onChange={(event) => setEnrollmentNumber(event.target.value)}
-              placeholder={t("enrollmentPlaceholderPayment")}
+              placeholder="Matricula do aluno (ex: 2026-0001)"
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              autoComplete="off"
-              inputMode="numeric"
               required
             />
             <button className="primary-button" disabled={lookupLoading} type="submit">
-              {lookupLoading ? t("loading") : t("consultCharges")}
+              {lookupLoading ? "Consultando..." : "Consultar"}
             </button>
           </form>
 
-            {studentInfo ? (
-            <div className="mt-4 module-card compact bg-sand p-3">
-              <div className="grid grid-cols-12 items-center gap-2">
-                <div className="col-span-7">
-                  <p className="text-sm font-semibold text-brand-navy">{maskName(studentInfo.name, "student")}</p>
-                  <p className="text-xs text-brand-navy/75">{t("enrollmentLabel")}: {studentInfo.enrollmentNumber}</p>
-                </div>
-                <div className="col-span-5 text-right">
-                  <p className="text-sm font-semibold text-brand-navy">{totalPending.toFixed(2)} HTG</p>
-                  <p className="text-xs text-brand-navy/70">{t("pendingTotalLabel")}</p>
-                </div>
-              </div>
+          {studentInfo ? (
+            <div className="mt-4 rounded-2xl border border-brand-navy/10 bg-sand p-3">
+              <p className="text-sm text-brand-navy">
+                Aluno: <strong>{studentInfo.name}</strong>
+              </p>
+              <p className="text-xs text-brand-navy/70">Matricula: {studentInfo.enrollmentNumber}</p>
+              <p className="text-xs text-brand-navy/70">Total pendente: {totalPending.toFixed(2)} HTG</p>
             </div>
           ) : null}
 
@@ -179,39 +143,33 @@ function GuardianTuitionPayment() {
                 initialLimit={3}
                 step={3}
                 renderItem={(charge) => (
-                  <div key={charge.id} className="module-card compact p-3 bg-white">
-                      <div className="grid grid-cols-12 items-center gap-2">
-                        <div className="col-span-3">
-                          <p className="text-sm font-semibold text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
-                        </div>
-                        <div className="col-span-6">
-                          <p className="text-xs text-brand-navy/75">{charge.description || t("invoiceDefaultItem")}</p>
-                          <p className="text-xs text-brand-navy/60">{t("dueDate")}: {new Date(charge.dueDate).toLocaleDateString()}</p>
-                        </div>
-                        <div className="col-span-3 text-right">
-                          <span className="badge">{charge.status}</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div key={charge.id} className="rounded-xl border border-brand-navy/10 bg-white p-3">
+                    <p className="text-sm text-brand-navy">{Number(charge.amount).toFixed(2)} HTG</p>
+                    <p className="text-xs text-brand-navy/60">Status: {charge.status}</p>
+                    <p className="text-xs text-brand-navy/60">
+                      Vencimento: {new Date(charge.dueDate).toLocaleDateString()}
+                    </p>
+                    {charge.description ? <p className="text-xs text-brand-navy/60">{charge.description}</p> : null}
+                  </div>
                 )}
               />
             </div>
           ) : studentInfo ? (
-            <p className="mt-3 text-xs text-brand-navy/60">{t("noPendingCharges")}</p>
+            <p className="mt-3 text-xs text-brand-navy/60">Sem cobrancas pendentes para este aluno.</p>
           ) : null}
         </section>
 
         <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-          <h2 className="text-base font-semibold text-brand-navy">{t("paySectionTitle")}</h2>
+          <h2 className="text-base font-semibold text-brand-navy">2. Efetuar pagamento</h2>
           <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={payTuition}>
             <select
               value={paymentForm.provider}
               onChange={(event) => setPaymentForm((prev) => ({ ...prev, provider: event.target.value }))}
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
             >
-              {providers.map((provider) => (
-                <option key={provider.id} value={provider.id}>
-                  {provider.label}
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
                 </option>
               ))}
             </select>
@@ -221,9 +179,8 @@ function GuardianTuitionPayment() {
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, accountNumber: event.target.value }))
               }
-              placeholder={t("accountNumberPlaceholder")}
+              placeholder="Numero da conta/carteira / chave PIX / email"
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              autoComplete="off"
               required
             />
 
@@ -233,37 +190,34 @@ function GuardianTuitionPayment() {
               step="0.01"
               value={paymentForm.amountHtg}
               onChange={(event) => setPaymentForm((prev) => ({ ...prev, amountHtg: event.target.value }))}
-              placeholder={t("amountPlaceholder")}
+              placeholder="Valor em HTG"
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              inputMode="decimal"
               required
             />
 
-            {paymentForm.provider === "card" ? (
+            {/* Conditional card fields */}
+            {paymentForm.provider === "card" && (
               <>
                 <input
                   value={paymentForm.cardNumber || ""}
-                  onChange={(event) => setPaymentForm((prev) => ({ ...prev, cardNumber: event.target.value }))}
-                  placeholder={t("cardNumberPlaceholder")}
+                  onChange={(e) => setPaymentForm((prev) => ({ ...prev, cardNumber: e.target.value }))}
+                  placeholder="Numero do cartao"
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-                  autoComplete="off"
                 />
                 <input
                   value={paymentForm.cardExpiry || ""}
-                  onChange={(event) => setPaymentForm((prev) => ({ ...prev, cardExpiry: event.target.value }))}
-                  placeholder={t("cardExpiryPlaceholder")}
+                  onChange={(e) => setPaymentForm((prev) => ({ ...prev, cardExpiry: e.target.value }))}
+                  placeholder="MM/AA"
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-                  autoComplete="off"
                 />
                 <input
                   value={paymentForm.cardCvv || ""}
-                  onChange={(event) => setPaymentForm((prev) => ({ ...prev, cardCvv: event.target.value }))}
-                  placeholder={t("cardCvvPlaceholder")}
+                  onChange={(e) => setPaymentForm((prev) => ({ ...prev, cardCvv: e.target.value }))}
+                  placeholder="CVV"
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-                  autoComplete="off"
                 />
               </>
-            ) : null}
+            )}
 
             <select
               value={paymentForm.tuitionPaymentId}
@@ -272,7 +226,7 @@ function GuardianTuitionPayment() {
               }
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
             >
-              <option value="">{t("linkChargeOptional")}</option>
+              <option value="">Sem vincular a cobranca especifica</option>
               {charges.map((charge) => (
                 <option key={charge.id} value={charge.id}>
                   {Number(charge.amount).toFixed(2)} HTG - {charge.status}
@@ -285,9 +239,8 @@ function GuardianTuitionPayment() {
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, guardianName: event.target.value }))
               }
-              placeholder={t("guardianNamePlaceholderPayment")}
+              placeholder="Nome do responsavel (opcional)"
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              autoComplete="name"
             />
 
             <input
@@ -295,87 +248,47 @@ function GuardianTuitionPayment() {
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, guardianPhone: event.target.value }))
               }
-              placeholder={t("guardianPhonePlaceholderPayment")}
+              placeholder="Telefone do responsavel (opcional)"
               className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              autoComplete="tel"
             />
 
-            <label className="flex items-start gap-2 rounded-2xl border border-brand-navy/10 bg-sand p-3 text-sm text-brand-navy md:col-span-2">
-              <input
-                type="checkbox"
-                checked={confirmPaymentDetails}
-                onChange={(event) => setConfirmPaymentDetails(event.target.checked)}
-                className="mt-1"
-              />
-              <span>{t("confirmPaymentDetails")}</span>
-            </label>
-
-            <button
-              className="primary-button md:col-span-2"
-              disabled={payLoading || !enrollmentNumber.trim() || !confirmPaymentDetails}
-              type="submit"
-            >
-              {payLoading ? t("processingPayment") : t("payTuition")}
+            <button className="primary-button md:col-span-2" disabled={payLoading || !enrollmentNumber.trim()} type="submit">
+              {payLoading ? "Processando..." : "Pagar escolaridade"}
             </button>
-
             <button
               type="button"
               onClick={() => {
+                // generate simple invoice client-side and open printable window
                 const invoice = {
                   id: `INV-${Date.now()}`,
                   student: studentInfo,
-                  items: charges.length
-                    ? charges
-                    : [{ description: t("invoiceDefaultItem"), amount: Number(paymentForm.amountHtg || totalPending || 0) }],
+                  items: charges.length ? charges : [{ description: "Mensalidade", amount: Number(paymentForm.amountHtg || totalPending || 0) }],
                   total: Number(paymentForm.amountHtg || totalPending || 0),
                   date: new Date().toLocaleString(),
                 }
 
-                const windowRef = window.open("", "_blank", "noopener,noreferrer")
-                if (!windowRef) {
-                  setError(t("popupBlocked"))
-                  return
-                }
-
                 const html = `
-                  <html>
-                    <head><title>${t("invoiceTitle")} ${escapeHtml(invoice.id)}</title></head>
-                    <body>
-                      <h2>${t("invoiceTitle")} ${escapeHtml(invoice.id)}</h2>
-                          <p>${t("studentLabel")}: ${escapeHtml(maskName(invoice.student?.name, "student") || "-")}</p>
-                            <p>${t("enrollmentLabel")}: ${escapeHtml(invoice.student?.enrollmentNumber || "-")}</p>
-                      <table border="1" cellpadding="8" cellspacing="0">
-                        <thead>
-                          <tr>
-                            <th>${t("invoiceItemDescription")}</th>
-                            <th>${t("invoiceItemAmount")}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          ${invoice.items
-                            .map(
-                              (item) =>
-                                `<tr><td>${escapeHtml(item.description || t("invoiceDefaultItem"))}</td><td>${Number(item.amount).toFixed(2)} HTG</td></tr>`,
-                            )
-                            .join("")}
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <td><strong>${t("total")}</strong></td>
-                            <td><strong>${Number(invoice.total).toFixed(2)} HTG</strong></td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                      <p>${t("generatedAt")}: ${escapeHtml(invoice.date)}</p>
-                    </body>
-                  </html>`
+                <html><head><title>Fatura ${invoice.id}</title></head><body>
+                  <h2>Fatura: ${invoice.id}</h2>
+                  <p>Aluno: ${invoice.student?.name || "-"}</p>
+                  <p>Matricula: ${invoice.student?.enrollmentNumber || "-"}</p>
+                  <table border="1" cellpadding="8" cellspacing="0">
+                    <thead><tr><th>Descricao</th><th>Valor</th></tr></thead>
+                    <tbody>
+                      ${invoice.items.map(i => `<tr><td>${i.description || "Item"}</td><td>${Number(i.amount).toFixed(2)} HTG</td></tr>`).join("")}
+                    </tbody>
+                    <tfoot><tr><td><strong>Total</strong></td><td><strong>${Number(invoice.total).toFixed(2)} HTG</strong></td></tr></tfoot>
+                  </table>
+                  <p>Gerado em: ${invoice.date}</p>
+                </body></html>`
 
-                windowRef.document.write(html)
-                windowRef.document.close()
+                const w = window.open("", "_blank")
+                w.document.write(html)
+                w.document.close()
               }}
               className="outline-button md:col-span-2"
             >
-              {t("generateInvoiceReceipt")}
+              Gerar fatura / emitir recibo
             </button>
           </form>
         </section>

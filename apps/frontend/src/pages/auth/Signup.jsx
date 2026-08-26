@@ -29,7 +29,7 @@ function Signup() {
         navigate("/login")
       }
     } catch (err) {
-      setError(err.message || "Failed to create account")
+      setError(err.message || t("createAccountError"))
     } finally {
       setLoading(false)
     }

@@ -67,7 +67,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateTeacherDto.prototype, "lastName", void 0);
 __decorate([
-    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.Matches)(/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/, {
+        message: 'dateOfBirth must be a valid date (YYYY-MM-DD) or ISO 8601 string',
+    }),
     __metadata("design:type", String)
 ], CreateTeacherDto.prototype, "dateOfBirth", void 0);
 __decorate([

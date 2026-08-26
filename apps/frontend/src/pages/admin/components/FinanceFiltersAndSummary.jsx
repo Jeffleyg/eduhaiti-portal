@@ -10,10 +10,10 @@ function FinanceFiltersAndSummary({ filters, summary, onFilterChange, onLoadDash
   const statusOptions = useMemo(
     () => [
       { value: "ALL", label: t("allStatuses") },
-      { value: "PENDING", label: "Pendente" },
-      { value: "PARTIAL", label: "Parcial" },
-      { value: "PAID", label: "Pago" },
-      { value: "OVERDUE", label: "Vencido" },
+      { value: "PENDING", label: t("paymentStatusPending") },
+      { value: "PARTIAL", label: t("paymentStatusPartial") },
+      { value: "PAID", label: t("paymentStatusPaid") },
+      { value: "OVERDUE", label: t("paymentStatusOverdue") },
     ],
     [t],
   )
@@ -23,26 +23,26 @@ function FinanceFiltersAndSummary({ filters, summary, onFilterChange, onLoadDash
       {/* Filtros */}
       <div className="grid gap-3 md:grid-cols-4">
         <div>
-          <label className="text-sm font-medium text-brand-navy">Matrícula</label>
+          <label className="text-sm font-medium text-brand-navy">{t("enrollmentLabel")}</label>
           <Input
             value={filters.studentEnrollmentNumber}
             onChange={(e) =>
               onFilterChange((prev) => ({ ...prev, studentEnrollmentNumber: e.target.value, page: 1 }))
             }
-            placeholder="Filtrar..."
+            placeholder={t("filterPlaceholder")}
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">Status</label>
+          <label className="text-sm font-medium text-brand-navy">{t("status")}</label>
           <Select
             value={filters.status}
             onValueChange={(value) => onFilterChange((prev) => ({ ...prev, status: value, page: 1 }))}
             options={statusOptions}
-            placeholder="Todos"
+            placeholder={t("allStatuses")}
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">Data inicial</label>
+          <label className="text-sm font-medium text-brand-navy">{t("startDate")}</label>
           <Input
             type="date"
             value={filters.startDate}
@@ -50,7 +50,7 @@ function FinanceFiltersAndSummary({ filters, summary, onFilterChange, onLoadDash
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">Data final</label>
+          <label className="text-sm font-medium text-brand-navy">{t("endDate")}</label>
           <Input
             type="date"
             value={filters.endDate}

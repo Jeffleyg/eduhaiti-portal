@@ -23,19 +23,19 @@ function Modal({ isOpen, onClose, title, children, size = "md", actions }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose()
         }
       }}
     >
-      <div className={`${sizeClasses[size]} rounded-3xl bg-white shadow-xl`}>
+      <div className={`${sizeClasses[size]} rounded-2xl border border-brand-navy/10 bg-white shadow-2xl shadow-brand-navy/15`}>
         <div className="flex items-center justify-between border-b border-brand-navy/10 px-6 py-4">
           <h2 className="font-display text-xl font-semibold text-brand-navy">{title}</h2>
           <button
             onClick={onClose}
-            className="text-2xl leading-none text-brand-navy/50 hover:text-brand-navy"
+            className="rounded-full px-2 py-1 text-2xl leading-none text-brand-navy/50 transition-colors hover:bg-brand-navy/5 hover:text-brand-navy"
             aria-label="Close modal"
           >
             ×

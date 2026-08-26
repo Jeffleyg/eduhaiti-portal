@@ -122,11 +122,11 @@ function StudentForum() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title={t("forumTitle") || 'Discussion forum'} subtitle={t("forumSubtitle") || 'Join class discussions.'} />
+      <SectionHeader title={t("forumTitle")} subtitle={t("forumSubtitle")} />
       {error ? <p className="text-sm text-brand-red">{error}</p> : null}
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">{t("classLabel") || 'Class'}</h3>
+        <h3 className="font-semibold text-brand-navy">{t("classLabel")}</h3>
         <select
           value={selectedClass}
           onChange={(event) => onClassChange(event.target.value)}
@@ -146,23 +146,23 @@ function StudentForum() {
             <input
             value={newThread.title}
             onChange={(event) => setNewThread((prev) => ({ ...prev, title: event.target.value }))}
-            placeholder={t("threadTitlePlaceholder") || 'Thread title'}
+            placeholder={t("threadTitlePlaceholder")}
             className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
           />
           <textarea
             value={newThread.body}
             onChange={(event) => setNewThread((prev) => ({ ...prev, body: event.target.value }))}
-            placeholder={t("threadInitialMessagePlaceholder") || 'Initial message'}
+            placeholder={t("threadInitialMessagePlaceholder")}
             rows={3}
             className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
           />
-          <button className="primary-button" type="submit">{t("publishThread") || 'Publish thread'}</button>
+          <button className="primary-button" type="submit">{t("publishThread")}</button>
         </form>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
-          <h3 className="font-semibold text-brand-navy">{t("topicsTitle") || 'Topics'}</h3>
+          <h3 className="font-semibold text-brand-navy">{t("topicsTitle")}</h3>
           {threads.length > 0 ? (
             <LoadMoreList
               items={threads}
@@ -186,12 +186,12 @@ function StudentForum() {
               )}
             />
           ) : (
-            <p className="text-sm text-brand-navy/60">{t("noTopicsInClass") || 'No topics in this class.'}</p>
+            <p className="text-sm text-brand-navy/60">{t("noTopicsInClass")}</p>
           )}
         </div>
 
         <div className="rounded-2xl border border-brand-navy/10 bg-white p-4 space-y-3">
-          <h3 className="font-semibold text-brand-navy">{t("discussionTitle") || 'Discussion'}</h3>
+          <h3 className="font-semibold text-brand-navy">{t("discussionTitle")}</h3>
           {threadDetails ? (
             <>
               <div className="rounded-xl border border-brand-navy/10 bg-sand p-3">
@@ -213,7 +213,7 @@ function StudentForum() {
                     )}
                   />
                 ) : (
-                  <p className="text-sm text-brand-navy/60">{t("noResponsesYet") || 'No responses yet.'}</p>
+                  <p className="text-sm text-brand-navy/60">{t("noResponsesYet")}</p>
                 )}
               </div>
 
@@ -222,7 +222,7 @@ function StudentForum() {
                   value={newPost}
                   onChange={(event) => setNewPost(event.target.value)}
                   rows={2}
-                  placeholder={t("replyPlaceholder") || 'Reply to thread'}
+                  placeholder={t("replyPlaceholder")}
                   className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
                 />
                 <button type="submit" className="primary-button">{t("sendResponse")}</button>

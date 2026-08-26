@@ -9,7 +9,7 @@ function FinancePaymentHistory({ payments, loading, pagination, onPageChange }) 
   const columns = [
     { key: "student", label: t("student") },
     { key: "enrollment", label: t("enrollmentLabel") },
-    { key: "amount", label: t("amountPlaceholder") },
+    { key: "amount", label: t("amountLabel") },
     { key: "status", label: t("status") },
     { key: "dueDate", label: t("dueDate") },
     { key: "paidDate", label: t("paidDate") },

@@ -22,6 +22,7 @@ import { AcademicPeriodsModule } from './academic-periods/academic-periods.modul
 import { AcademicSettingsModule } from './academic-settings/academic-settings.module';
 import { AcademicRequestsModule } from './academic-requests/academic-requests.module';
 import { DisciplinesModule } from './disciplines/disciplines.module';
+import { SeriesModule } from './series/series.module';
 import { ForumsModule } from './forums/forums.module';
 import { FamilyAccessModule } from './family-access/family-access.module';
 import { ScorecardsModule } from './scorecards/scorecards.module';
@@ -54,6 +55,7 @@ import { OwnerModule } from './owner/owner.module';
     AcademicPeriodsModule,
     AcademicSettingsModule,
     AcademicRequestsModule,
+    SeriesModule,
     DisciplinesModule,
     ForumsModule,
     FamilyAccessModule,

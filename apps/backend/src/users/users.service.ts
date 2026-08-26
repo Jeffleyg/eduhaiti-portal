@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
@@ -13,6 +14,7 @@ import { CreateTeacherDto } from './dto/create-teacher.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
@@ -75,8 +77,8 @@ export class UsersService {
       resolvedSchoolId ??= classExists.academicYear.schoolId;
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
+    const user = await this.prisma.$transaction(async (tx) => {
+      return tx.user.create({
         data: {
           email: normalizedEmail,
           name: fullName,
@@ -105,15 +107,21 @@ export class UsersService {
           enrollmentNumber: true,
         },
       });
+    });
 
+    try {
       await this.emailService.sendTempPasswordEmail(
         normalizedEmail,
         tempPassword,
         expiresAt,
       );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send temp password email to ${normalizedEmail}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
-      return user;
-    });
+    return user;
   }
 
   async createTeacher(payload: CreateTeacherDto, schoolId?: string) {
@@ -153,8 +161,8 @@ export class UsersService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
+    const user = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
         data: {
           email: normalizedEmail,
           name: fullName,
@@ -185,7 +193,7 @@ export class UsersService {
       if (payload.classIds && payload.classIds.length > 0) {
         await tx.class.updateMany({
           where: { id: { in: payload.classIds } },
-          data: { teacherId: user.id },
+          data: { teacherId: created.id },
         });
       }
 
@@ -194,33 +202,57 @@ export class UsersService {
         const defaultAcademicYear = await tx.academicYear.findFirst();
         const defaultSeries = await tx.series.findFirst();
 
-        if (!defaultAcademicYear || !defaultSeries) {
-          throw new BadRequestException(
-            'No academic year or series found in database',
-          );
-        }
+          if (!defaultAcademicYear) {
+            throw new BadRequestException('No academic year found in database');
+          }
 
-        for (const newClass of payload.newClasses) {
-          await tx.class.create({
-            data: {
-              name: newClass.name,
-              level: newClass.level ?? '3eme',
-              teacherId: user.id,
-              academicYearId: newClass.academicYearId ?? defaultAcademicYear.id,
-              seriesId: newClass.seriesId ?? defaultSeries.id,
-            },
-          });
-        }
+          for (const newClass of payload.newClasses) {
+            const yearId = newClass.academicYearId ?? defaultAcademicYear.id;
+
+            // Try to use provided seriesId, otherwise find an existing series
+            let seriesId = newClass.seriesId ?? undefined;
+            if (!seriesId) {
+              const found = await tx.series.findFirst({ where: { academicYearId: yearId } });
+              if (found) {
+                seriesId = found.id;
+              } else {
+                // Create a simple series for this academic year using class level or a default name
+                const seriesName = newClass.level ?? `${created.name ?? 'General'} Series`;
+                const createdSeries = await tx.series.create({
+                  data: { name: seriesName, academicYearId: yearId },
+                });
+                seriesId = createdSeries.id;
+              }
+            }
+
+            await tx.class.create({
+              data: {
+                name: newClass.name,
+                level: newClass.level ?? '3eme',
+                teacherId: created.id,
+                academicYearId: yearId,
+                seriesId,
+              },
+            });
+          }
       }
 
+      return created;
+    });
+
+    try {
       await this.emailService.sendTempPasswordEmail(
         normalizedEmail,
         tempPassword,
         expiresAt,
       );
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send temp password email to ${normalizedEmail}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
 
-      return user;
-    });
+    return user;
   }
 
   async resendTempPassword(email: string) {

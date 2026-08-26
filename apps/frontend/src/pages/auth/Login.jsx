@@ -93,31 +93,28 @@ function Login() {
           <div className="relative flex items-center gap-3">
             <img
               src="/LogoEdu.png"
-              alt="EduHaiti"
+              alt={t("brand")}
               className="h-12 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1"
             />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/70">Sistema de Educação</p>
-              <h1 className="font-display text-3xl text-brand-navy">EduHaiti Portal</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/70">{t("systemTitle")}</p>
+              <h1 className="font-display text-3xl text-brand-navy">{t("brand")}</h1>
             </div>
           </div>
 
           <div className="relative mt-10 max-w-xl space-y-5">
-            <span className="chip">Gestão escolar centralizada</span>
+            <span className="chip">{t("loginChip")}</span>
             <h2 className="font-display text-4xl leading-tight text-brand-navy sm:text-5xl">
-              Acesso elegante, seguro e direto para equipes educacionais.
+              {t("tagline")}
             </h2>
-            <p className="max-w-2xl text-base leading-7 text-brand-navy/75 sm:text-lg">
-              Um portal pensado para escolas, administradores e professores entrarem rapidamente, com fluxo claro,
-              onboarding por código e experiência consistente em todo o sistema.
-            </p>
+            <p className="max-w-2xl text-base leading-7 text-brand-navy/75 sm:text-lg">{t("subtitle")}</p>
           </div>
 
           <div className="relative mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              ["Acesso rápido", "Login simples com recuperação do fluxo de entrada"],
-              ["Perfil certo", "Cada pessoa cai automaticamente na área correta"],
-              ["Base organizada", "Painéis com estrutura limpa e profissional"],
+              [t("feature1_title"), t("feature1_desc")],
+              [t("feature2_title"), t("feature2_desc")],
+              [t("feature3_title"), t("feature3_desc")],
             ].map(([title, description]) => (
               <div key={title} className="rounded-2xl border border-brand-navy/10 bg-white/70 p-4 shadow-sm">
                 <p className="text-sm font-semibold text-brand-navy">{title}</p>
@@ -200,9 +197,9 @@ function Login() {
           {testAccounts.length > 0 ? (
             <div className="space-y-2">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">Contas de teste</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">{t("testAccounts")}</p>
                 <span className="rounded-full bg-brand-navy/5 px-3 py-1 text-xs font-semibold text-brand-navy/60">
-                  Ambiente de validação
+                  {t("validationEnvironment")}
                 </span>
               </div>
               {testAccounts.map((account) => (
@@ -223,8 +220,8 @@ function Login() {
       </div>
 
       <div className="relative pb-8 text-center text-xs text-brand-navy/60">
-        <p>Protected by enterprise security standards</p>
-        <p className="mt-1">© 2025 EduHaiti. All rights reserved.</p>
+        <p>{t("protectedBy")}</p>
+        <p className="mt-1">{t("copyrightNotice")}</p>
       </div>
     </div>
   )

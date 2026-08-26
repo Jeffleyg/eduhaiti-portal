@@ -78,7 +78,7 @@ function Sidebar({ role }) {
 
   return (
     <aside
-      className={`glass-panel sticky top-6 hidden h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 lg:flex ${
+      className={`glass-panel sticky top-6 hidden h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-2xl px-4 py-5 lg:flex ${
         collapsed ? "w-16" : "w-64 xl:w-72"
       }`}
     >
@@ -87,20 +87,20 @@ function Sidebar({ role }) {
           <img
             src="/LogoEdu.png"
             alt={t("brand")}
-            className={`h-10 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 ${collapsed ? "" : ""}`}
+            className="h-10 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 shadow-sm"
           />
-          {!collapsed ? (
+          {collapsed ? null : (
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">{t("appSubtitle")}</p>
               <h2 className="mt-1 font-display text-xl text-brand-navy">{t("brand")}</h2>
               <p className="mt-1 text-sm text-brand-navy/70">{t(roleLabelKey)}</p>
             </div>
-          ) : null}
+          )}
         </div>
 
         <button
           onClick={() => setCollapsed((s) => !s)}
-          className="rounded-full p-1 text-brand-navy/70 hover:bg-white"
+          className="btn btn-ghost btn-sm rounded-full p-1.5 text-brand-navy/70"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -114,14 +114,16 @@ function Sidebar({ role }) {
             to={item.to}
             end={item.to === "/teacher" || item.to === "/student" || item.to === "/owner"}
             title={t(item.labelKey)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"
-                    } ${collapsed ? "justify-center px-0" : ""}`
-                  }
-                  >
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-brand-navy text-white shadow-sm shadow-brand-navy/20"
+                  : "text-brand-navy/90 hover:bg-white/60 hover:text-brand-navy"
+              } ${collapsed ? "justify-center px-0" : ""}`
+            }
+          >
             <item.icon className="h-4 w-4" />
-            {!collapsed ? t(item.labelKey) : null}
+            {collapsed ? null : t(item.labelKey)}
           </NavLink>
         ))}
       </nav>
@@ -129,13 +131,13 @@ function Sidebar({ role }) {
       <div className="mt-auto">
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red ${
+          className={`btn btn-ghost flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 hover:bg-brand-red/10 hover:text-brand-red ${
             collapsed ? "justify-center" : ""
           }`}
           title={t("logout")}
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed ? t("logout") : null}
+          {collapsed ? null : t("logout")}
         </button>
       </div>
     </aside>

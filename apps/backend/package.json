@@ -7,6 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "postbuild": "node -e \"const fs=require('fs');const entry='require(\\'./src/main.js\\')\\n';fs.mkdirSync('dist',{recursive:true});fs.writeFileSync('dist/main.js',entry);fs.writeFileSync('dist/main',entry);\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

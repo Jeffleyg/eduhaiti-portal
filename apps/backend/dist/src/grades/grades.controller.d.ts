@@ -101,29 +101,23 @@ export declare class GradesController {
     }, academicYearId: string): Promise<{
         studentId: string;
         academicYearId: string;
-        grades: ({
-            discipline: {
-                id: string;
-                name: string;
-            };
-            class: {
-                id: string;
-                name: string;
-            };
-        } & {
+        student: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            academicYearId: string;
-            classId: string;
-            studentId: string;
-            disciplineId: string;
-            score: number;
-            maxScore: number;
-            weight: number;
-            status: import(".prisma/client").$Enums.GradeStatus;
-        })[];
-        summary: {};
+            enrollmentNumber: string | null;
+            name: string | null;
+            school: {
+                id: string;
+                name: string;
+                address: string | null;
+                logo: string | null;
+            } | null;
+        } | null;
+        grades: any[];
+        summary: Record<string, any>;
+        attendance: {
+            total: number;
+            present: number;
+        };
     }>;
     getClassGrades(classId: string, disciplineId?: string): Promise<({
         discipline: {

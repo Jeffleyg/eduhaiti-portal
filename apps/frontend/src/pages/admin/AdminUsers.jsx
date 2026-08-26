@@ -30,6 +30,7 @@ function AdminUsers() {
   const { t } = useTranslation()
   const { token } = useAuth()
   const [classes, setClasses] = useState([])
+  const [academicYears, setAcademicYears] = useState([])
   const [students, setStudents] = useState([])
   const [teachers, setTeachers] = useState([])
   const [teacherData, setTeacherData] = useState(emptyTeacher)
@@ -49,6 +50,15 @@ function AdminUsers() {
           apiFetch("/admin/users/teachers", { token }),
         ])
         setClasses(classesData ?? [])
+        // fetch academic years for period selection
+        try {
+          const years = await apiFetch('/admin/classes/meta/academic-years', { token })
+          setAcademicYears(years ?? [])
+        } catch (e) {
+          // non-fatal
+          console.warn('Failed to load academic years', e)
+          setAcademicYears([])
+        }
         setStudents(studentsData ?? [])
         setTeachers(teachersData ?? [])
       } catch (err) {
@@ -184,6 +194,7 @@ function AdminUsers() {
           onSubmit={submitStudent}
           loading={loading}
           classes={classes}
+          academicYears={academicYears}
         />
       </Modal>
 

@@ -88,7 +88,7 @@ function ProfessorLessonPlans() {
 
     try {
       await apiFetch("/lessons", { method: "POST", body: payload, token })
-      setMessage("Plano de aula salvo com sucesso.")
+      setMessage(t("lessonPlanSaved"))
       setForm({ date: "", title: "", objectives: "", content: "", methodology: "", tags: "", visibility: "SCHOOL" })
       // try to refresh
       const refreshed = await apiFetch(`/lessons?classId=${encodeURIComponent(selectedClass)}`, { token })
@@ -101,20 +101,20 @@ function ProfessorLessonPlans() {
       const updated = [newPlan, ...existing]
       localStorage.setItem(key, JSON.stringify(updated))
       setPlans(updated)
-      setMessage("Plano salvo localmente (sem backend).")
+      setMessage(t("lessonPlanSavedLocal"))
     }
   }
 
-  if (loading) return <div className="text-center text-brand-navy">Carregando...</div>
+  if (loading) return <div className="text-center text-brand-navy">{t("loading")}</div>
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Planos de Aula" subtitle="Crie e agende planos de aula para suas turmas." />
+      <SectionHeader title={t("lessonPlansTitle")} subtitle={t("lessonPlansSubtitle")} />
 
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="font-semibold text-brand-navy">Novo plano de aula</h3>
+        <h3 className="font-semibold text-brand-navy">{t("newLessonPlan")}</h3>
         <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={submitPlan}>
           <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="rounded-2xl border px-3 py-2 bg-sand">
             {(classes ?? []).map((c) => (

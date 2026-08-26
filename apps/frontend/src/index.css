@@ -58,14 +58,12 @@ body {
   line-height: 1.5;
   
   /* Performance optimizations */
-  scrollbar-gutter: stable;
   contain: layout style paint;
   
   /* Smooth scrolling */
   scroll-behavior: smooth;
 
   /* Better text rendering */
-  text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -174,6 +172,7 @@ input[type="radio"] {
 /* Glassmorphism effect */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(15, 43, 94, 0.1);
 }
@@ -288,12 +287,6 @@ input[type="radio"] {
   background: rgba(15, 43, 94, 0.4);
 }
 
-/* Firefox */
-* {
-  scrollbar-color: rgba(15, 43, 94, 0.2) transparent;
-  scrollbar-width: thin;
-}
-
 /* ============================================
    ACCESSIBILITY
    ============================================ */
@@ -378,19 +371,51 @@ input[type="radio"] {
 
 @layer components {
   .chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-brand-navy/10 bg-white/70 px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-navy;
+    @apply inline-flex items-center gap-2 rounded-full border border-brand-navy/10 bg-white/80 px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-navy shadow-sm;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-navy text-white shadow-sm shadow-brand-navy/15 hover:-translate-y-0.5 hover:bg-brand-navy/95 active:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply btn border border-brand-navy/15 bg-white text-brand-navy hover:border-brand-navy/30 hover:bg-brand-navy/5;
+  }
+
+  .btn-outline {
+    @apply btn border border-brand-red/25 bg-white text-brand-red hover:border-brand-red/45 hover:bg-brand-red/5;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-brand-navy hover:bg-brand-navy/5;
+  }
+
+  .btn-sm {
+    @apply px-3 py-2 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-5 py-3 text-base;
+  }
+
+  .btn-disabled {
+    @apply opacity-60;
   }
 
   .primary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-red px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-red/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0;
+    @apply btn-primary rounded-xl bg-brand-red shadow-brand-red/20 hover:bg-brand-red/95;
   }
 
   .outline-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-navy/20 bg-white px-5 py-3 text-sm font-semibold text-brand-navy transition-all duration-200 hover:border-brand-navy/40 active:scale-95 disabled:opacity-60 disabled:hover:scale-100;
+    @apply btn-secondary rounded-xl;
   }
 
   .surface-panel {
-    @apply rounded-3xl border border-brand-navy/10 bg-white/80 shadow-xl shadow-brand-navy/10;
+    @apply rounded-2xl border border-brand-navy/10 bg-white/90 shadow-sm shadow-brand-navy/5;
   }
 
   .module-grid {
@@ -403,7 +428,7 @@ input[type="radio"] {
 
   /* Compact card variant for dense lists */
   .card-compact {
-    @apply p-3 sm:p-3 rounded-xl;
+    @apply rounded-xl p-3 sm:p-3;
   }
 
   /* Slightly smaller module card for compact mode */

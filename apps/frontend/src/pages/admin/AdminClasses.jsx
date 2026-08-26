@@ -55,18 +55,18 @@ export default function AdminClasses() {
       })
     } catch (error) {
       console.error("Failed to create class:", error)
-      alert(t("createClassError") || "Erro ao criar turma")
+      alert(t("createClassError"))
     }
   }
 
   const handleDelete = async (classId) => {
-    if (confirm(t("confirmDeleteClass") || "Tem certeza que deseja deletar esta turma?")) {
+    if (confirm(t("confirmDeleteClass"))) {
       try {
         await apiFetch(`/admin/classes/${classId}`, { method: "DELETE", token })
         setClasses(classes.filter((c) => c.id !== classId))
         } catch (error) {
         console.error("Failed to delete class:", error)
-        alert(t("deleteClassError") || "Erro ao deletar turma")
+        alert(t("deleteClassError"))
       }
     }
   }

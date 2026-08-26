@@ -31,6 +31,7 @@ const academic_periods_module_1 = require("./academic-periods/academic-periods.m
 const academic_settings_module_1 = require("./academic-settings/academic-settings.module");
 const academic_requests_module_1 = require("./academic-requests/academic-requests.module");
 const disciplines_module_1 = require("./disciplines/disciplines.module");
+const series_module_1 = require("./series/series.module");
 const forums_module_1 = require("./forums/forums.module");
 const family_access_module_1 = require("./family-access/family-access.module");
 const scorecards_module_1 = require("./scorecards/scorecards.module");
@@ -66,6 +67,7 @@ exports.AppModule = AppModule = __decorate([
             academic_periods_module_1.AcademicPeriodsModule,
             academic_settings_module_1.AcademicSettingsModule,
             academic_requests_module_1.AcademicRequestsModule,
+            series_module_1.SeriesModule,
             disciplines_module_1.DisciplinesModule,
             forums_module_1.ForumsModule,
             family_access_module_1.FamilyAccessModule,

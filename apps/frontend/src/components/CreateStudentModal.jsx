@@ -70,47 +70,57 @@ const createStudentSchema = z.object({
  * ✅ FormField com aria-labels
  * ✅ SelectField com Radix UI
  */
-function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes }) {
+function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes, academicYears = [] }) {
   const { t } = useTranslation()
+  
+    // Inicializar form com schema Zod
+    const {
+      control,
+      handleSubmit,
+      reset,
+      watch,
+      formState: { errors, isSubmitting },
+    } = useForm({
+      resolver: zodResolver(createStudentSchema),
+      mode: 'onBlur', // Validar ao sair do campo
+      defaultValues: {
+        email: '',
+        firstName: '',
+        lastName: '',
+        dateOfBirth: '',
+        address: '',
+        gender: '',
+        fatherName: '',
+        motherName: '',
+        classId: '',
+      },
+    })
+  
+    const selectedYear = watch('academicYearId')
 
   // Preparar opções de classes
+  const filteredClasses = useMemo(() => {
+    if (!selectedYear) return classes
+    return classes.filter((c) => c.academicYearId === selectedYear || (c.academicYear && c.academicYear.id === selectedYear))
+  }, [classes, selectedYear])
+
   const classOptions = useMemo(
     () =>
-      classes.map((item) => ({
+      filteredClasses.map((item) => ({
         value: item.id,
         label: `${sanitizeText(item.name)} (${sanitizeText(item.level)})`,
       })),
-    [classes]
+    [filteredClasses]
   )
 
   // Preparar opções de gênero
   const genderOptions = [
-    { value: 'MALE', label: t('genderMale') || 'Masculino' },
-    { value: 'FEMALE', label: t('genderFemale') || 'Feminino' },
-    { value: 'OTHER', label: t('genderOther') || 'Outro' },
+    { value: 'MALE', label: t('genderMale') },
+    { value: 'FEMALE', label: t('genderFemale') },
+    { value: 'OTHER', label: t('genderOther') },
   ]
 
-  // Inicializar form com schema Zod
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(createStudentSchema),
-    mode: 'onBlur', // Validar ao sair do campo
-    defaultValues: {
-      email: '',
-      firstName: '',
-      lastName: '',
-      dateOfBirth: '',
-      address: '',
-      gender: '',
-      fatherName: '',
-      motherName: '',
-      classId: '',
-    },
-  })
+  
 
   // Callback ao submeter
   const onSubmit = useCallback(
@@ -138,47 +148,56 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
       noValidate
     >
       <div className="grid gap-3 md:grid-cols-2">
+        {/* Academic Year / Period */}
+        <SelectField
+          control={control}
+          name="academicYearId"
+          label={t('academicYear')}
+          options={academicYears.map(y => ({ value: y.id, label: y.year }))}
+          placeholder={t('selectAcademicYear')}
+          className="md:col-span-2"
+        />
         {/* Email */}
         <FormField
           control={control}
           name="email"
-          label={t('email') || 'Email'}
+          label={t('email')}
           type="email"
-          placeholder={t('enterEmail') || 'E.g. student@school.ht'}
+          placeholder={t('enterEmail')}
           required
           error={errors.email?.message}
-          hint={t('emailHint') || 'Email will be used for login'}
+          hint={t('emailHint')}
         />
 
         {/* First Name */}
         <FormField
           control={control}
           name="firstName"
-          label={t('firstName') || 'First Name'}
+          label={t('firstName')}
           type="text"
-          placeholder={t('enterFirstName') || 'E.g. John'}
+          placeholder={t('enterFirstName')}
           required
           error={errors.firstName?.message}
-          hint={t('firstNameHint') || 'Minimum 2 characters'}
+          hint={t('firstNameHint')}
         />
 
         {/* Last Name */}
         <FormField
           control={control}
           name="lastName"
-          label={t('lastName') || 'Last Name'}
+          label={t('lastName')}
           type="text"
-          placeholder={t('enterLastName') || 'E.g. Silva'}
+          placeholder={t('enterLastName')}
           required
           error={errors.lastName?.message}
-          hint={t('lastNameHint') || 'Minimum 2 characters'}
+          hint={t('lastNameHint')}
         />
 
         {/* Date of Birth */}
         <FormField
           control={control}
           name="dateOfBirth"
-          label={t('dateOfBirth') || 'Date of Birth'}
+          label={t('dateOfBirth')}
           type="date"
           required
           error={errors.dateOfBirth?.message}
@@ -188,12 +207,12 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
         <FormField
           control={control}
           name="address"
-          label={t('address') || 'Address'}
+          label={t('address')}
           type="text"
-          placeholder={t('enterAddress') || 'E.g. Main Street, 123'}
+          placeholder={t('enterAddress')}
           required
           error={errors.address?.message}
-          hint={t('addressHint') || 'Complete address'}
+          hint={t('addressHint')}
           className="md:col-span-2"
         />
 
@@ -201,9 +220,9 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
         <SelectField
           control={control}
           name="gender"
-          label={t('gender') || 'Gender'}
+          label={t('gender')}
           options={genderOptions}
-          placeholder={t('selectGender') || 'Select...'}
+          placeholder={t('selectGender')}
           required
           error={errors.gender?.message}
         />
@@ -212,9 +231,9 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
         <FormField
           control={control}
           name="fatherName"
-          label={t('fatherName') || 'Father Name (optional)'}
+          label={t('fatherName')}
           type="text"
-          placeholder={t('enterFatherName') || 'E.g. John Silva'}
+          placeholder={t('enterFatherName')}
           error={errors.fatherName?.message}
         />
 
@@ -222,9 +241,9 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
         <FormField
           control={control}
           name="motherName"
-          label={t('motherName') || 'Mother Name (optional)'}
+          label={t('motherName')}
           type="text"
-          placeholder={t('enterMotherName') || 'E.g. Maria Silva'}
+          placeholder={t('enterMotherName')}
           error={errors.motherName?.message}
         />
 
@@ -232,12 +251,12 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
         <SelectField
           control={control}
           name="classId"
-          label={t('class') || 'Class'}
+          label={t('class')}
           options={classOptions}
-          placeholder={t('selectClass') || 'Select a class...'}
+          placeholder={t('selectClass')}
           required
           error={errors.classId?.message}
-          hint={t('classHint') || 'Class in which the student will be enrolled'}
+          hint={t('classHint')}
           className="md:col-span-2"
         />
       </div>
@@ -250,7 +269,7 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
           onClick={handleClose}
           disabled={loading || isSubmitting}
         >
-          {t('cancel') || 'Cancel'}
+          {t('cancel')}
         </Button>
         <Button
           type="submit"
@@ -258,7 +277,7 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
           isLoading={loading || isSubmitting}
           disabled={loading || isSubmitting}
         >
-          {t('createStudentAction') || 'Create Student'}
+          {t('createStudentAction')}
         </Button>
       </div>
     </form>

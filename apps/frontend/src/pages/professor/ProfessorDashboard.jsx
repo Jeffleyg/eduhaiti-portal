@@ -132,20 +132,20 @@ function ProfessorDashboard() {
       </div>
 
       <div className="module-card compact card-compact p-5">
-        <SectionHeader title="Gamificacao da Turma" subtitle="Ranking parcial de engajamento" />
+        <SectionHeader title={t("gamificationTitle")} subtitle={t("engagementRankingSubtitle")} />
         <div className="space-y-2">
               {leaderboard.length ? (
             leaderboard.map((entry, index) => (
               <div key={entry.student?.id ?? index} className="flex items-center justify-between rounded-xl border px-3 py-2">
                 <div>
                   <p className="font-semibold text-brand-navy">{index + 1}. {maskName(entry.student?.name ?? entry.student?.email, "student")}</p>
-                  <p className="text-xs text-brand-navy/60">Presenca: {entry.attendanceRate ?? 0}% | Entregas antecipadas: {entry.earlySubmissions ?? 0}</p>
+                  <p className="text-xs text-brand-navy/60">{t("attendanceTitle")}: {entry.attendanceRate ?? 0}% | {t("earlySubmissionsLabel")}: {entry.earlySubmissions ?? 0}</p>
                 </div>
                 <span className="text-sm font-bold text-brand-red">{entry.points ?? 0} pts</span>
               </div>
             ))
           ) : (
-            <p className="text-sm text-brand-navy/60">Sem dados de gamificacao para a turma selecionada.</p>
+            <p className="text-sm text-brand-navy/60">{t("noGamificationData")}</p>
           )}
         </div>
       </div>

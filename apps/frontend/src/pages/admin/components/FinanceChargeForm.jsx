@@ -100,7 +100,7 @@ function ChargeForm({ onSuccess, loading }) {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("description") || 'Description'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("description")}</label>
           <Input
             value={form.description}
             onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
@@ -108,7 +108,7 @@ function ChargeForm({ onSuccess, loading }) {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("scholarship") || 'Scholarship (%)'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("scholarship")}</label>
           <div className="relative">
             <Percent className="absolute left-3 top-3 h-4 w-4 text-brand-navy/40" />
             <Input
@@ -124,7 +124,7 @@ function ChargeForm({ onSuccess, loading }) {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("scholarshipLabel") || 'Scholarship name'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("scholarshipLabel")}</label>
           <Input
             value={form.scholarshipLabel}
             onChange={(e) => setForm((prev) => ({ ...prev, scholarshipLabel: e.target.value }))}
@@ -139,11 +139,11 @@ function ChargeForm({ onSuccess, loading }) {
               onChange={(e) => setForm((prev) => ({ ...prev, applyPunctualityDiscount: e.target.checked }))}
               className="h-4 w-4 rounded border-brand-navy/20"
             />
-            <span className="text-sm text-brand-navy">{t("applyPunctualityDiscount") || 'Apply punctuality discount'}</span>
+            <span className="text-sm text-brand-navy">{t("applyPunctualityDiscount")}</span>
           </label>
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("punctualityDiscount") || 'Punctuality discount (%)'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("punctualityDiscount")}</label>
           <div className="relative">
             <Percent className="absolute left-3 top-3 h-4 w-4 text-brand-navy/40" />
             <Input

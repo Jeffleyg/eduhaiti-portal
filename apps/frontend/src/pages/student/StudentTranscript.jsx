@@ -94,165 +94,217 @@ function StudentTranscript() {
 
     try {
       const selectedYear = academicYears.find((item) => item.id === selectedYearId)
-      const doc = new jsPDF()
+      const doc = new jsPDF({ unit: "mm", format: "a4" })
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
-      let yPos = 15
+      const margin = 15
+      const contentWidth = pageWidth - margin * 2
 
-      // En-tête professionnel
+      // helper: fetch image url -> dataURL
+      const toDataURL = async (url) => {
+        try {
+          const res = await fetch(url)
+          const blob = await res.blob()
+          return await new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result)
+            reader.readAsDataURL(blob)
+          })
+        } catch (e) {
+          return null
+        }
+      }
+
+      // Header: optional logo, school name, transcript title
+      const logoUrl = user?.school?.logoUrl || user?.school?.logo || null
+      if (logoUrl) {
+        const logoData = await toDataURL(logoUrl)
+        if (logoData) doc.addImage(logoData, "PNG", margin, 12, 28, 28)
+      }
+
+      doc.setFontSize(14)
       doc.setFont("Helvetica", "bold")
-      doc.setFontSize(18)
-      doc.text("RELEVÉ DE NOTES", pageWidth / 2, yPos, { align: "center" })
-      yPos += 8
+      const schoolName = user?.school?.name || t("schoolName")
+      doc.text(schoolName, pageWidth / 2, 18, { align: "center" })
 
-      doc.setFont("Helvetica", "normal")
       doc.setFontSize(10)
-      doc.text("Établissement d'Enseignement Superieur", pageWidth / 2, yPos, { align: "center" })
-      yPos += 5
+      doc.setFont("Helvetica", "normal")
+      const schoolAddr = user?.school?.address || t("schoolAddress")
+      doc.text(schoolAddr, pageWidth / 2, 23, { align: "center" })
 
-      // Ligne séparatrice
       doc.setDrawColor(20, 30, 80)
-      doc.setLineWidth(0.8)
-      doc.line(15, yPos, pageWidth - 15, yPos)
-      yPos += 8
+      doc.setLineWidth(0.7)
+      doc.line(margin, 30, pageWidth - margin, 30)
 
-      // Informations générales
+      // Title
+      doc.setFontSize(16)
       doc.setFont("Helvetica", "bold")
-      doc.setFontSize(11)
-      doc.text("INFORMATIONS ÉTUDIANTE", 15, yPos)
-      yPos += 6
+      doc.text(t("academicRecordHeader"), pageWidth / 2, 38, { align: "center" })
 
-      doc.setFont("Helvetica", "normal")
+      // Student block (left) and optional photo (right)
+      let y = 44
+      const photoUrl = user?.photoUrl || user?.profilePhotoUrl || user?.avatarUrl || null
+      const boxHeight = 34
+      doc.setDrawColor(230)
+      doc.rect(margin, y, contentWidth, boxHeight)
+
+      const leftX = margin + 4
+      let infoY = y + 7
       doc.setFontSize(10)
-      const studentInfo = [
-        [`Nom et Prénom:`, `${maskName(user?.name ?? user?.email, "student")}`],
-        [`Numéro d'Inscription:`, user?.enrollmentNumber ?? "-"],
-        [`Année Académique:`, selectedYear?.year ?? "-"],
-        [`Date d'Émission:`, new Date().toLocaleDateString("fr-FR")],
-        [`ID Vérification:`, transcriptId],
-      ]
-
-      studentInfo.forEach(([label, value]) => {
-        doc.text(label, 15, yPos)
-        doc.text(value, 80, yPos)
-        yPos += 5
-      })
-
-      yPos += 3
-
-      // Résultats par discipline
       doc.setFont("Helvetica", "bold")
-      doc.setFontSize(11)
-      doc.text("RÉSULTATS PAR DISCIPLINE", 15, yPos)
-      yPos += 6
+      doc.text(t("studentInformation"), leftX, infoY)
+      doc.setFont("Helvetica", "normal")
+      infoY += 5
+      doc.text(`${t("studentFullName")} ${maskName(user?.name ?? user?.email, "student")}`, leftX, infoY)
+      infoY += 5
+      doc.text(`${t("enrollmentNumber")} ${user?.enrollmentNumber ?? "-"}`, leftX, infoY)
+      infoY += 5
+      doc.text(`Date Naissance: ${user?.birthDate ? new Date(user.birthDate).toLocaleDateString() : "-"}`, leftX, infoY)
 
-      const tableRows = (report.grades ?? []).map((item) => {
+      if (photoUrl) {
+        const photoData = await toDataURL(photoUrl)
+        if (photoData) {
+          doc.addImage(photoData, "JPEG", pageWidth - margin - 28, y + 4, 24, 28)
+        }
+      }
+
+      y += boxHeight + 6
+
+      // Build table rows with extra columns (Credits / Lettre / Statut)
+      const letterGrade = (pct) => {
+        if (pct >= 90) return "A"
+        if (pct >= 80) return "B"
+        if (pct >= 70) return "C"
+        if (pct >= 60) return "D"
+        return "F"
+      }
+
+      const gradeToPoints = (letter) => ({ A: 4, B: 3, C: 2, D: 1, F: 0 }[letter] ?? 0)
+
+      const rows = (report.grades ?? []).map((item) => {
         const score = Number(item.score ?? 0)
-        const maxScore = Number(item.maxScore ?? 20)
-        const percentage = ((score / maxScore) * 100).toFixed(1)
-        const status = percentage >= 60 ? "Admis(e)" : "Non admis(e)"
+        const max = Number(item.maxScore ?? 20)
+        const pct = max > 0 ? (score / max) * 100 : 0
+        const letter = letterGrade(pct)
+        const credits = item.discipline?.credits ?? item.class?.credits ?? "-"
+        const status = pct >= 60 ? "Admis(e)" : "Non admis(e)"
         return [
+          sanitizeText(item.discipline?.code ?? item.discipline?.name ?? "-"),
           sanitizeText(item.discipline?.name ?? "-"),
-          sanitizeText(item.class?.name ?? "-"),
-          `${score}/${maxScore}`,
-          `${percentage}%`,
+          String(credits),
+          `${score}/${max}`,
+          `${pct.toFixed(1)}%`,
+          letter,
           status,
         ]
       })
 
+      // AutoTable (bulletin style): Matières | Moy/20 | Classe(min/max/moy) | Appréciations
+      const bulletinRows = (report.grades ?? []).map((item) => {
+        const score = Number(item.score ?? 0)
+        const max = Number(item.maxScore ?? 20)
+        const classMin = item.classStats?.min ?? item.class?.min ?? "-"
+        const classMax = item.classStats?.max ?? item.class?.max ?? "-"
+        const classAvg = item.classStats?.avg ?? item.class?.avg ?? "-"
+        const appreciation = item.appreciation ?? item.comment ?? item.teacherComment ?? ""
+        return [
+          sanitizeText(item.discipline?.name ?? "-"),
+          `${score}/${max}`,
+          String(classMin),
+          String(classMax),
+          String(classAvg),
+          sanitizeText(appreciation),
+        ]
+      })
+
       autoTable(doc, {
-        head: [["Discipline", "Classe", "Note", "%", "Statut"]],
-        body: tableRows,
-        startY: yPos,
-        headStyles: {
-          fillColor: [20, 30, 80],
-          textColor: 255,
-          fontStyle: "bold",
-          fontSize: 9,
+        head: [
+          [
+            { content: "Matières", rowSpan: 2 },
+            { content: "Moy /20", rowSpan: 2 },
+            { content: "Classe", colSpan: 3, styles: { halign: "center" } },
+            { content: "Appréciations", rowSpan: 2 },
+          ],
+          ["Min", "Max", "Moy"],
+        ],
+        body: bulletinRows,
+        startY: y,
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [30, 60, 90], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [245, 248, 250] },
+        columnStyles: {
+          0: { cellWidth: 80 },
+          1: { cellWidth: 24 },
+          2: { cellWidth: 18 },
+          3: { cellWidth: 18 },
+          4: { cellWidth: 18 },
+          5: { cellWidth: 60 },
         },
-        bodyStyles: {
-          fontSize: 9,
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          const pageCount = doc.getNumberOfPages()
+          const page = doc.internal.getCurrentPageInfo().pageNumber
+          doc.setFontSize(9)
+          doc.setTextColor(120)
+          doc.text(`Page ${page} / ${pageCount}`, pageWidth - margin, pageHeight - 10, { align: "right" })
         },
-        alternateRowStyles: {
-          fillColor: [245, 248, 250],
-        },
-        margin: 15,
       })
 
-      yPos = doc.lastAutoTable?.finalY ?? yPos + 50
+      // Summary statistics below table
+      let finalY = doc.lastAutoTable?.finalY ?? y + 10
+      finalY += 6
 
-      // Statistiques générales
-      yPos += 5
-      doc.setFont("Helvetica", "bold")
-      doc.setFontSize(11)
-      doc.text("STATISTIQUES GÉNÉRALES", 15, yPos)
-      yPos += 6
+      const totalScore = (report.grades ?? []).reduce((s, g) => s + Number(g.score ?? 0), 0)
+      const totalMaxScore = (report.grades ?? []).reduce((s, g) => s + Number(g.maxScore ?? 20), 0)
+      const overallPct = totalMaxScore > 0 ? ((totalScore / totalMaxScore) * 100).toFixed(1) : 0
+      const mean = report.grades?.length > 0 ? (totalScore / report.grades.length).toFixed(2) : "0"
 
-      const totalScore = (report.grades ?? []).reduce((sum, g) => sum + Number(g.score ?? 0), 0)
-      const totalMaxScore = (report.grades ?? []).reduce((sum, g) => sum + Number(g.maxScore ?? 20), 0)
-      const overallPercentage = totalMaxScore > 0 ? ((totalScore / totalMaxScore) * 100).toFixed(1) : 0
-      const meanScore = report.grades?.length > 0 ? (totalScore / report.grades.length).toFixed(2) : 0
-      const passedCount = (report.grades ?? []).filter((g) => {
-        const score = Number(g.score ?? 0)
-        const maxScore = Number(g.maxScore ?? 20)
-        return (score / maxScore) * 100 >= 60
-      }).length
+      // GPA calculation (simple average by letter points)
+      const points = (report.grades ?? []).reduce((acc, g) => {
+        const pct = (Number(g.score ?? 0) / Number(g.maxScore ?? 20)) * 100
+        const letter = letterGrade(pct)
+        return acc + gradeToPoints(letter)
+      }, 0)
+      const gpa = report.grades?.length > 0 ? (points / report.grades.length).toFixed(2) : "0.00"
 
-      doc.setFont("Helvetica", "normal")
       doc.setFontSize(10)
-      const stats = [
-        [`Total de disciplines:`, `${report.grades?.length ?? 0}`],
-        [`Disciplines réussies:`, `${passedCount}`],
-        [`Moyenne générale:`, `${meanScore}/20`],
-        [`Taux de réussite:`, `${overallPercentage}%`],
-      ]
-
-      stats.forEach(([label, value]) => {
-        doc.text(label, 15, yPos)
-        doc.setFont("Helvetica", "bold")
-        doc.text(value, 80, yPos)
-        doc.setFont("Helvetica", "normal")
-        yPos += 5
-      })
-
-      // Remarques
-      yPos += 5
       doc.setFont("Helvetica", "bold")
-      doc.text("REMARQUES", 15, yPos)
-      yPos += 4
+      doc.text("STATISTIQUES GÉNÉRALES", margin, finalY)
+      doc.setFont("Helvetica", "normal")
+      finalY += 6
+      doc.text(`Total disciplines: ${report.grades?.length ?? 0}`, margin, finalY)
+      doc.text(`Moyenne générale: ${mean}/20`, margin + 70, finalY)
+      finalY += 5
+      doc.text(`Taux de réussite: ${overallPct}%`, margin, finalY)
+      doc.text(`GPA estimé: ${gpa}`, margin + 70, finalY)
+
+      // Remarks
+      finalY += 8
+      doc.setFont("Helvetica", "italic")
+      const remarkText = overallPct >= 75 ? "Excellent rendement académique" : overallPct >= 60 ? "Rendement académique satisfaisant" : "Rendement académique à améliorer"
+      doc.text(`Remarques: ${remarkText}`, margin, finalY, { maxWidth: contentWidth })
+
+      // Signatures & Verification block at bottom
+      const bottomY = pageHeight - 50
+      doc.setDrawColor(200)
+      doc.line(margin, bottomY - 6, pageWidth - margin, bottomY - 6)
+
+      // QR code small
+      const smallQr = await QRCode.toDataURL(`${window.location.origin}/verify-transcript?id=${transcriptId}&student=${user?.id}&year=${selectedYearId}`, { width: 100 })
+      if (smallQr) doc.addImage(smallQr, "PNG", pageWidth - margin - 30, bottomY - 2, 26, 26)
+
       doc.setFont("Helvetica", "normal")
       doc.setFontSize(9)
-      const remarque =
-        overallPercentage >= 75
-          ? "Excellent rendement académique"
-          : overallPercentage >= 60
-            ? "Rendement académique satisfaisant"
-            : "Rendement académique à améliorer"
-      doc.text(remarque, 15, yPos, { maxWidth: pageWidth - 30 })
+      doc.text(`ID Vérification: ${transcriptId}`, margin, bottomY + 2)
+      doc.text(`Émis le: ${new Date().toLocaleDateString()}`, margin + 70, bottomY + 2)
 
-      // Pied de page avec QR Code
-      yPos = pageHeight - 45
-      
-      // Génération du QR code
-      const qrDataUrl = await QRCode.toDataURL(
-        `${window.location.origin}/verify-transcript?id=${transcriptId}&student=${user?.id}&year=${selectedYearId}`,
-        { width: 80 }
-      )
-      
-      // Ajout du QR code au PDF
-      doc.addImage(qrDataUrl, "PNG", pageWidth - 40, yPos - 10, 25, 25)
-      
-      doc.setFont("Helvetica", "bold")
-      doc.setFontSize(9)
-      doc.text("Vérifier:", pageWidth - 40, yPos + 20)
-      
-      doc.setFont("Helvetica", "italic")
-      doc.setFontSize(8)
-      doc.setDrawColor(200)
-      doc.line(15, yPos - 5, pageWidth - 50, yPos - 5)
-      doc.text("Ce document est généré automatiquement et a valeur de relevé officiel.", 15, yPos, { maxWidth: pageWidth - 50 })
-      doc.text(`ID Vérification: ${transcriptId}`, 15, yPos + 5, { maxWidth: pageWidth - 50 })
-      doc.text(`Signature numérique: ${new Date().toLocaleString("fr-FR")}`, 15, yPos + 10, { maxWidth: pageWidth - 50 })
+      // Signature lines
+      doc.setFontSize(10)
+      doc.text("Signature du Directeur:", margin, bottomY + 16)
+      doc.line(margin, bottomY + 20, margin + 60, bottomY + 20)
+
+      doc.text("Cachet de l'établissement:", margin + 80, bottomY + 16)
+      doc.line(margin + 80, bottomY + 20, margin + 150, bottomY + 20)
 
       const filename = `Releve_de_Notes_${selectedYear?.year ?? "academique"}.pdf`
       doc.save(filename)
@@ -279,7 +331,8 @@ function StudentTranscript() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Relevé de Notes Académique" subtitle="Historique complet de votre parcours académique" />
+      <SectionHeader title={t("transcriptTitle")} subtitle={t("transcriptSubtitle")}
+      />
 
       {error ? <div className="rounded-2xl border border-brand-red/20 bg-brand-red/5 p-3 text-sm text-brand-red">{error}</div> : null}
 
@@ -290,7 +343,7 @@ function StudentTranscript() {
           onChange={(event) => handleYearChange(event.target.value)}
           className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
         >
-          <option value="">Sélectionner une année académique</option>
+          <option value="">{t("transcriptSelectYear")}</option>
           {academicYears.map((year) => (
             <option key={year.id} value={year.id}>
               {year.year}
@@ -303,7 +356,7 @@ function StudentTranscript() {
             className="flex items-center gap-2 rounded-2xl border border-brand-navy/20 bg-white px-3 py-2 text-sm font-semibold text-brand-navy hover:bg-brand-navy/5 transition-colors"
           >
             <Printer className="h-4 w-4" />
-            Imprimer
+            {t("print")}
           </button>
           <button
             onClick={generateProfessionalPdf}
@@ -311,7 +364,7 @@ function StudentTranscript() {
             className="flex items-center gap-2 rounded-2xl bg-brand-navy px-3 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
-            PDF
+            {t("pdf")}
           </button>
         </div>
       </div>
@@ -357,15 +410,15 @@ function StudentTranscript() {
 
       {/* Tableau des résultats */}
       <div className="module-card compact p-4">
-        <h2 className="font-bold text-brand-navy mb-3">RÉSULTATS PAR DISCIPLINE</h2>
+        <h2 className="font-bold text-brand-navy mb-3">{t("resultsByDiscipline")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-brand-navy/20">
-                <th className="px-3 py-2 text-left font-semibold text-brand-navy">Discipline</th>
-                <th className="px-3 py-2 text-left font-semibold text-brand-navy">Classe</th>
-                <th className="px-3 py-2 text-center font-semibold text-brand-navy">Note</th>
-                <th className="px-3 py-2 text-center font-semibold text-brand-navy">%</th>
+                <th className="px-3 py-2 text-left font-semibold text-brand-navy">{t("subject")}</th>
+                <th className="px-3 py-2 text-left font-semibold text-brand-navy">{t("className")}</th>
+                <th className="px-3 py-2 text-center font-semibold text-brand-navy">{t("grade")}</th>
+                <th className="px-3 py-2 text-center font-semibold text-brand-navy">{t("percentage")}</th>
                 <th className="px-3 py-2 text-center font-semibold text-brand-navy">Statut</th>
               </tr>
             </thead>

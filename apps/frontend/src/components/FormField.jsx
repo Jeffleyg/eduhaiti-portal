@@ -149,7 +149,7 @@ export default function FormField({
           className={`${baseInputClass} ${errorClass} ${disabledClass} cursor-pointer ${inputClassName}`}
           {...props}
         >
-          <option value="">{placeholder || "Selecione uma opção"}</option>
+          <option value="">{placeholder || ""}</option>
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}

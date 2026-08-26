@@ -68,7 +68,7 @@ function InstallmentPlanForm({ onSuccess, loading }) {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("installmentsLabel") || 'Number of installments *'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("installmentsLabel")}</label>
           <Input
             type="number"
             min="2"
@@ -80,7 +80,7 @@ function InstallmentPlanForm({ onSuccess, loading }) {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("firstDueDate") || 'First due date *'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("firstDueDate")}</label>
           <div className="relative">
             <Calendar className="absolute left-3 top-3 h-4 w-4 text-brand-navy/40" />
             <Input
@@ -93,7 +93,7 @@ function InstallmentPlanForm({ onSuccess, loading }) {
           </div>
         </div>
         <div>
-          <label className="text-sm font-medium text-brand-navy">{t("intervalBetweenInstallments") || 'Interval between installments (days)'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("intervalBetweenInstallments")}</label>
           <Input
             type="number"
             min="7"
@@ -104,7 +104,7 @@ function InstallmentPlanForm({ onSuccess, loading }) {
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-sm font-medium text-brand-navy">{t("customTotalAmountLabel") || 'Renegotiated total (HTG)'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("customTotalAmountLabel")}</label>
           <div className="relative">
             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-brand-navy/40" />
             <Input
@@ -113,17 +113,17 @@ function InstallmentPlanForm({ onSuccess, loading }) {
               step="0.01"
               value={form.customTotalAmountHtg}
               onChange={(e) => setForm((prev) => ({ ...prev, customTotalAmountHtg: e.target.value }))}
-              placeholder={t("leaveBlankToUseOriginal") || 'Leave blank to use original amount'}
+              placeholder={t("leaveBlankToUseOriginal")}
               className="pl-8"
             />
           </div>
         </div>
         <div className="md:col-span-2">
-          <label className="text-sm font-medium text-brand-navy">{t("agreementDescription") || 'Agreement description'}</label>
+          <label className="text-sm font-medium text-brand-navy">{t("agreementDescription")}</label>
           <Input
             value={form.description}
             onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-            placeholder={t("agreementDescriptionPlaceholder") || 'E.g. Agreement with guardian, payment over 3 months'}
+            placeholder={t("agreementDescriptionPlaceholder")}
           />
         </div>
         <div className="md:col-span-2">
@@ -134,7 +134,7 @@ function InstallmentPlanForm({ onSuccess, loading }) {
               onChange={(e) => setForm((prev) => ({ ...prev, markSourceAsRenegotiated: e.target.checked }))}
               className="h-4 w-4 rounded border-brand-navy/20"
             />
-            <span className="text-sm text-brand-navy">{t("markOldDebtsRenegotiated") || 'Mark old debts as renegotiated'}</span>
+            <span className="text-sm text-brand-navy">{t("markOldDebtsRenegotiated")}</span>
           </label>
         </div>
       </div>

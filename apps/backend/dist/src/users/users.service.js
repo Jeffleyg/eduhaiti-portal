@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var UsersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
@@ -19,9 +20,10 @@ const client_1 = require("@prisma/client");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const crypto_1 = require("crypto");
 const email_service_1 = require("../common/services/email.service");
-let UsersService = class UsersService {
+let UsersService = UsersService_1 = class UsersService {
     prisma;
     emailService;
+    logger = new common_1.Logger(UsersService_1.name);
     constructor(prisma, emailService) {
         this.prisma = prisma;
         this.emailService = emailService;
@@ -73,8 +75,8 @@ let UsersService = class UsersService {
             }
             resolvedSchoolId ??= classExists.academicYear.schoolId;
         }
-        return this.prisma.$transaction(async (tx) => {
-            const user = await tx.user.create({
+        const user = await this.prisma.$transaction(async (tx) => {
+            return tx.user.create({
                 data: {
                     email: normalizedEmail,
                     name: fullName,
@@ -103,9 +105,14 @@ let UsersService = class UsersService {
                     enrollmentNumber: true,
                 },
             });
-            await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt);
-            return user;
         });
+        try {
+            await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt);
+        }
+        catch (err) {
+            this.logger.warn(`Failed to send temp password email to ${normalizedEmail}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        return user;
     }
     async createTeacher(payload, schoolId) {
         const normalizedEmail = payload.email.trim().toLowerCase();
@@ -138,8 +145,8 @@ let UsersService = class UsersService {
                 resolvedSchoolId = academicYear?.schoolId;
             }
         }
-        return this.prisma.$transaction(async (tx) => {
-            const user = await tx.user.create({
+        const user = await this.prisma.$transaction(async (tx) => {
+            const created = await tx.user.create({
                 data: {
                     email: normalizedEmail,
                     name: fullName,
@@ -169,30 +176,51 @@ let UsersService = class UsersService {
             if (payload.classIds && payload.classIds.length > 0) {
                 await tx.class.updateMany({
                     where: { id: { in: payload.classIds } },
-                    data: { teacherId: user.id },
+                    data: { teacherId: created.id },
                 });
             }
             if (payload.newClasses && payload.newClasses.length > 0) {
                 const defaultAcademicYear = await tx.academicYear.findFirst();
                 const defaultSeries = await tx.series.findFirst();
-                if (!defaultAcademicYear || !defaultSeries) {
-                    throw new common_1.BadRequestException('No academic year or series found in database');
+                if (!defaultAcademicYear) {
+                    throw new common_1.BadRequestException('No academic year found in database');
                 }
                 for (const newClass of payload.newClasses) {
+                    const yearId = newClass.academicYearId ?? defaultAcademicYear.id;
+                    let seriesId = newClass.seriesId ?? undefined;
+                    if (!seriesId) {
+                        const found = await tx.series.findFirst({ where: { academicYearId: yearId } });
+                        if (found) {
+                            seriesId = found.id;
+                        }
+                        else {
+                            const seriesName = newClass.level ?? `${created.name ?? 'General'} Series`;
+                            const createdSeries = await tx.series.create({
+                                data: { name: seriesName, academicYearId: yearId },
+                            });
+                            seriesId = createdSeries.id;
+                        }
+                    }
                     await tx.class.create({
                         data: {
                             name: newClass.name,
                             level: newClass.level ?? '3eme',
-                            teacherId: user.id,
-                            academicYearId: newClass.academicYearId ?? defaultAcademicYear.id,
-                            seriesId: newClass.seriesId ?? defaultSeries.id,
+                            teacherId: created.id,
+                            academicYearId: yearId,
+                            seriesId,
                         },
                     });
                 }
             }
-            await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt);
-            return user;
+            return created;
         });
+        try {
+            await this.emailService.sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt);
+        }
+        catch (err) {
+            this.logger.warn(`Failed to send temp password email to ${normalizedEmail}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        return user;
     }
     async resendTempPassword(email) {
         const normalizedEmail = email.trim().toLowerCase();
@@ -308,7 +336,7 @@ let UsersService = class UsersService {
     }
 };
 exports.UsersService = UsersService;
-exports.UsersService = UsersService = __decorate([
+exports.UsersService = UsersService = UsersService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         email_service_1.EmailService])

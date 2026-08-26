@@ -43,16 +43,16 @@ function SchoolFeatures({ schoolId, token }) {
     }
   }
 
-  if (loading) return <p>Carregando recursos...</p>
+  if (loading) return <p>{t("loadingResources")}</p>
 
   const featuresList = [
-    { key: 'enableFamilyAccess', label: '👨‍👩‍👧‍👦 Acesso Família', icon: '👨‍👩‍👧' },
-    { key: 'enablePayment', label: '💳 Pagamentos', icon: '💳' },
-    { key: 'enableGamification', label: '🎮 Gamificação', icon: '🎮' },
-    { key: 'enableForums', label: '💬 Fóruns', icon: '💬' },
-    { key: 'enableLessons', label: '📖 Aulas', icon: '📖' },
-    { key: 'enableInventory', label: '📦 Inventário', icon: '📦' },
-    { key: 'enableFinance', label: '💰 Finanças', icon: '💰' },
+    { key: 'enableFamilyAccess', label: `👨‍👩‍👧‍👦 ${t("familyAccessTitle")}`, icon: '👨‍👩‍👧' },
+    { key: 'enablePayment', label: `💳 ${t("paymentMethods")}`, icon: '💳' },
+    { key: 'enableGamification', label: `🎮 ${t("gamificationTitle")}`, icon: '🎮' },
+    { key: 'enableForums', label: `💬 ${t("forumsTitle")}`, icon: '💬' },
+    { key: 'enableLessons', label: `📖 ${t("lessonPlansTitle")}`, icon: '📖' },
+    { key: 'enableInventory', label: `📦 ${t("inventoryTitle")}`, icon: '📦' },
+    { key: 'enableFinance', label: `💰 ${t("financeControlTitle")}`, icon: '💰' },
     { key: 'enableSync', label: '🔄 Sincronização', icon: '🔄' },
   ]
 

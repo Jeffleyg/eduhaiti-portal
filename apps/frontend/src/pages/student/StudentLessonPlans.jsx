@@ -44,7 +44,7 @@ function StudentLessonPlans() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title={t("lessonPlansTitle") || "Lesson plans"} subtitle={t("lessonPlansSubtitle") || "Access lesson plans for your classes."} />
+      <SectionHeader title={t("lessonPlansTitle")} subtitle={t("lessonPlansSubtitle")} />
 
       <div className="space-y-3">
         {classes.length ? (
@@ -63,13 +63,13 @@ function StudentLessonPlans() {
                     </div>
                   ))
                   ) : (
-                  <p className="text-sm text-brand-navy/60">{t("noLessonPlansForClass") || 'No plans published for this class.'}</p>
+                  <p className="text-sm text-brand-navy/60">{t("noLessonPlansForClass")}</p>
                 )}
               </div>
             </div>
           ))
         ) : (
-          <p className="text-sm text-brand-navy/60">{t("notAssignedToAnyClass") || 'You are not assigned to any class.'}</p>
+          <p className="text-sm text-brand-navy/60">{t("notAssignedToAnyClass")}</p>
         )}
       </div>
     </div>

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
+  Patch,
   Header,
   Headers,
   HttpCode,
@@ -15,6 +17,7 @@ import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { TenantGuard } from '../common/guards/tenant.guard';
 import { AdminLedgerReportQueryDto } from './dto/admin-ledger-report-query.dto';
 import { AdminFinanceSummaryQueryDto } from './dto/admin-finance-summary-query.dto';
 import { AdminPaymentsQueryDto } from './dto/admin-payments-query.dto';
@@ -25,15 +28,92 @@ import { DidTrustTokenDto } from './dto/did-trust-token.dto';
 import { GuardianTuitionPaymentDto } from './dto/guardian-tuition-payment.dto';
 import { MobileMoneyPaymentDto } from './dto/mobile-money-payment.dto';
 import { FinanceIntegrationService } from './finance-integration.service';
+import { PixPaymentDto } from './dto/pix-payment.dto';
+import { CreatePixAccountDto } from './dto/create-pix-account.dto';
+import { PixAccountService } from './services/pix-account.service';
 import { FinanceObservabilityService } from './services/finance-observability.service';
 import { WebhookAlertService } from './services/webhook-alert.service';
 import { WebhookSignatureService } from './services/webhook-signature.service';
 
 @Controller('finance')
 export class FinanceIntegrationController {
+  @Post('pix/pay')
+  async payViaPix(@Body() dto: PixPaymentDto) {
+    await this.observability.logPaymentStage(
+      'REQUEST_RECEIVED',
+      {
+        channel: 'pix',
+        idempotencyKey: dto.idempotencyKey,
+        studentEnrollmentNumber: dto.studentEnrollmentNumber,
+      },
+      { persistAudit: true },
+    );
+
+    return this.financeService.processPixPayment(dto);
+  }
+
+  @Get('pix-accounts/public')
+  async getPublicPrimaryPixAccount() {
+    return this.pixAccountService.getPublicPrimaryPixAccount();
+  }
+
+  @Post('pix-accounts')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.OWNER)
+  async createPixAccount(
+    @Req() req,
+    @Body() dto: CreatePixAccountDto,
+  ) {
+    const schoolId = req.school?.id || req.user?.schoolId;
+    return this.pixAccountService.createPixAccount(schoolId, dto);
+  }
+
+  @Get('pix-accounts')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.OWNER)
+  async getPixAccounts(@Req() req) {
+    const schoolId = req.school?.id || req.user?.schoolId;
+    return this.pixAccountService.getPixAccounts(schoolId);
+  }
+
+  @Post('pix-accounts/:id/primary')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.OWNER)
+  async setPixAccountAsPrimary(
+    @Req() req,
+    @Param('id') pixAccountId: string,
+  ) {
+    const schoolId = req.school?.id || req.user?.schoolId;
+    return this.pixAccountService.setPixAccountAsPrimary(schoolId, pixAccountId);
+  }
+
+  @Patch('pix-accounts/:id/status')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.OWNER)
+  async updatePixAccountStatus(
+    @Req() req,
+    @Param('id') pixAccountId: string,
+    @Body('isActive') isActive: boolean,
+  ) {
+    const schoolId = req.school?.id || req.user?.schoolId;
+    return this.pixAccountService.updatePixAccountStatus(schoolId, pixAccountId, isActive);
+  }
+
+  @Delete('pix-accounts/:id')
+  @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.OWNER)
+  async deletePixAccount(
+    @Req() req,
+    @Param('id') pixAccountId: string,
+  ) {
+    const schoolId = req.school?.id || req.user?.schoolId;
+    return this.pixAccountService.deletePixAccount(schoolId, pixAccountId);
+  }
+
   constructor(
     private readonly financeService: FinanceIntegrationService,
     private readonly webhookSignatureService: WebhookSignatureService,
+    private readonly pixAccountService: PixAccountService,
     private readonly observability: FinanceObservabilityService,
     private readonly webhookAlertService: WebhookAlertService,
   ) {}
@@ -61,6 +141,11 @@ export class FinanceIntegrationController {
     return this.financeService.listPendingTuitionByEnrollment(
       studentEnrollmentNumber,
     );
+  }
+
+  @Get('tuition/:studentEnrollmentNumber/pix-account')
+  async getPixAccountForStudent(@Param('studentEnrollmentNumber') studentEnrollmentNumber: string) {
+    return this.financeService.getPrimaryPixAccountForEnrollment(studentEnrollmentNumber);
   }
 
   @Post('tuition/pay')

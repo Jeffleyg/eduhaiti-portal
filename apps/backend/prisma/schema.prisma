@@ -83,6 +83,14 @@ enum InventoryItemType {
   OTHER
 }
 
+enum PixKeyType {
+  CPF
+  CNPJ
+  EMAIL
+  PHONE
+  RANDOM
+}
+
 // ========== SCHOOL & ORGANIZATION ==========
 model School {
   id        String    @id @default(uuid())
@@ -126,6 +134,7 @@ model School {
   auditLogs           AuditLog[]
   metricHistory       SchoolMetricHistory[]
   tenantMetrics       TenantMetric?
+  pixAccounts         PixAccount[]
 }
 
 model AcademicYear {
@@ -790,6 +799,30 @@ model PaymentGatewayConfig {
 
   @@unique([schoolId, provider])
   @@index([provider])
+}
+
+model PixAccount {
+  id                    String       @id @default(uuid())
+  school                School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId              String
+
+  keyType               PixKeyType
+  key                   String       // PIX key (CPF, CNPJ, email, phone, or random UUID)
+  accountHolderName     String?      // Name of account holder
+  bankCode              String?      // Bank code (if bank transfer)
+  accountNumber         String?      // Bank account number
+  accountBranch         String?      // Bank branch code
+  description           String?      // e.g. "Main School Account"
+
+  isActive              Boolean      @default(true)
+  isPrimary             Boolean      @default(false)  // Primary account for payments
+
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@unique([schoolId, key])
+  @@index([schoolId, isActive])
+  @@index([schoolId, isPrimary])
 }
 
 model AuditLog {
