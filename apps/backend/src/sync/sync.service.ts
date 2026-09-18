@@ -11,6 +11,8 @@ import {
   SyncResult,
 } from './types/sync.types';
 
+const NON_SYNCABLE_ENTITIES = new Set<SyncEntity>(['grade', 'attendance']);
+
 type PrismaDelegate = {
   findUnique: (
     args: Record<string, unknown>,
@@ -48,6 +50,26 @@ export class SyncService {
     const results: SyncResult[] = [];
 
     for (const action of dto.actions) {
+      if (NON_SYNCABLE_ENTITIES.has(action.entityType)) {
+        await this.auditLog.write({
+          actionId: action.actionId,
+          deviceId: dto.deviceId,
+          entityType: action.entityType,
+          entityId: action.entityId,
+          status: 'ignored',
+          timestamp: new Date().toISOString(),
+          message: 'Offline sync is disabled for this entity',
+        });
+
+        results.push({
+          actionId: action.actionId,
+          status: 'ignored',
+          message: 'Offline sync is disabled for this entity',
+        });
+
+        continue;
+      }
+
       if (this.auditLog.isProcessed(action.actionId)) {
         await this.auditLog.write({
           actionId: action.actionId,
@@ -186,9 +208,12 @@ export class SyncService {
       dto.entities && dto.entities.length > 0
         ? dto.entities
         : [...SYNC_ENTITIES];
+    const syncableEntities = selectedEntities.filter(
+      (entityType) => !NON_SYNCABLE_ENTITIES.has(entityType),
+    );
 
     const deltas = await Promise.all(
-      selectedEntities.map(async (entityType) => {
+      syncableEntities.map(async (entityType) => {
         const delegate = this.delegateByEntity[entityType];
 
         // Delta-only fetch keeps payloads tiny for unstable mobile links.

@@ -1,6 +1,7 @@
 export { default as StudentDashboard } from "../../pages/student/StudentDashboard.jsx"
 export { default as StudentResults } from "../../pages/student/StudentResults.jsx"
 export { default as StudentGrades } from "../../pages/student/StudentResults.jsx"
+export { default as StudentTranscript } from "../../pages/student/StudentTranscript.jsx"
 export { default as StudentSchedule } from "../../pages/student/StudentSchedule.jsx"
 export { default as StudentResources } from "../../pages/student/StudentResources.jsx"
 export { default as StudentAssignments } from "../../pages/student/StudentAssignments.jsx"

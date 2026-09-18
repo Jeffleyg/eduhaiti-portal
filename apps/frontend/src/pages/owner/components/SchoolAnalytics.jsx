@@ -1,7 +1,37 @@
+import DataTablePaginated from "../../../components/DataTablePaginated.jsx"
+import SkeletonLoader from "../../../components/SkeletonLoader.jsx"
+import { sanitizeText } from "../../../lib/string.js"
+
 function SchoolAnalytics({ analytics, schools }) {
   if (!analytics) {
-    return <div className="surface-panel p-8 text-center text-brand-navy/60">Carregando análise...</div>
+    return (
+      <div className="space-y-6">
+        <SkeletonLoader type="dashboard" />
+        <SkeletonLoader type="table" count={5} />
+      </div>
+    )
   }
+
+  const schoolRows = (analytics.schoolsDetails ?? []).map((school) => ({
+    id: school.id,
+    school: sanitizeText(school.name),
+    logins: school.logins,
+    users: school.users,
+    students: school.students,
+    teachers: school.teachers,
+    classes: school.classes,
+    lastActivity: school.lastActivity ? new Date(school.lastActivity).toLocaleDateString("pt-BR") : "-",
+  }))
+
+  const schoolColumns = [
+    { key: "school", label: "Escola" },
+    { key: "logins", label: "Logins" },
+    { key: "users", label: "Usuários" },
+    { key: "students", label: "Alunos" },
+    { key: "teachers", label: "Prof." },
+    { key: "classes", label: "Turmas" },
+    { key: "lastActivity", label: "Última Atividade" },
+  ]
 
   return (
     <div className="space-y-6">
@@ -32,44 +62,13 @@ function SchoolAnalytics({ analytics, schools }) {
       {/* Schools Usage Table */}
       <div className="surface-panel p-6">
         <h3 className="mb-4 font-semibold text-brand-navy">Uso por Escola</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-navy/10">
-                <th className="text-left p-2 font-semibold text-brand-navy">Escola</th>
-                <th className="text-right p-2 font-semibold text-brand-navy">Logins</th>
-                <th className="text-right p-2 font-semibold text-brand-navy">Usuários</th>
-                <th className="text-right p-2 font-semibold text-brand-navy">Alunos</th>
-                <th className="text-right p-2 font-semibold text-brand-navy">Prof.</th>
-                <th className="text-right p-2 font-semibold text-brand-navy">Turmas</th>
-                <th className="text-right p-2 font-semibold text-brand-navy">Última Atividade</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analytics.schoolsDetails.length > 0 ? analytics.schoolsDetails.map((school) => (
-                <tr key={school.id} className="border-b border-brand-navy/5 hover:bg-sand/30">
-                  <td className="p-2 font-medium text-brand-navy">{school.name}</td>
-                  <td className="text-right p-2 text-blue-600">{school.logins}</td>
-                  <td className="text-right p-2">{school.users}</td>
-                  <td className="text-right p-2 text-emerald-600">{school.students}</td>
-                  <td className="text-right p-2 text-purple-600">{school.teachers}</td>
-                  <td className="text-right p-2 text-orange-600">{school.classes}</td>
-                  <td className="text-right p-2 text-xs text-brand-navy/60">
-                    {school.lastActivity
-                      ? new Date(school.lastActivity).toLocaleDateString('pt-BR')
-                      : '-'}
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td className="p-4 text-center text-brand-navy/60" colSpan={7}>
-                    Sem dados de uso por escola ainda.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTablePaginated
+          columns={schoolColumns}
+          rows={schoolRows}
+          pageSize={10}
+          totalCount={schoolRows.length}
+          emptyMessage="Sem dados de uso por escola ainda."
+        />
       </div>
     </div>
   )

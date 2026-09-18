@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiAssetUrl, apiFetch, apiUpload } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
+import { sanitizeText } from "../../lib/string.js"
 import { Upload } from "lucide-react"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
@@ -96,16 +97,16 @@ function ProfessorResources() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Gerenciar Recursos"
+        title={t("manageResourcesTitle") || 'Manage resources'}
         subtitle={
           disableImages
-            ? "Modo texto ativo: interface simplificada para baixo consumo."
-            : "Compartilhe PDFs, slides e documentos com sua turma"
+            ? t("manageResourcesSubtitleTextMode") || 'Text mode active: simplified interface for low consumption.'
+            : t("manageResourcesSubtitle") || 'Share PDFs, slides and documents with your class'
         }
       />
 
       <div className="rounded-2xl border border-brand-navy/10 bg-white p-6">
-        <h3 className="font-semibold text-brand-navy mb-4">Selecione a Turma</h3>
+        <h3 className="font-semibold text-brand-navy mb-4">{t("selectClass")}</h3>
         <select
           value={selectedClass}
           onChange={handleClassChange}
@@ -113,17 +114,17 @@ function ProfessorResources() {
         >
           {classes.map((cls) => (
             <option key={cls.id} value={cls.id}>
-              {cls.name}
+              {sanitizeText(cls.name)}
             </option>
           ))}
         </select>
       </div>
 
       <form onSubmit={handleSubmit} className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">Enviar Novo Recurso</h3>
+        <h3 className="font-semibold text-brand-navy">{t("uploadNewResource") || 'Upload new resource'}</h3>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">Título</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("title") || 'Title'}</label>
           <input
             type="text"
             value={formData.title}
@@ -135,7 +136,7 @@ function ProfessorResources() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-brand-navy mb-2">Descrição (opcional)</label>
+          <label className="block text-sm font-semibold text-brand-navy mb-2">{t("description") || 'Description (optional)'}</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -165,7 +166,7 @@ function ProfessorResources() {
           disabled={uploading || !file || !formData.title}
           className="w-full py-3 bg-gradient-to-r from-brand-red to-brand-red hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-all"
         >
-          {uploading ? "Enviando..." : "Enviar Recurso"}
+          {uploading ? t("uploading") : t("sendResource")}
         </button>
       </form>
 
@@ -189,7 +190,7 @@ function ProfessorResources() {
             )}
           />
         ) : (
-          <p className="text-center text-brand-navy/60">Nenhum recurso enviado ainda</p>
+          <p className="text-center text-brand-navy/60">{t("noResourcesYet") || 'No resources uploaded yet'}</p>
         )}
       </div>
 
@@ -204,7 +205,7 @@ function ProfessorResources() {
               <div key={resource.id} className="rounded-2xl border border-brand-navy/10 bg-white p-4 flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-brand-navy">{resource.title}</p>
-                  <p className="text-xs text-brand-navy/60">Turma: {resource.class?.name ?? "-"}</p>
+                  <p className="text-xs text-brand-navy/60">Turma: {sanitizeText(resource.class?.name) || "-"}</p>
                 </div>
                 <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
                   Download
@@ -213,7 +214,7 @@ function ProfessorResources() {
             )}
           />
         ) : (
-          <p className="text-center text-brand-navy/60">Sem itens na biblioteca da serie.</p>
+          <p className="text-center text-brand-navy/60">{t("noLibraryItems") || 'No items in the series library.'}</p>
         )}
       </div>
     </div>

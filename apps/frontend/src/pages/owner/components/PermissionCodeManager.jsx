@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../../lib/api.js'
+import { sanitizeText } from '../../../lib/string.js'
 
 function PermissionCodeManager({ schoolId, token }) {
   const [codes, setCodes] = useState([])
@@ -105,8 +106,8 @@ function PermissionCodeManager({ schoolId, token }) {
             <div key={code.id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
               <div>
                 <p className="font-mono font-bold text-brand-navy">{code.code}</p>
-                {code.name && <p className="text-gray-600">{code.name}</p>}
-                {code.usedAt && <p className="text-gray-500">Usado por: {code.usedBy}</p>}
+                {code.name && <p className="text-gray-600">{sanitizeText(code.name)}</p>}
+                {code.usedAt && <p className="text-gray-500">Usado por: {sanitizeText(code.usedBy)}</p>}
               </div>
               <button
                 onClick={() => handleRevoke(code.id)}

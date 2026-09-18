@@ -1,3 +1,6 @@
+import { shouldBlockRequest, SurvivalModeNetworkError } from "./network-interceptor.js"
+import { survivalModeStateManager } from "./survival-mode-state.js"
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000"
 
 export function apiAssetUrl(filePath) {
@@ -7,6 +10,12 @@ export function apiAssetUrl(filePath) {
 }
 
 export async function apiFetch(path, options = {}) {
+  // Check if this request should be blocked in survival mode
+  const isSurvivalMode = survivalModeStateManager.getSurvivalMode()
+  if (shouldBlockRequest(path, isSurvivalMode)) {
+    throw new SurvivalModeNetworkError(path, "non_essential_request_blocked")
+  }
+
   const { method = "GET", body, token, headers } = options
   const response = await fetch(`${API_URL}/api${path}`, {
     method,
@@ -31,6 +40,12 @@ export async function apiFetch(path, options = {}) {
 }
 
 export async function apiFetchRaw(path, options = {}) {
+  // Check if this request should be blocked in survival mode
+  const isSurvivalMode = survivalModeStateManager.getSurvivalMode()
+  if (shouldBlockRequest(path, isSurvivalMode)) {
+    throw new SurvivalModeNetworkError(path, "non_essential_request_blocked")
+  }
+
   const { method = "GET", body, token, headers } = options
   const response = await fetch(`${API_URL}/api${path}`, {
     method,
@@ -55,6 +70,12 @@ export async function apiFetchRaw(path, options = {}) {
 }
 
 export async function apiUpload(path, options = {}) {
+  // Check if this request should be blocked in survival mode
+  const isSurvivalMode = survivalModeStateManager.getSurvivalMode()
+  if (shouldBlockRequest(path, isSurvivalMode)) {
+    throw new SurvivalModeNetworkError(path, "non_essential_request_blocked")
+  }
+
   const { method = "POST", token, formData, headers } = options
   const response = await fetch(`${API_URL}/api${path}`, {
     method,

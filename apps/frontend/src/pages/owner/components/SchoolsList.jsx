@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../../../lib/api.js'
+import { sanitizeText } from '../../../lib/string.js'
 import SchoolFeatures from './SchoolFeatures.jsx'
 import PermissionCodeManager from './PermissionCodeManager.jsx'
 
@@ -30,13 +31,13 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
             <div className="flex flex-col items-start justify-between gap-4 md:flex-row">
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-lg font-semibold text-brand-navy">{school.name}</h3>
-                  <span className="chip">{school.country}</span>
+                  <h3 className="text-lg font-semibold text-brand-navy">{sanitizeText(school.name)}</h3>
+                  <span className="chip">{sanitizeText(school.country)}</span>
                 </div>
-                <p className="text-sm text-brand-navy/60">{school.email}</p>
+                <p className="text-sm text-brand-navy/60">{sanitizeText(school.email)}</p>
                 <p className="text-xs text-brand-navy/50 mt-1">
-                  {school.city && `${school.city}, `}
-                  {school.country}
+                  {school.city && `${sanitizeText(school.city)}, `}
+                  {sanitizeText(school.country)}
                 </p>
                 {school.usageAnalytics && (
                   <div className="mt-2 flex gap-4 text-xs text-brand-navy/70">

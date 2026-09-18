@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { apiFetch } from '../../lib/api.js'
+import { SurvivalModeNetworkError } from '../../lib/network-interceptor.js'
+import { sanitizeText } from '../../lib/string.js'
 import SectionHeader from '../../components/SectionHeader.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
+import SurvivalModeBlockedBanner from '../../components/SurvivalModeBlockedBanner.jsx'
 import SchoolsList from './components/SchoolsList.jsx'
 import SchoolForm from './components/SchoolForm.jsx'
 import SchoolAnalytics from './components/SchoolAnalytics.jsx'
@@ -19,6 +22,7 @@ function OwnerDashboard() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [accessLink, setAccessLink] = useState('')
+  const [analyticsBlocked, setAnalyticsBlocked] = useState(false)
   const [activeTab, setActiveTab] = useState('schools')
 
   const loadSchools = async () => {
@@ -35,11 +39,16 @@ function OwnerDashboard() {
 
   const loadAnalytics = async () => {
     setLoading(true)
+    setAnalyticsBlocked(false)
     try {
       const data = await apiFetch('/owner/analytics/summary', { token })
       setAnalytics(data)
     } catch (err) {
-      setError(err.message)
+      if (err instanceof SurvivalModeNetworkError) {
+        setAnalyticsBlocked(true)
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -51,7 +60,7 @@ function OwnerDashboard() {
   }, [])
 
   const handleCreateSchool = (result) => {
-    const schoolName = result?.school?.name || t('newSchool')
+    const schoolName = sanitizeText(result?.school?.name ?? t('newSchool'))
     setMessage(`${t('schoolCreatedSuccess')}: ${schoolName}`)
     setAccessLink(result?.accessLink || '')
     setShowForm(false)
@@ -59,7 +68,7 @@ function OwnerDashboard() {
   }
 
   const handleUpdateSchool = (result) => {
-    const schoolName = result?.school?.name || t('school')
+    const schoolName = sanitizeText(result?.school?.name ?? t('school'))
     setMessage(`${t('schoolUpdatedSuccess')}: ${schoolName}`)
     setAccessLink('')
     setSelectedSchool(null)
@@ -223,7 +232,18 @@ function OwnerDashboard() {
         )}
 
         {/* Analytics Tab */}
-        {activeTab === 'analytics' && <SchoolAnalytics analytics={analytics} schools={schools} />}
+        {activeTab === 'analytics' && (
+          <div>
+            {analyticsBlocked && (
+              <SurvivalModeBlockedBanner
+                message="Análise de uso bloqueada para economizar dados"
+                reason="non-essential"
+                onDismiss={() => setAnalyticsBlocked(false)}
+              />
+            )}
+            {!analyticsBlocked && <SchoolAnalytics analytics={analytics} schools={schools} />}
+          </div>
+        )}
       </main>
     </div>
   )

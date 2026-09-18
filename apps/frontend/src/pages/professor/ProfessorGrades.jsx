@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import SectionHeader from "../../components/SectionHeader.jsx"
+import LoadingState from "../../components/LoadingState.jsx"
+import SkeletonLoader from "../../components/SkeletonLoader.jsx"
+import Button from "../../components/Button.jsx"
+import Input from "../../components/Input.jsx"
+import Select from "../../components/Select.jsx"
 import { useTranslation } from "react-i18next"
-import LoadMoreList from "../../components/LoadMoreList.jsx"
+import { sanitizeText, maskName } from "../../lib/string.js"
 
 function ProfessorGrades() {
   const { t } = useTranslation()
@@ -17,12 +22,20 @@ function ProfessorGrades() {
   const [maxScore, setMaxScore] = useState("20")
   const [grades, setGrades] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingGrades, setLoadingGrades] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
-  const selectedClass = classes.find((item) => item.id === selectedClassId)
+  const selectedClass = useMemo(
+    () => classes.find((item) => item.id === selectedClassId),
+    [classes, selectedClassId],
+  )
+
+  const gradeByStudent = useMemo(() => {
+    return new Map((grades ?? []).map((grade) => [grade.studentId, grade]))
+  }, [grades])
 
   const buildDraftsFromGrades = (classId, records, classList = classes) => {
     const classStudents = classList.find((item) => item.id === classId)?.students ?? []
@@ -43,20 +56,27 @@ function ProfessorGrades() {
       return []
     }
 
-    const suffix = disciplineId ? `?disciplineId=${disciplineId}` : ""
-    const classGrades = await apiFetch(`/grades/class/${classId}${suffix}`, { token })
-    setGrades(classGrades ?? [])
-    return classGrades ?? []
+    setLoadingGrades(true)
+    try {
+      const suffix = disciplineId ? `?disciplineId=${disciplineId}` : ""
+      const classGrades = await apiFetch(`/grades/class/${classId}${suffix}`, { token })
+      setGrades(classGrades ?? [])
+      return classGrades ?? []
+    } finally {
+      setLoadingGrades(false)
+    }
   }
 
   const loadDisciplines = async (seriesId) => {
     if (!seriesId) {
       setDisciplines([])
-      return
+      return []
     }
 
     const data = await apiFetch(`/disciplines?seriesId=${seriesId}`, { token })
-    setDisciplines(data ?? [])
+    const prepared = data ?? []
+    setDisciplines(prepared)
+    return prepared
   }
 
   useEffect(() => {
@@ -73,15 +93,21 @@ function ProfessorGrades() {
           const firstClass = preparedClasses[0]
           setSelectedClassId(firstClass.id)
 
-          const [, classGrades] = await Promise.all([
+          const [classDisciplines, classGrades] = await Promise.all([
             loadDisciplines(firstClass.series?.id),
             loadGrades(firstClass.id),
           ])
 
-          buildDraftsFromGrades(firstClass.id, classGrades, preparedClasses)
+          if (classDisciplines.length) {
+            setSelectedDisciplineId(classDisciplines[0].id)
+            const filteredGrades = await loadGrades(firstClass.id, classDisciplines[0].id)
+            buildDraftsFromGrades(firstClass.id, filteredGrades, preparedClasses)
+          } else {
+            buildDraftsFromGrades(firstClass.id, classGrades, preparedClasses)
+          }
         }
-      } catch (err) {
-        setError(err.message)
+      } catch (fetchError) {
+        setError(fetchError.message)
       } finally {
         setLoading(false)
       }
@@ -100,14 +126,17 @@ function ProfessorGrades() {
     const nextClass = classes.find((item) => item.id === classId)
 
     try {
-      const [, classGrades] = await Promise.all([
-        loadDisciplines(nextClass?.series?.id),
-        loadGrades(classId),
-      ])
-
+      const nextDisciplines = await loadDisciplines(nextClass?.series?.id)
+      const classGrades = await loadGrades(classId)
       buildDraftsFromGrades(classId, classGrades)
-    } catch (err) {
-      setError(err.message)
+
+      if (nextDisciplines.length) {
+        setSelectedDisciplineId(nextDisciplines[0].id)
+        const filteredGrades = await loadGrades(classId, nextDisciplines[0].id)
+        buildDraftsFromGrades(classId, filteredGrades)
+      }
+    } catch (fetchError) {
+      setError(fetchError.message)
     }
   }
 
@@ -119,8 +148,8 @@ function ProfessorGrades() {
     try {
       const classGrades = await loadGrades(selectedClassId, disciplineId)
       buildDraftsFromGrades(selectedClassId, classGrades)
-    } catch (err) {
-      setError(err.message)
+    } catch (fetchError) {
+      setError(fetchError.message)
     }
   }
 
@@ -196,8 +225,8 @@ function ProfessorGrades() {
       const classGrades = await loadGrades(selectedClassId, selectedDisciplineId)
       buildDraftsFromGrades(selectedClassId, classGrades)
       setMessage(`${parsedEntries.length} ${t("gradesSaved")}`)
-    } catch (err) {
-      setError(err.message)
+    } catch (saveError) {
+      setError(saveError.message)
     } finally {
       setSubmitting(false)
     }
@@ -220,130 +249,171 @@ function ProfessorGrades() {
       })
       setMessage(t("gradesPublishedSuccess"))
       await loadGrades(selectedClassId, selectedDisciplineId)
-    } catch (err) {
-      setError(err.message)
+    } catch (publishError) {
+      setError(publishError.message)
     } finally {
       setPublishing(false)
     }
   }
 
-  if (loading) {
-    return <div className="text-center text-brand-navy">{t("loading")}</div>
-  }
+  const editableColumns = [
+    { key: "student", label: t("student") },
+    { key: "enrollment", label: t("enrollmentNumber") },
+    { key: "current", label: t("currentLabel") || 'Current' },
+    { key: "draft", label: t("grade") },
+  ]
 
-  const columns = [
+  const editableRows = (selectedClass?.students ?? []).map((student) => {
+    const existingGrade = gradeByStudent.get(student.id)
+
+    return {
+      id: student.id,
+      student: (
+        <div>
+          {loadingGrades ? (
+            <div className="skeleton h-5 w-40 rounded" />
+          ) : (
+            <div>
+              <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
+              <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
+            </div>
+          )}
+        </div>
+      ),
+      enrollment: student.enrollmentNumber ?? "-",
+      current: existingGrade ? `${existingGrade.score}/${existingGrade.maxScore} (${existingGrade.status})` : "Sem nota",
+      draft: (
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          max={maxScore || undefined}
+          value={gradeDrafts[student.id] ?? ""}
+          onChange={(event) => handleDraftChange(student.id, event.target.value)}
+          placeholder={t("enterGrade")}
+          className="mt-0 bg-white"
+          disabled={!selectedDisciplineId}
+        />
+      ),
+    }
+  })
+
+  const historyColumns = [
     { key: "student", label: t("student") },
     { key: "subject", label: t("subject") },
     { key: "score", label: t("grade") },
     { key: "status", label: t("status") },
   ]
 
-  const rows = (grades ?? []).map((grade) => ({
-    student: grade.student?.name ?? grade.student?.email,
-    subject: grade.discipline?.name ?? "-",
+  const historyRows = (grades ?? []).map((grade) => ({
+    id: grade.id,
+    student: maskName(grade.student?.name ?? grade.student?.email, "student"),
+    subject: sanitizeText(grade.discipline?.name ?? "-"),
     score: `${grade.score}/${grade.maxScore}`,
     status: grade.status === "DRAFT" ? t("gradeDraft") : t("gradePublished"),
   }))
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <SectionHeader title={t("navGrades")} subtitle={t("gradesSubtitle")} />
+        <SkeletonLoader type="dashboard" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
       <SectionHeader title={t("navGrades")} subtitle={t("gradesSubtitle")} />
 
-      {error ? <p className="text-sm text-brand-red">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
+      {error ? <LoadingState type="banner" error={error} message={error} /> : null}
+      {message ? <LoadingState type="banner" success={Boolean(message)} message={message} /> : null}
 
-      <section className="grid gap-3 rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-2">
-        <select
-          value={selectedClassId}
-          onChange={(event) => handleClassChange(event.target.value)}
-          className="rounded-xl border border-brand-navy/20 px-3 py-2"
-        >
-          <option value="">{t("selectClass")}</option>
-          {classes.map((cls) => (
-            <option key={cls.id} value={cls.id}>{cls.name}</option>
-          ))}
-        </select>
+      <section className="grid gap-3 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-3">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-brand-navy">Turma</p>
+          <Select
+            value={selectedClassId}
+            onValueChange={handleClassChange}
+            options={classes.map((cls) => ({ value: cls.id, label: cls.name }))}
+            placeholder={t("selectClass")}
+            aria-label={t("selectClass")}
+          />
+        </div>
 
-        <select
-          value={selectedDisciplineId}
-          onChange={(event) => handleDisciplineChange(event.target.value)}
-          className="rounded-xl border border-brand-navy/20 px-3 py-2"
-          disabled={!selectedClassId}
-        >
-          <option value="">{t("selectDiscipline")}</option>
-          {disciplines.map((discipline) => (
-            <option key={discipline.id} value={discipline.id}>{discipline.name}</option>
-          ))}
-        </select>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-brand-navy">Disciplina</p>
+          <Select
+            value={selectedDisciplineId}
+            onValueChange={handleDisciplineChange}
+            options={disciplines.map((discipline) => ({ value: discipline.id, label: discipline.name }))}
+            placeholder={t("selectDiscipline")}
+            aria-label={t("selectDiscipline")}
+            disabled={!selectedClassId}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-brand-navy">Nota máxima</p>
+          <Input
+            type="number"
+            step="0.01"
+            min="1"
+            value={maxScore}
+            onChange={(event) => setMaxScore(event.target.value)}
+            placeholder={t("maxScore")}
+            className="mt-0 bg-white"
+          />
+        </div>
       </section>
 
-      <form className="space-y-3 rounded-2xl border border-brand-navy/10 bg-white p-4" onSubmit={handleCreateGrade}>
-        <input
-          type="number"
-          step="0.01"
-          min="1"
-          value={maxScore}
-          onChange={(event) => setMaxScore(event.target.value)}
-          placeholder={t("maxScore")}
-          className="w-full rounded-xl border border-brand-navy/20 px-3 py-2 md:w-56"
-        />
+      <form className="space-y-4 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4" onSubmit={handleCreateGrade}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-brand-navy">{t("gradeEntryTitle") || 'Entry'}</h3>
+            <p className="text-sm text-brand-navy/60">{t("gradeEntrySubtitle") || 'Edit the grade directly in the table and then save.'}</p>
+          </div>
+          <Button type="submit" variant="primary" loading={submitting} disabled={submitting || !selectedClassId || !selectedDisciplineId}>
+            {t("saveGrades")}
+          </Button>
+        </div>
 
         {selectedClass?.students?.length ? (
-          <LoadMoreList
-            items={selectedClass.students}
-            initialLimit={6}
-            step={6}
-            renderItem={(student) => {
-              const existingGrade = grades.find((item) => item.studentId === student.id)
-
-              return (
-                <div key={student.id} className="grid gap-2 rounded-xl border border-brand-navy/10 p-3 md:grid-cols-[1fr_200px] md:items-center">
-                  <div>
-                    <p className="font-semibold text-brand-navy">{student.name ?? student.email}</p>
-                    <p className="text-xs text-brand-navy/60">{student.enrollmentNumber ?? "-"}</p>
-                    <p className="text-xs text-brand-navy/60">
-                      {existingGrade ? `Atual: ${existingGrade.score}/${existingGrade.maxScore} (${existingGrade.status})` : "Sem nota registrada"}
-                    </p>
-                  </div>
-
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max={maxScore || undefined}
-                    value={gradeDrafts[student.id] ?? ""}
-                    onChange={(event) => handleDraftChange(student.id, event.target.value)}
-                    placeholder={t("enterGrade")}
-                    className="rounded-xl border border-brand-navy/20 px-3 py-2"
-                    disabled={!selectedDisciplineId}
-                  />
-                </div>
-              )
-            }}
+          <DataTablePaginated
+            columns={editableColumns}
+            rows={editableRows}
+            loading={loadingGrades}
+            pageSize={10}
+            totalCount={selectedClass.students.length}
+            emptyMessage={t("noStudentsAssigned") || 'No students assigned to this class.'}
           />
         ) : (
           <p className="text-sm text-brand-navy/60">{t("noData")}</p>
         )}
-
-        <button type="submit" className="primary-button" disabled={submitting || !selectedClassId || !selectedDisciplineId}>
-          {submitting ? t("savingClassGrades") : t("savingClassGrades")}
-        </button>
       </form>
 
       <div className="flex justify-end">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={handlePublish}
-          className="outline-button"
+          loading={publishing}
           disabled={publishing || !selectedClassId || !selectedDisciplineId}
         >
-          {publishing ? t("publishingGrades") : t("publishGrades")}
-        </button>
+          {t("publishGrades")}
+        </Button>
       </div>
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="mb-4 font-semibold text-brand-navy">{t("gradesViewTable")}</h3>
-        <DataTablePaginated columns={columns} rows={rows.length > 0 ? rows : []} pageSize={10} />
+        <h3 className="mb-4 font-semibold text-brand-navy">{t("gradesHistory") || 'Grades history'}</h3>
+        <DataTablePaginated
+          columns={historyColumns}
+          rows={historyRows}
+          loading={loadingGrades && historyRows.length === 0}
+          pageSize={10}
+          totalCount={historyRows.length}
+          emptyMessage={t("noGrades")}
+        />
       </section>
     </div>
   )

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { useState } from "react"
+import { sanitizeText } from "../lib/string.js"
 
 function CreateTeacherModal({ onClose, onSubmit, loading, classes, teacherData, onChangeTeacher, onChangeTeacherClasses }) {
   const { t } = useTranslation()
@@ -7,7 +8,7 @@ function CreateTeacherModal({ onClose, onSubmit, loading, classes, teacherData, 
 
   const classOptions = classes.map((item) => ({
     value: item.id,
-    label: `${item.name} (${item.level})`,
+    label: `${sanitizeText(item.name)} (${sanitizeText(item.level)})`,
   }))
 
   const handleNewClassChange = (index, field, value) => {

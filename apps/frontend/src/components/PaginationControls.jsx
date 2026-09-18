@@ -20,7 +20,7 @@ export default function PaginationControls({
       >
         {previousLabel}
       </button>
-      <p className="text-xs font-medium text-brand-navy/70">
+      <p className="text-xs font-medium text-brand-navy/85">
         Página {currentPage} de {totalPages}
       </p>
       <button

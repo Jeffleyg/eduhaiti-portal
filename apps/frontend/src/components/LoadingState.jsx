@@ -1,4 +1,5 @@
 import React from "react"
+import { useTranslation } from "react-i18next"
 import { AlertCircle, CheckCircle, Loader } from "lucide-react"
 import "../styles/LoadingState.css"
 
@@ -14,6 +15,8 @@ function LoadingState({
   type = "inline",
   fullHeight = false 
 }) {
+  const { t } = useTranslation()
+
   // Inline loading (dentro de um container)
   if (type === "inline") {
     return (
@@ -21,7 +24,7 @@ function LoadingState({
         {isLoading && (
           <div className="loading-content">
             <Loader className="loading-spinner" />
-            <p className="loading-text">{message || "Carregando..."}</p>
+            <p className="loading-text">{message || t("loading")}</p>
           </div>
         )}
 
@@ -35,7 +38,7 @@ function LoadingState({
         {success && !isLoading && !error && (
           <div className="success-state">
             <CheckCircle className="success-icon" />
-            <p className="success-text">{message || "Concluído com sucesso!"}</p>
+            <p className="success-text">{message || t("success")}</p>
           </div>
         )}
       </div>
@@ -49,7 +52,7 @@ function LoadingState({
         <div className="loading-backdrop" />
         <div className="loading-content-overlay">
           <Loader className="loading-spinner-lg" />
-          <p className="loading-text-overlay">{message || "Processando..."}</p>
+          <p className="loading-text-overlay">{message || t("processing")}</p>
         </div>
       </div>
     )
@@ -74,7 +77,7 @@ function LoadingState({
           {isLoading && (
             <>
               <Loader className="banner-spinner" />
-              <span>{message || "Processando..."}</span>
+              <span>{message || t("processing")}</span>
             </>
           )}
           {error && (
@@ -86,7 +89,7 @@ function LoadingState({
           {success && (
             <>
               <CheckCircle className="banner-success-icon" />
-              <span>{message || "Sucesso!"}</span>
+              <span>{message || t("success")}</span>
             </>
           )}
         </div>

@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react"
+import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
+import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 import "../styles/AdminClasses.css"
 
 export default function AdminClasses() {
+  const { t } = useTranslation()
   const { user, token } = useAuth()
   const [classes, setClasses] = useState([])
   const [showForm, setShowForm] = useState(false)
+  const [activeSection, setActiveSection] = useState("list")
 
   const [formData, setFormData] = useState({
     name: "",
@@ -50,38 +55,41 @@ export default function AdminClasses() {
       })
     } catch (error) {
       console.error("Failed to create class:", error)
-      alert("Erro ao criar turma")
+      alert(t("createClassError") || "Erro ao criar turma")
     }
   }
 
   const handleDelete = async (classId) => {
-    if (confirm("Tem certeza que deseja deletar esta turma?")) {
+    if (confirm(t("confirmDeleteClass") || "Tem certeza que deseja deletar esta turma?")) {
       try {
         await apiFetch(`/admin/classes/${classId}`, { method: "DELETE", token })
         setClasses(classes.filter((c) => c.id !== classId))
-      } catch (error) {
+        } catch (error) {
         console.error("Failed to delete class:", error)
-        alert("Erro ao deletar turma")
+        alert(t("deleteClassError") || "Erro ao deletar turma")
       }
     }
   }
 
   return (
     <div className="admin-classes">
-      <h1>📚 Gestão de Turmas</h1>
+      <h1>📚 {t("adminClassManagementTitle")}</h1>
 
-      <button
-        className="btn btn-primary"
-        onClick={() => setShowForm(!showForm)}
-      >
-        {showForm ? "✕ Cancelar" : "+ Nova Turma"}
-      </button>
-
-      {showForm && (
+      <div className="flex items-center justify-between gap-4">
+        <AdminSectionToolbar
+            sections={[{ key: "list", label: t("adminClassList") }, { key: "filters", label: t("adminClassFilters") }, { key: "create", label: t("adminCreateClass") }]}
+          active={activeSection}
+          onChange={(k) => {
+            setActiveSection(k)
+            setShowForm(k === "create")
+          }}
+        />
+      </div>
+      {activeSection === "create" && (
         <form onSubmit={handleSubmit} className="form-container">
           <input
             type="text"
-            placeholder="Nome da turma (ex: 3eme-A)"
+            placeholder={t("classNamePlaceholder")}
             value={formData.name}
             onChange={(e) =>
               setFormData({ ...formData, name: e.target.value })
@@ -96,7 +104,7 @@ export default function AdminClasses() {
             }
             required
           >
-            <option value="">Selecione o ano letivo</option>
+              <option value="">{t("selectAcademicYear")}</option>
           </select>
 
           <select
@@ -106,7 +114,7 @@ export default function AdminClasses() {
             }
             required
           >
-            <option value="">Selecione a série</option>
+            <option value="">{t("adminSelectSeriesOption")}</option>
           </select>
 
           <select
@@ -115,12 +123,12 @@ export default function AdminClasses() {
               setFormData({ ...formData, teacherId: e.target.value })
             }
           >
-            <option value="">Selecione o professor (opcional)</option>
+            <option value="">{t("adminSelectTeacherOptional")}</option>
           </select>
 
           <input
             type="number"
-            placeholder="Máximo de alunos"
+            placeholder={t("adminMaxStudents")}
             value={formData.maxStudents}
             onChange={(e) =>
               setFormData({ ...formData, maxStudents: parseInt(e.target.value) })
@@ -130,13 +138,13 @@ export default function AdminClasses() {
           />
 
           <button type="submit" className="btn btn-success">
-            ✓ Criar Turma
+            ✓ {t("adminCreateClass")}
           </button>
         </form>
       )}
 
-      {classes.length === 0 ? (
-        <p className="no-data">Nenhuma turma cadastrada</p>
+      {activeSection === "list" && (classes.length === 0 ? (
+        <p className="no-data">{t("noClasses")}</p>
       ) : (
         <LoadMoreList
           items={classes}
@@ -144,30 +152,30 @@ export default function AdminClasses() {
           step={6}
           renderItem={(cls) => (
             <div key={cls.id} className="class-card">
-              <h3>{cls.name}</h3>
+              <h3>{sanitizeText(cls.name)}</h3>
               <p>
-                <strong>Professor:</strong> {cls.teacher?.name || "Sem professor"}
+                <strong>{t("teacherLabel")}</strong> {maskName(cls.teacher?.name, "teacher") || t("adminNoTeacher")}
               </p>
               <p>
-                <strong>Alunos:</strong> {cls.students?.length || 0} /{" "}
+                <strong>{t("studentsLabel")}</strong> {cls.students?.length || 0} /{" "}
                 {cls.maxStudents}
               </p>
               <p>
-                <strong>Série:</strong> {cls.series?.name}
+                <strong>{t("seriesLabel")}</strong> {sanitizeText(cls.series?.name) || "-"}
               </p>
               <div className="actions">
-                <button className="btn btn-sm btn-info">✏️ Editar</button>
+                <button className="btn btn-sm btn-info">{t("adminEdit")}</button>
                 <button
                   className="btn btn-sm btn-danger"
                   onClick={() => handleDelete(cls.id)}
                 >
-                  🗑️ Deletar
+                  {t("adminDelete")}
                 </button>
               </div>
             </div>
           )}
         />
-      )}
+      ))}
     </div>
   )
 }

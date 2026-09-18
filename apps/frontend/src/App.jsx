@@ -30,6 +30,7 @@ import {
 import {
   StudentDashboard,
   StudentGrades,
+  StudentTranscript,
   StudentSchedule,
   StudentResources,
   StudentAssignments,
@@ -96,6 +97,7 @@ function App() {
                 <Route path="/student" element={<AppShell role="student" />}>
                   <Route index element={<StudentDashboard />} />
                   <Route path="grades" element={<StudentGrades />} />
+                  <Route path="transcript" element={<StudentTranscript />} />
                   <Route path="schedule" element={<StudentSchedule />} />
                   <Route path="resources" element={<StudentResources />} />
                   <Route path="assignments" element={<StudentAssignments />} />

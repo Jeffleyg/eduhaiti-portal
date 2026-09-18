@@ -7,6 +7,7 @@ import StatCard from "../../components/StatCard.jsx"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../../lib/string.js"
 import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/sqliteCache"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import { useSyncControl } from "../../context/useSyncControl.js"
@@ -143,9 +144,9 @@ function StudentDashboard() {
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {(gamification?.badges ?? []).length ? (
-            gamification.badges.map((badge) => (
+              gamification.badges.map((badge) => (
               <span key={badge.code} className="rounded-full bg-brand-navy/10 px-3 py-1 text-xs font-semibold text-brand-navy">
-                {badge.name}
+                {sanitizeText(badge.name)}
               </span>
             ))
           ) : (
@@ -161,8 +162,8 @@ function StudentDashboard() {
             {classes.length > 0 ? (
               classes.map((cls) => (
                 <div key={cls.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
-                  <span className="font-semibold text-brand-navy">{cls.name}</span>
-                  <span className="text-brand-navy/70">{cls.teacher?.name ?? cls.teacher?.email}</span>
+                  <span className="font-semibold text-brand-navy">{sanitizeText(cls.name)}</span>
+                  <span className="text-brand-navy/70">{maskName(cls.teacher?.name, "teacher") || sanitizeText(cls.teacher?.email)}</span>
                 </div>
               ))
             ) : (
@@ -178,8 +179,8 @@ function StudentDashboard() {
               recentMessages.map((message) => (
                 <div key={message.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
                   <div>
-                    <p className="font-semibold text-brand-navy">{message.from?.name ?? message.from?.email}</p>
-                    <p className="text-brand-navy/70">{message.subject}</p>
+                    <p className="font-semibold text-brand-navy">{maskName(message.from?.name, message.from?.role ? message.from.role.toLowerCase() : "user") || sanitizeText(message.from?.email)}</p>
+                    <p className="text-brand-navy/70">{sanitizeText(message.subject)}</p>
                   </div>
                 </div>
               ))

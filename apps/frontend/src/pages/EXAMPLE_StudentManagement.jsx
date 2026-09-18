@@ -2,6 +2,7 @@
 // This demonstrates best practices using the new component system
 
 import React, { useState, useEffect } from "react"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { Plus, Edit, Trash2, Search, Filter } from "lucide-react"
 import {
   Button,
@@ -213,10 +214,10 @@ export default function StudentManagement() {
       {filteredStudents.length > 0 && (
         <div className="space-y-lg">
           {filteredStudents.map(student => (
-            <ListItemCard
+              <ListItemCard
               key={student.id}
-              title={student.name}
-              subtitle={student.email}
+              title={maskName(student.name, "student")}
+              subtitle={sanitizeText(student.email)}
               status={
                 student.status === "active" ? "Ativo" :
                 student.status === "inactive" ? "Inativo" : "Pendente"
@@ -268,8 +269,8 @@ export default function StudentManagement() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-title mb-lg">Confirmar exclusão</h2>
-            <p className="text-body text-gray-600 mb-2xl">
-              Tem certeza que deseja deletar <strong>{selectedStudent.name}</strong>?
+              <p className="text-body text-gray-600 mb-2xl">
+              Tem certeza que deseja deletar <strong>{maskName(selectedStudent.name, "student")}</strong>?
             </p>
             <Alert variant="warning">
               Esta ação não pode ser desfeita. Todos os dados do aluno serão removidos.

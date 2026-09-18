@@ -79,7 +79,7 @@ function Landing() {
               <h1 className="text-4xl font-semibold leading-tight text-brand-navy md:text-5xl">
                 {t("tagline")}
               </h1>
-              <p className="max-w-xl text-lg text-brand-navy/80">{t("subtitle")}</p>
+              <p className="max-w-xl text-lg text-brand-navy/85">{t("subtitle")}</p>
               <div className="flex flex-wrap gap-4">
                 <Link className="primary-button" to="/login">
                   {t("cta")}

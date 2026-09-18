@@ -2,6 +2,7 @@ import { LogOut, Settings, User } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext.jsx"
 import { useTranslation } from "react-i18next"
+import { sanitizeText, maskName } from "../lib/string.js"
 import { useState } from "react"
 
 function CorporateHeader() {
@@ -55,7 +56,7 @@ function CorporateHeader() {
   }
 
   return (
-    <div className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
+    <div className="sticky top-0 z-40 bg-brand-navy text-white shadow-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo e Título */}
         <div className="flex items-center gap-3">
@@ -77,13 +78,13 @@ function CorporateHeader() {
             onClick={() => setShowMenu(!showMenu)}
             className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
           >
-            {user?.profilePhoto ? (
-              <img
-                src={user.profilePhoto}
-                alt={user.name}
-                className="h-full w-full rounded-full object-cover"
-              />
-            ) : (
+              {user?.profilePhoto ? (
+                <img
+                  src={user.profilePhoto}
+                  alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
               <User className="h-5 w-5" />
             )}
             {/* Indicador de status */}
@@ -95,10 +96,10 @@ function CorporateHeader() {
             <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-white/20 bg-white/95 shadow-xl backdrop-blur-sm">
               {/* Cabeçalho com Info do Usuário */}
               <div className="border-b border-brand-navy/10 px-4 py-3">
-                <p className="font-semibold text-brand-navy">{user?.name}</p>
-                <p className="text-xs text-brand-navy/60">{user?.email}</p>
+                <p className="font-semibold text-brand-navy">{maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}</p>
+                <p className="text-xs text-brand-navy/60">{sanitizeText(user?.email)}</p>
                 <div className="mt-2 flex gap-2">
-                  <span className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getRoleBadgeColor()}`}>
+                  <span className={`badge ${getRoleBadgeColor()}`}>
                     {t(roleLabelKey)}
                   </span>
                   {user?.enrollmentNumber && (
