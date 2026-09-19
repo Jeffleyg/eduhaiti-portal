@@ -69,6 +69,37 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
                 </button>
               </div>
             </div>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                  school.enableFinance
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                }`}
+              >
+                Finanças: {school.enableFinance ? "Ativo" : "Bloqueado"}
+              </span>
+
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                  school.enableFamilyAccess
+                    ? "bg-sky-50 text-sky-700 border border-sky-200"
+                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                }`}
+              >
+                Família: {school.enableFamilyAccess ? "Ativo" : "Bloqueado"}
+              </span>
+
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                  school.enablePayment
+                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                    : "bg-slate-100 text-slate-400 border border-slate-200"
+                }`}
+              >
+                MonCash: {school.enablePayment ? "Ativo" : "Bloqueado"}
+              </span>
+            </div>
 
             {/* Expandable Details */}
             {expandedSchool === school.id && (
