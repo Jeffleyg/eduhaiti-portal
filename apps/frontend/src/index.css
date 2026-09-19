@@ -75,6 +75,20 @@ body {
   flex-direction: column;
 }
 
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Evita zoom automático no iOS Safari ao focar inputs */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* ============================================
    TYPOGRAPHY
    ============================================ */

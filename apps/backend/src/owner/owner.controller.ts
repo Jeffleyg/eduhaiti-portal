@@ -649,9 +649,14 @@ export class OwnerController {
    * Create a new school
    * POST /owner/schools
    */
+  /**
+   * Create a new school
+   * POST /owner/schools
+   */
   @Post('schools')
   async createSchool(
-    @Body() data: {
+    @Body()
+    data: {
       name: string
       email: string
       phone?: string
@@ -659,6 +664,17 @@ export class OwnerController {
       city?: string
       country?: string
       principal?: string
+      adminName?: string
+      adminEmail?: string
+      adminPassword?: string
+      enableFinance?: boolean
+      enableFamilyAccess?: boolean
+      enablePayment?: boolean
+      enableSync?: boolean
+      enableLessons?: boolean
+      enableGamification?: boolean
+      enableForums?: boolean
+      enableInventory?: boolean
     },
     @Request() req: any
   ) {
@@ -667,6 +683,7 @@ export class OwnerController {
     // Log audit
     await this.auditService.log({
       userId: req.user?.id,
+      schoolId: result.id,
       action: 'CREATE',
       resource: 'School',
       resourceId: result.id,
