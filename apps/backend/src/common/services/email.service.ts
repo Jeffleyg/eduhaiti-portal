@@ -1,10 +1,11 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private readonly logger = new Logger(EmailService.name);
+  private transporter: nodemailer.Transporter | null = null;
   private fromAddress: string;
 
   constructor(private readonly configService: ConfigService) {
@@ -17,19 +18,25 @@ export class EmailService {
     const user = this.configService.get<string>('SMTP_USER');
     const pass = this.configService.get<string>('SMTP_PASS');
 
+    this.fromAddress =
+      this.configService.get<string>('MAIL_FROM') ??
+      (user ? `"EduHaiti" <${user}>` : '"EduHaiti" <noreply@eduhaiti.ht>');
+
     if (!host || !user || !pass) {
-      this.fromAddress = this.configService.get<string>('MAIL_FROM') ?? '';
-      this.transporter = null as unknown as nodemailer.Transporter;
+      this.logger.warn(
+        'Configurações SMTP incompletas no .env. Envio de e-mails em modo silencioso/desativado.',
+      );
       return;
     }
-
-    this.fromAddress = this.configService.get<string>('MAIL_FROM') ?? user;
 
     this.transporter = nodemailer.createTransport({
       host,
       port,
       secure,
       auth: { user, pass },
+      // Timeout curto para evitar travar a API se o servidor SMTP demorar a responder
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
     });
   }
 
@@ -37,17 +44,33 @@ export class EmailService {
     to: string,
     tempPassword: string,
     expiresAt: Date,
-  ) {
+  ): Promise<boolean> {
     if (!this.transporter) {
-      throw new ServiceUnavailableException('SMTP configuration is missing');
+      this.logger.warn(
+        `SMTP não configurado. Senha temporária para ${to}: ${tempPassword}`,
+      );
+      return false;
     }
+
     const expiresAtText = expiresAt.toLocaleString('pt-BR');
 
-    await this.transporter.sendMail({
-      from: this.fromAddress,
-      to,
-      subject: 'Sua senha temporaria - EduHaiti',
-      text: `Sua senha temporaria e: ${tempPassword}\n\nEla expira em: ${expiresAtText}\n\nNo primeiro acesso, voce devera alterar a senha.`,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: this.fromAddress,
+        to,
+        subject: 'Sua senha temporária - EduHaiti',
+        text: `Sua senha temporária é: ${tempPassword}\n\nEla expira em: ${expiresAtText}\n\nNo primeiro acesso, você deverá alterar a senha.`,
+      });
+
+      this.logger.log(`E-mail com senha temporária enviado com sucesso para: ${to}`);
+      return true;
+    } catch (error: any) {
+      // Captura a falha de autenticação ou rede sem propagar o erro 500 para a rota
+      this.logger.error(
+        `Falha ao enviar e-mail para ${to} (${error.message}). A operação continuará normalmente.`,
+      );
+      this.logger.debug(`Senha gerada para contingência: ${tempPassword}`);
+      return false;
+    }
   }
 }
