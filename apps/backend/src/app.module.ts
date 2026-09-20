@@ -29,7 +29,8 @@ import { InventoryModule } from './inventory/inventory.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { OwnerModule } from './owner/owner.module';
-
+import { AcademicYearsModule } from './academic-years/academic-years.module';
+import { SeriesModule } from './series/series.module';
   @Module({
   imports: [
     ConfigModule.forRoot({
@@ -62,6 +63,8 @@ import { OwnerModule } from './owner/owner.module';
     LessonsModule,
     GamificationModule,
     OwnerModule,
+    AcademicYearsModule,
+    SeriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

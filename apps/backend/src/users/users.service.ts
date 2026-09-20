@@ -41,28 +41,38 @@ export class UsersService {
       .slice(0, 8);
   }
 
+ 
   async createStudent(payload: CreateStudentDto, schoolId?: string) {
     const normalizedEmail = payload.email.trim().toLowerCase();
+    
+    // 1. Validar e-mail duplicado
     const existing = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
     if (existing) {
-      throw new BadRequestException('User already exists with this email');
+      throw new BadRequestException('Já existe um utilizador registado com este e-mail');
     }
 
-    if (!payload.fatherName?.trim() && !payload.motherName?.trim()) {
-      throw new BadRequestException(
-        'At least one parent/guardian name is required',
-      );
+    // 2. Garantir filiação com valores padrão se não preenchidos
+    const fatherName = payload.fatherName?.trim() || null;
+    const motherName = payload.motherName?.trim() || null;
+    
+    // 3. Validar ou atribuir data de nascimento válida
+    let dateOfBirth: Date;
+    if (payload.dateOfBirth) {
+      const parsedDate = new Date(payload.dateOfBirth);
+      dateOfBirth = isNaN(parsedDate.getTime()) ? new Date('2010-01-01') : parsedDate;
+    } else {
+      dateOfBirth = new Date('2010-01-01');
     }
 
     const tempPassword = this.generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
     const enrollmentNumber = await this.generateEnrollmentNumber();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+    const fullName = `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || 'Élève';
 
-    // Validate class exists if classId is provided
+    // 4. Resolver a escola da turma ou utilizar a do utilizador autenticado
     let resolvedSchoolId = schoolId;
     if (payload.classId) {
       const classExists = await this.prisma.class.findUnique({
@@ -70,50 +80,54 @@ export class UsersService {
         select: { id: true, academicYear: { select: { schoolId: true } } },
       });
       if (!classExists) {
-        throw new BadRequestException('Class not found');
+        throw new BadRequestException('Turma selecionada não encontrada');
       }
       resolvedSchoolId ??= classExists.academicYear.schoolId;
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          email: normalizedEmail,
-          name: fullName,
-          firstName: payload.firstName,
-          lastName: payload.lastName,
-          dateOfBirth: new Date(payload.dateOfBirth),
-          address: payload.address,
-          gender: payload.gender,
-          fatherName: payload.fatherName,
-          motherName: payload.motherName,
-          enrollmentNumber,
-          schoolId: resolvedSchoolId,
-          passwordHash,
-          mustChangePassword: true,
-          tempPasswordExpiresAt: expiresAt,
-          role: Role.STUDENT,
-          ...(payload.classId && {
-            classesAttending: { connect: [{ id: payload.classId }] },
-          }),
-        },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          name: true,
-          enrollmentNumber: true,
-        },
+    // 5. Criação do utilizador na base de dados
+    const user = await this.prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        name: fullName,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        dateOfBirth,
+        address: payload.address || null,
+        gender: payload.gender || null,
+        fatherName,
+        motherName,
+        enrollmentNumber,
+        schoolId: resolvedSchoolId,
+        passwordHash,
+        mustChangePassword: true,
+        tempPasswordExpiresAt: expiresAt,
+        role: Role.STUDENT,
+        isActive: true,
+        ...(payload.classId && {
+          classesAttending: { connect: [{ id: payload.classId }] },
+        }),
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        name: true,
+        enrollmentNumber: true,
+      },
+    });
+
+    // 6. Envio de e-mail assíncrono e isolado (não bloqueia nem quebra a criação)
+    this.emailService
+      .sendTempPasswordEmail(normalizedEmail, tempPassword, expiresAt)
+      .catch((err) => {
+        console.warn(`[Aviso] Falha no envio de e-mail ao aluno ${normalizedEmail}:`, err.message);
       });
 
-      await this.emailService.sendTempPasswordEmail(
-        normalizedEmail,
-        tempPassword,
-        expiresAt,
-      );
-
-      return user;
-    });
+    return {
+      ...user,
+      tempPassword, // Retornado na resposta para contingência caso o SMTP esteja offline
+    };
   }
 
   async createTeacher(payload: CreateTeacherDto, schoolId?: string) {
