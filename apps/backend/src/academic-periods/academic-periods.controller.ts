@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
@@ -27,12 +28,16 @@ export class AcademicPeriodsController {
   ) {}
 
   @Get()
-  listBySchool(@Query('schoolId') schoolId: string) {
-    return this.academicPeriodsService.listBySchool(schoolId);
+  listBySchool(@Request() req: any, @Query('schoolId') schoolId?: string) {
+    const targetSchoolId = schoolId || req.user?.schoolId;
+    return this.academicPeriodsService.listBySchool(targetSchoolId);
   }
 
   @Post()
-  create(@Body() body: CreateAcademicPeriodDto) {
+  create(@Request() req: any, @Body() body: CreateAcademicPeriodDto) {
+    if (!body.schoolId && req.user?.schoolId) {
+      body.schoolId = req.user.schoolId;
+    }
     return this.academicPeriodsService.create(body);
   }
 
