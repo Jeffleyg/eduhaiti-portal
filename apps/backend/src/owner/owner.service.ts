@@ -65,31 +65,98 @@ export class OwnerService {
     city?: string
     country?: string
     principal?: string
+    adminName?: string
+    adminEmail?: string
+    adminPassword?: string
+    enableFinance?: boolean
+    enableFamilyAccess?: boolean
+    enablePayment?: boolean
+    enableSync?: boolean
+    enableLessons?: boolean
+    enableGamification?: boolean
+    enableForums?: boolean
+    enableInventory?: boolean
   }) {
-    // Check if email already exists
+    // 1. Extrair campos de usuário para não poluir o create da tabela School
+    const {
+      adminName,
+      adminEmail,
+      adminPassword,
+      ...schoolFields
+    } = data
+
+    // 2. Verificar se já existe escola com o mesmo e-mail ou nome
     const existing = await this.prisma.school.findFirst({
-      where: { OR: [{ email: data.email }, { name: data.name }] },
-    })
-
-    if (existing) {
-      throw new BadRequestException('School with this email or name already exists')
-    }
-
-    const school = await this.prisma.school.create({
-      data: {
-        ...data,
-        country: data.country || 'Haiti',
+      where: {
+        OR: [
+          { email: schoolFields.email },
+          { name: schoolFields.name },
+        ],
       },
     })
 
-    // Initialize analytics
+    if (existing) {
+      throw new BadRequestException('Uma escola com este e-mail ou nome já existe.')
+    }
+
+    // 3. Criar a Escola no Prisma apenas com os campos válidos
+    const school = await this.prisma.school.create({
+      data: {
+        name: schoolFields.name,
+        email: schoolFields.email,
+        phone: schoolFields.phone || null,
+        address: schoolFields.address || null,
+        city: schoolFields.city || 'Port-au-Prince',
+        country: schoolFields.country || 'Haiti',
+        principal: schoolFields.principal || null,
+        enableFinance: schoolFields.enableFinance ?? true,
+        enableFamilyAccess: schoolFields.enableFamilyAccess ?? true,
+        enablePayment: schoolFields.enablePayment ?? true,
+        enableSync: schoolFields.enableSync ?? true,
+        enableLessons: schoolFields.enableLessons ?? true,
+        enableGamification: schoolFields.enableGamification ?? false,
+        enableForums: schoolFields.enableForums ?? false,
+        enableInventory: schoolFields.enableInventory ?? false,
+      },
+    })
+
+    // 4. Inicializar registro de Analytics da escola
     await this.prisma.schoolUsageAnalytic.create({
       data: { schoolId: school.id },
     })
 
+    // 5. Se foi informado um e-mail para o administrador, provisionar o usuário ADMIN
+    if (adminEmail) {
+      const normalizedEmail = adminEmail.trim().toLowerCase()
+      const rawPassword = adminPassword || this.generateTempPassword()
+      const passwordHash = await this.hashPassword(rawPassword)
+
+      const firstName = adminName ? adminName.split(' ')[0] : 'Admin'
+      const lastName = adminName ? adminName.split(' ').slice(1).join(' ') || school.name : school.name
+
+      await this.prisma.user.upsert({
+        where: { email: normalizedEmail },
+        update: {
+          schoolId: school.id,
+          role: 'ADMIN',
+          isActive: true,
+        },
+        create: {
+          email: normalizedEmail,
+          name: adminName || `Admin - ${school.name}`,
+          firstName,
+          lastName,
+          role: 'ADMIN',
+          schoolId: school.id,
+          passwordHash,
+          isActive: true,
+          mustChangePassword: false,
+        },
+      })
+    }
+
     return school
   }
-
   async updateSchool(
     schoolId: string,
     data: {

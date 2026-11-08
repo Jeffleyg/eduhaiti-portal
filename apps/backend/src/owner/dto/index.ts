@@ -431,3 +431,77 @@ export class MonthlyEnrollmentTrendDto {
   newEnrollments: number
   growthPercent: number
 }
+
+export class CreateSchoolDto {
+  @IsString()
+  name: string
+
+  @IsEmail()
+  email: string
+
+  @IsOptional()
+  @IsString()
+  phone?: string
+
+  @IsOptional()
+  @IsString()
+  address?: string
+
+  @IsOptional()
+  @IsString()
+  city?: string
+
+  @IsOptional()
+  @IsString()
+  country?: string
+
+  @IsOptional()
+  @IsString()
+  principal?: string
+
+  // Dados do Administrador Inicial (Diretor)
+  @IsOptional()
+  @IsString()
+  adminName?: string
+
+  @IsOptional()
+  @IsEmail()
+  adminEmail?: string
+
+  @IsOptional()
+  @IsString()
+  adminPassword?: string
+
+  // Permissões e Módulos (Feature Flags)
+  @IsOptional()
+  @IsBoolean()
+  enableFinance?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enableFamilyAccess?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enablePayment?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enableSync?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enableLessons?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enableGamification?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enableForums?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  enableInventory?: boolean
+}
