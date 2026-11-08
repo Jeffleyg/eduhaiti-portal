@@ -5,6 +5,7 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { SyncSchoolAccessGuard } from './guards/sync-school-access.guard';
 import { SyncRequestMiddleware } from './middleware/sync-request.middleware';
 import { AuditLogService } from './services/audit-log.service';
 import { ConflictResolverService } from './services/conflict-resolver.service';
@@ -14,7 +15,12 @@ import { SyncService } from './sync.service';
 @Module({
   imports: [PrismaModule],
   controllers: [SyncController],
-  providers: [SyncService, ConflictResolverService, AuditLogService],
+  providers: [
+    SyncService,
+    ConflictResolverService,
+    AuditLogService,
+    SyncSchoolAccessGuard,
+  ],
 })
 export class SyncModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
