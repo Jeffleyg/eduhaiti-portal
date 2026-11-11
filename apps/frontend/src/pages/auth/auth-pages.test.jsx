@@ -109,7 +109,7 @@ describe("Login", () => {
 
 describe("RedeemAccess", () => {
   const fillAccount = () => {
-    fireEvent.change(screen.getByPlaceholderText("Seu nome completo"), { target: { value: "Jean" } })
+    fireEvent.change(screen.getByPlaceholderText("fullNamePlaceholder"), { target: { value: "Jean" } })
     fireEvent.change(screen.getByPlaceholderText("seu@email.ht"), { target: { value: "j@x.ht" } })
   }
 
@@ -117,11 +117,11 @@ describe("RedeemAccess", () => {
     renderAt(<RedeemAccess />, "/redeem-access")
     fireEvent.change(screen.getByPlaceholderText("XXXXXXXX"), { target: { value: "abcd1234" } })
     expect(screen.getByPlaceholderText("XXXXXXXX")).toHaveValue("ABCD1234")
-    fireEvent.submit(screen.getByText("Continuar").closest("form"))
-    expect(await screen.findByText("Criar Conta Escolar")).toBeInTheDocument()
+    fireEvent.submit(screen.getByText("continue").closest("form"))
+    expect(await screen.findByText("createSchoolAccount")).toBeInTheDocument()
     apiFetch.mockResolvedValue({ schoolName: "Lycée" })
     fillAccount()
-    fireEvent.submit(screen.getByText("Criar Conta").closest("form"))
+    fireEvent.submit(screen.getByText("createAccount").closest("form"))
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith("/owner-auth/verify-permission-code", {
         method: "POST",
@@ -135,7 +135,7 @@ describe("RedeemAccess", () => {
     apiFetch.mockResolvedValue({ schoolName: "Lycée" })
     renderAt(<RedeemAccess />, "/redeem-access?code=XYZ")
     fillAccount()
-    fireEvent.submit(screen.getByText("Criar Conta").closest("form"))
+    fireEvent.submit(screen.getByText("createAccount").closest("form"))
     expect(await screen.findByText("Lycée")).toBeInTheDocument()
     act(() => vi.advanceTimersByTime(2100))
     expect(await screen.findByTestId("where")).toHaveTextContent("/login|j@x.ht")
@@ -145,12 +145,12 @@ describe("RedeemAccess", () => {
     apiFetch.mockRejectedValueOnce(new Error("Invalid or expired permission code")).mockRejectedValueOnce(new Error(""))
     renderAt(<RedeemAccess />, "/redeem-access?code=XYZ")
     fireEvent.change(screen.getByPlaceholderText("seu@email.ht"), { target: { value: "j@x.ht" } })
-    fireEvent.submit(screen.getByText("Criar Conta").closest("form"))
+    fireEvent.submit(screen.getByText("createAccount").closest("form"))
     expect(await screen.findByText("Invalid or expired permission code")).toBeInTheDocument()
     expect(apiFetch.mock.calls[0][1].body.name).toBeUndefined()
-    fireEvent.submit(screen.getByText("Criar Conta").closest("form"))
-    expect(await screen.findByText("Código inválido ou expirado")).toBeInTheDocument()
-    await userEvent.click(screen.getByText("Faça login"))
+    fireEvent.submit(screen.getByText("createAccount").closest("form"))
+    expect(await screen.findByText("redeemInvalidCode")).toBeInTheDocument()
+    await userEvent.click(screen.getByText("loginHere"))
     expect(screen.getByTestId("where")).toHaveTextContent("/login")
   })
 
@@ -159,19 +159,19 @@ describe("RedeemAccess", () => {
     apiFetch.mockResolvedValue({ schoolName: "Lycée", tempPassword: "Abc123XyZ9", emailSent: false })
     renderAt(<RedeemAccess />, "/redeem-access?code=XYZ")
     fillAccount()
-    fireEvent.submit(screen.getByText("Criar Conta").closest("form"))
+    fireEvent.submit(screen.getByText("createAccount").closest("form"))
     expect(await screen.findByTestId("temp-password")).toHaveTextContent("Abc123XyZ9")
     act(() => vi.advanceTimersByTime(5000))
     expect(screen.queryByTestId("where")).toBeNull()
-    fireEvent.click(screen.getByText("Ir para o login"))
+    fireEvent.click(screen.getByText("goToLogin"))
     expect(await screen.findByTestId("where")).toHaveTextContent("/login|j@x.ht")
   })
 
   it("shows the creating label", async () => {
     apiFetch.mockImplementation(() => new Promise(() => {}))
     renderAt(<RedeemAccess />, "/redeem-access?code=XYZ")
-    fireEvent.submit(screen.getByText("Criar Conta").closest("form"))
-    expect(await screen.findByText("Criando Conta...")).toBeInTheDocument()
+    fireEvent.submit(screen.getByText("createAccount").closest("form"))
+    expect(await screen.findByText("creatingAccount")).toBeInTheDocument()
   })
 })
 

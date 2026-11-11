@@ -1,3 +1,4 @@
+import { uiLocale } from "../../lib/locale.js"
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
@@ -72,7 +73,7 @@ function StudentSchedule() {
   ]
 
   const historyRows = attendanceHistory.map((item) => ({
-    date: new Date(item.date).toLocaleDateString("pt-BR"),
+    date: new Date(item.date).toLocaleDateString(uiLocale()),
     class: sanitizeText(item.class?.name) || "-",
     status: item.status,
   }))

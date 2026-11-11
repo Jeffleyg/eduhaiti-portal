@@ -272,7 +272,7 @@ function ProfessorGrades() {
         </div>
       ),
       enrollment: student.enrollmentNumber ?? "-",
-      current: existingGrade ? `${existingGrade.score}/${existingGrade.maxScore} (${existingGrade.status})` : "Sem nota",
+      current: existingGrade ? `${existingGrade.score}/${existingGrade.maxScore} (${existingGrade.status})` : t("noGrade"),
       draft: (
         <Input
           type="number"
@@ -322,7 +322,7 @@ function ProfessorGrades() {
 
       <section className="grid gap-3 module-card compact card-compact rounded-2xl border border-brand-navy/10 bg-white p-4 md:grid-cols-3">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-brand-navy">Turma</p>
+          <p className="text-sm font-medium text-brand-navy">{t("common.class")}</p>
           <Select
             value={selectedClassId}
             onValueChange={handleClassChange}
@@ -333,7 +333,7 @@ function ProfessorGrades() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium text-brand-navy">Disciplina</p>
+          <p className="text-sm font-medium text-brand-navy">{t("common.discipline")}</p>
           <Select
             value={selectedDisciplineId}
             onValueChange={handleDisciplineChange}
@@ -345,7 +345,7 @@ function ProfessorGrades() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium text-brand-navy">Nota máxima</p>
+          <p className="text-sm font-medium text-brand-navy">{t("maxScore")}</p>
           <Input
             type="number"
             step="0.01"

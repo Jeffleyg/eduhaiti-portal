@@ -50,7 +50,7 @@ describe("AdminFamilyCommunication", () => {
     fireEvent.change(screen.getByPlaceholderText("noticeTitlePlaceholder"), { target: { value: "Aviso" } })
     fireEvent.change(screen.getByPlaceholderText("noticeBodyPlaceholder"), { target: { value: "Texto" } })
     fireEvent.submit(screen.getByText("sendNotice").closest("form"))
-    expect(await screen.findByText("Comunicado enviado para a familia com sucesso.")).toBeInTheDocument()
+    expect(await screen.findByText("familyNoticeSent")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/family/admin/notices", {
       method: "POST",
       token: "tok",
@@ -65,7 +65,7 @@ describe("AdminFamilyCommunication", () => {
     renderWithRouter(<AdminFamilyCommunication />)
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1))
     fireEvent.submit(screen.getByText("sendNotice").closest("form"))
-    expect(await screen.findByText("Comunicado registrado. familySmsNoRecipient")).toBeInTheDocument()
+    expect(await screen.findByText("familyNoticeRecorded familySmsNoRecipient")).toBeInTheDocument()
   })
 
   it("reports notice errors and shows the sending label", async () => {
@@ -94,11 +94,11 @@ describe("AdminFamilyCommunication", () => {
     expect(screen.getByText("Respondido")).toBeInTheDocument()
 
     await userEvent.click(screen.getByText("respondFamily"))
-    expect(await screen.findByText("Escreva uma resposta antes de enviar.")).toBeInTheDocument()
+    expect(await screen.findByText("familyResponseRequired")).toBeInTheDocument()
 
     fireEvent.change(screen.getByPlaceholderText("familyResponsePlaceholder"), { target: { value: " Sai amanhã " } })
     await userEvent.click(screen.getByText("respondFamily"))
-    expect(await screen.findByText("Resposta enviada para a familia.")).toBeInTheDocument()
+    expect(await screen.findByText("familyResponseSent")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/family/admin/contact-requests/r1/respond", {
       method: "POST",
       token: "tok",

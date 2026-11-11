@@ -128,7 +128,7 @@ function ChargeForm({ onSuccess, loading }) {
           <Input
             value={form.scholarshipLabel}
             onChange={(e) => setForm((prev) => ({ ...prev, scholarshipLabel: e.target.value }))}
-            placeholder="Ex: Mérito acadêmico"
+            placeholder={t("scholarshipNamePlaceholder")}
           />
         </div>
         <div className="md:col-span-2">

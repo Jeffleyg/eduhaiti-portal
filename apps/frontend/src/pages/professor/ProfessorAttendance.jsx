@@ -168,7 +168,7 @@ function ProfessorAttendance() {
         type: "info",
         message: t(
           "attendanceOfflineSaved",
-          "Ou pa gen rezo. Prezans lan sove lokalman epi l ap senkronize le w konekte."
+          t("attendanceSavedOfflineNotice")
         ),
       })
     } catch {
@@ -309,14 +309,14 @@ function ProfessorAttendance() {
                 item.student?.name ||
                 `${item.student?.firstName || ""} ${item.student?.lastName || ""}`.trim() ||
                 item.name ||
-                `Elèv #${idx + 1}`
+                t("studentNumber", { number: idx + 1 })
 
               return (
                 <div key={item.studentId || item.id || idx} className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-slate-800">{sanitizeText(studentName)}</p>
                     <span className="text-xs text-slate-400">
-                      {item.student?.enrollmentNumber || item.enrollmentNumber || "Matrikil N/A"}
+                      {item.student?.enrollmentNumber || item.enrollmentNumber || t("enrollmentNotAvailable")}
                     </span>
                   </div>
 

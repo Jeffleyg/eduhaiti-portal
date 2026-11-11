@@ -298,7 +298,7 @@ describe("SyncControlContext", () => {
         throw "weird"
       })
       await act(() => result.current.syncNow("admin"))
-      expect(result.current.error).toBe("Sync failed")
+      expect(result.current.error).toBe("syncFailed")
     })
 
     it("ignores concurrent sync requests", async () => {

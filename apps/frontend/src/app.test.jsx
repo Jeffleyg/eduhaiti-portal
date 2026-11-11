@@ -31,7 +31,7 @@ describe("App routing", () => {
   it.each([
     ["/familia", "/family", "familyPortalTitle"],
     ["/pagamento-escolaridade", "/tuition-payment", "tuitionPaymentTitle"],
-    ["/redeem-access", "/redeem-access", "Continuar"],
+    ["/redeem-access", "/redeem-access", "continue"],
   ])("serves %s", async (path, expected, text) => {
     visit(path)
     await waitFor(() => expect(window.location.pathname).toBe(expected))

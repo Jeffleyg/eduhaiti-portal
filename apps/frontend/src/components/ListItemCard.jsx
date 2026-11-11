@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { ChevronRight, Edit2, Trash2, MoreVertical } from "lucide-react"
 import { useState } from "react"
 
@@ -36,6 +37,7 @@ function ListItemCard({
   onClick,
   isSelected = false,
 }) {
+  const { t } = useTranslation()
   const [showActions, setShowActions] = useState(false)
 
   const statusColors = {
@@ -48,14 +50,14 @@ function ListItemCard({
   const defaultActions = []
   if (onEdit) {
     defaultActions.push({
-      label: "Edit",
+      label: t("edit"),
       onClick: onEdit,
       icon: <Edit2 size={14} />,
     })
   }
   if (onDelete) {
     defaultActions.push({
-      label: "Delete",
+      label: t("deleteAction"),
       onClick: onDelete,
       icon: <Trash2 size={14} />,
       isDangerous: true,

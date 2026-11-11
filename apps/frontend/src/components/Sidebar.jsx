@@ -104,7 +104,7 @@ function Sidebar({ role }) {
         <button
           onClick={() => setCollapsed((s) => !s)}
           className="rounded-full p-1 text-brand-navy/70 hover:bg-white"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

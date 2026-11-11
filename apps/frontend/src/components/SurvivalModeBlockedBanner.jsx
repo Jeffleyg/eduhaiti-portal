@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next"
 import { AlertCircle, Wifi } from "lucide-react"
 
 /**
  * Banner exibido quando uma requisição é bloqueada no modo de sobrevivência
  */
 function SurvivalModeBlockedBanner({ message, reason = "non-essential", onDismiss }) {
+  const { t } = useTranslation()
   const reasonText = {
-    "non-essential": "Este recurso não é essencial e está bloqueado para economizar dados",
-    "low-battery": "Desabilitado com bateria baixa",
-    "slow-network": "Desabilitado em rede lenta",
-    "data-saver": "Modo de economias de dados ativado",
+    "non-essential": t("survivalBlockedNonEssential"),
+    "low-battery": t("survivalBlockedLowBattery"),
+    "slow-network": t("survivalBlockedSlowNetwork"),
+    "data-saver": t("survivalBlockedDataSaver"),
   }[reason]
 
   return (
@@ -18,7 +20,7 @@ function SurvivalModeBlockedBanner({ message, reason = "non-essential", onDismis
           <Wifi className="h-4 w-4 text-orange-600" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-orange-900">Modo de sobrevivência ativo</p>
+          <p className="text-sm font-medium text-orange-900">{t("survivalModeActive")}</p>
           <p className="text-xs text-orange-800">{message || reasonText}</p>
         </div>
         {onDismiss ? (
@@ -26,7 +28,7 @@ function SurvivalModeBlockedBanner({ message, reason = "non-essential", onDismis
             type="button"
             onClick={onDismiss}
             className="flex-shrink-0 text-orange-600 hover:text-orange-800"
-            aria-label="Descartar"
+            aria-label={t("dismiss")}
           >
             ×
           </button>

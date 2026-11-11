@@ -153,7 +153,7 @@ function StudentResults() {
 
         <div className="grid gap-3 md:grid-cols-2">
           <div className="module-card compact p-3">
-            <h4 className="font-semibold text-brand-navy mb-1">Linha do tempo</h4>
+            <h4 className="font-semibold text-brand-navy mb-1">{t("timeline")}</h4>
             {evolution?.timeline?.length ? (
               <LoadMoreList
                 items={evolution.timeline}
@@ -167,12 +167,12 @@ function StudentResults() {
                 )}
               />
             ) : (
-              <p className="text-sm text-brand-navy/60">Sem dados suficientes para o periodo selecionado.</p>
+              <p className="text-sm text-brand-navy/60">{t("timelineEmpty")}</p>
             )}
           </div>
 
           <div className="module-card compact p-3">
-            <h4 className="font-semibold text-brand-navy mb-1">Média por disciplina</h4>
+            <h4 className="font-semibold text-brand-navy mb-1">{t("averageBySubject")}</h4>
             {evolution?.byDiscipline?.length ? (
               <LoadMoreList
                 items={evolution.byDiscipline}
@@ -186,7 +186,7 @@ function StudentResults() {
                 )}
               />
             ) : (
-              <p className="text-sm text-brand-navy/60">Sem dados por disciplina no periodo selecionado.</p>
+              <p className="text-sm text-brand-navy/60">{t("averageBySubjectEmpty")}</p>
             )}
           </div>
         </div>

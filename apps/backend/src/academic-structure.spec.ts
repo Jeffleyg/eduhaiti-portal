@@ -173,6 +173,8 @@ describe('AcademicPeriodsService', () => {
 
     it('rejects empty, ambiguous and unknown schools', async () => {
       await expect(svc.listBySchool('  ')).rejects.toBeInstanceOf(BadRequestException);
+      // admin without a linked school and without ?schoolId: 400, not a 500 TypeError
+      await expect(svc.listBySchool(undefined)).rejects.toBeInstanceOf(BadRequestException);
       prisma.school.findMany.mockResolvedValueOnce([{ id: 'a' }, { id: 'b' }]);
       await expect(svc.listBySchool('x')).rejects.toThrow('identifier');
       prisma.school.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'a' }, { id: 'b' }]);

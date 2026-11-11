@@ -67,7 +67,7 @@ describe("OwnerDashboard", () => {
     expect(await screen.findByText("Lycée")).toBeInTheDocument()
     expect(screen.getByText("7")).toBeInTheDocument()
     await userEvent.click(screen.getByText("usageAnalysis"))
-    expect(screen.getByText("Uso por Escola")).toBeInTheDocument()
+    expect(screen.getByText("usageBySchool")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: /^schools \(/ }))
     expect(screen.getByText("Lycée")).toBeInTheDocument()
   })
@@ -85,9 +85,9 @@ describe("OwnerDashboard", () => {
     fireEvent.change(screen.getByPlaceholderText("Ex: EduHaiti Academy"), { target: { value: "Nova" } })
     fireEvent.change(screen.getByPlaceholderText("contact@ecole.ht"), { target: { value: "n@x.ht" } })
     fireEvent.change(screen.getByPlaceholderText("Ex: Jean-Pierre Dessalines"), { target: { value: "Dir" } })
-    fireEvent.change(screen.getByPlaceholderText("Nome do Administrador"), { target: { value: "Adm" } })
+    fireEvent.change(screen.getByPlaceholderText("schoolFormAdminNamePlaceholder"), { target: { value: "Adm" } })
     fireEvent.change(screen.getByPlaceholderText("admin@ecole.ht"), { target: { value: "a@x.ht" } })
-    fireEvent.submit(screen.getByText("Cadastrar Escola & Admin").closest("form"))
+    fireEvent.submit(screen.getByText("createSchoolAndAdmin").closest("form"))
     expect(await screen.findByText("schoolCreatedSuccess: Nova")).toBeInTheDocument()
     await userEvent.click(screen.getByText("✕"))
     expect(screen.queryByText("schoolCreatedSuccess: Nova")).toBeNull()
@@ -103,7 +103,7 @@ describe("OwnerDashboard", () => {
     renderWithRouter(<OwnerDashboard />)
     await screen.findByText("Lycée")
     await userEvent.click(screen.getByText("+ newSchool"))
-    fireEvent.submit(screen.getByText("Cadastrar Escola & Admin").closest("form"))
+    fireEvent.submit(screen.getByText("createSchoolAndAdmin").closest("form"))
     expect(await screen.findByTestId("temp-password")).toHaveTextContent("Tmp12345")
     expect(screen.getByText("tempPasswordNotEmailed")).toBeInTheDocument()
     expect(screen.getByText("schoolCreatedSuccess: newSchool")).toBeInTheDocument()
@@ -142,8 +142,8 @@ describe("OwnerDashboard", () => {
     renderWithRouter(<OwnerDashboard />)
     expect(await screen.findByText("schools down")).toBeInTheDocument()
     await userEvent.click(screen.getByText("usageAnalysis"))
-    expect(screen.getByText("Análise de uso bloqueada para economizar dados")).toBeInTheDocument()
-    await userEvent.click(screen.getByLabelText("Descartar"))
+    expect(screen.getByText("usageAnalysisBlocked")).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText("dismiss"))
     expect(document.querySelector(".skeleton-card")).not.toBeNull()
   })
 
@@ -181,12 +181,12 @@ describe("SchoolsList", () => {
         token="t"
       />,
     )
-    expect(screen.getByText("Finanças: Ativo")).toBeInTheDocument()
-    expect(screen.getByText("Família: Ativo")).toBeInTheDocument()
+    expect(screen.getByText("financeShort active")).toBeInTheDocument()
+    expect(screen.getByText("familyShort active")).toBeInTheDocument()
     await userEvent.click(screen.getAllByText("details")[0])
-    expect(await screen.findByText("Controle de Módulos da Escola")).toBeInTheDocument()
+    expect(await screen.findByText("moduleControlTitle")).toBeInTheDocument()
     await userEvent.click(screen.getByText("collapse"))
-    expect(screen.queryByText("Controle de Módulos da Escola")).toBeNull()
+    expect(screen.queryByText("moduleControlTitle")).toBeNull()
   })
 })
 
@@ -197,7 +197,7 @@ describe("SchoolAnalytics", () => {
     rerender(<SchoolAnalytics analytics={analytics} />)
     expect(screen.getByText("Other")).toBeInTheDocument()
     rerender(<SchoolAnalytics analytics={{ ...analytics, schoolsDetails: undefined }} />)
-    expect(screen.getByText("Sem dados de uso por escola ainda.")).toBeInTheDocument()
+    expect(screen.getByText("usageBySchoolEmpty")).toBeInTheDocument()
   })
 })
 
@@ -208,17 +208,17 @@ describe("SchoolFeatures", () => {
       .mockResolvedValueOnce({ enableFinance: false, enableSync: true })
       .mockRejectedValueOnce(new Error(""))
     render(<SchoolFeatures schoolId="s1" token="t" />)
-    expect(screen.getByText("Carregando permissões dos módulos...")).toBeInTheDocument()
-    const finance = (await screen.findByText("Módulo Financeiro")).closest("div.p-3\\.5")
-    await userEvent.click(within(finance).getByText("Ativo"))
+    expect(screen.getByText("moduleLoading")).toBeInTheDocument()
+    const finance = (await screen.findByText("moduleFinance")).closest("div.p-3\\.5")
+    await userEvent.click(within(finance).getByText("active"))
     expect(apiFetch).toHaveBeenLastCalledWith("/owner/schools/s1/features", {
       method: "PATCH",
       token: "t",
       body: { enableFinance: false },
     })
-    expect(within(finance).getByText("Inativo")).toBeInTheDocument()
-    await userEvent.click(within(finance).getByText("Inativo"))
-    expect(await screen.findByText("Falha ao atualizar módulo.")).toBeInTheDocument()
+    expect(within(finance).getByText("inactive")).toBeInTheDocument()
+    await userEvent.click(within(finance).getByText("inactive"))
+    expect(await screen.findByText("moduleUpdateError")).toBeInTheDocument()
   })
 
   it("shows load errors and accepts empty payloads", async () => {
@@ -228,14 +228,14 @@ describe("SchoolFeatures", () => {
     unmount()
     apiFetch.mockResolvedValueOnce(null)
     render(<SchoolFeatures schoolId="s1" token="t" />)
-    expect(await screen.findAllByText("Inativo")).toHaveLength(6)
+    expect(await screen.findAllByText("inactive")).toHaveLength(6)
   })
 
   it("shows a saving indicator", async () => {
     let finish
     apiFetch.mockResolvedValueOnce({}).mockImplementationOnce(() => new Promise((r) => (finish = r)))
     render(<SchoolFeatures schoolId="s1" token="t" />)
-    await userEvent.click((await screen.findAllByText("Inativo"))[0])
+    await userEvent.click((await screen.findAllByText("inactive"))[0])
     expect(screen.getByText("...")).toBeInTheDocument()
     await act(async () => finish({ enableFinance: true }))
   })
@@ -250,38 +250,38 @@ describe("PermissionCodeManager", () => {
     vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
     render(<PermissionCodeManager schoolId="s1" token="t" />)
     expect(await screen.findByText("ABCD")).toBeInTheDocument()
-    expect(screen.getByText("Usado por: a@x")).toBeInTheDocument()
+    expect(screen.getByText("usedBy a@x")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText("+ Gerar Código"))
-    fireEvent.change(screen.getByPlaceholderText("Nome (opcional)"), { target: { value: "Diretor" } })
+    await userEvent.click(screen.getByText("generateCodeAction"))
+    fireEvent.change(screen.getByPlaceholderText("nameOptional"), { target: { value: "Diretor" } })
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "90" } })
-    await userEvent.click(screen.getByText("Gerar"))
+    await userEvent.click(screen.getByText("generate"))
     expect(await screen.findByText("EFGH")).toBeInTheDocument()
     expect(apiFetch.mock.calls[1][1].body).toEqual({ name: "Diretor", expiresIn: 90 })
 
-    await userEvent.click(screen.getAllByText("Revogar")[0])
+    await userEvent.click(screen.getAllByText("revoke")[0])
     expect(screen.getByText("ABCD")).toBeInTheDocument()
-    await userEvent.click(screen.getAllByText("Revogar")[0])
+    await userEvent.click(screen.getAllByText("revoke")[0])
     await waitFor(() => expect(screen.queryByText("ABCD")).toBeNull())
 
-    await userEvent.click(screen.getByText("+ Gerar Código"))
-    await userEvent.click(screen.getByText("Cancelar"))
-    expect(screen.queryByPlaceholderText("Nome (opcional)")).toBeNull()
+    await userEvent.click(screen.getByText("generateCodeAction"))
+    await userEvent.click(screen.getByText("adminCancel"))
+    expect(screen.queryByPlaceholderText("nameOptional")).toBeNull()
   })
 
   it("shows errors from every action", async () => {
     apiFetch.mockRejectedValueOnce(new Error("load error"))
     const { unmount } = render(<PermissionCodeManager schoolId="s1" token="t" />)
     expect(await screen.findByText("load error")).toBeInTheDocument()
-    expect(screen.getByText("Nenhum código gerado")).toBeInTheDocument()
+    expect(screen.getByText("noCodesGenerated")).toBeInTheDocument()
     unmount()
 
     apiFetch
       .mockResolvedValueOnce(null)
       .mockRejectedValueOnce(new Error("generate error"))
     render(<PermissionCodeManager schoolId="s2" token="t" />)
-    await userEvent.click(await screen.findByText("+ Gerar Código"))
-    await userEvent.click(screen.getByText("Gerar"))
+    await userEvent.click(await screen.findByText("generateCodeAction"))
+    await userEvent.click(screen.getByText("generate"))
     expect(await screen.findByText("generate error")).toBeInTheDocument()
   })
 
@@ -289,7 +289,7 @@ describe("PermissionCodeManager", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true)
     apiFetch.mockResolvedValueOnce([{ id: "1", code: "X1" }]).mockRejectedValueOnce(new Error("revoke error"))
     render(<PermissionCodeManager schoolId="s1" token="t" />)
-    await userEvent.click(await screen.findByText("Revogar"))
+    await userEvent.click(await screen.findByText("revoke"))
     expect(await screen.findByText("revoke error")).toBeInTheDocument()
   })
 })
@@ -342,21 +342,21 @@ describe("SchoolForm", () => {
     expect(screen.getByPlaceholderText("Ex: EduHaiti Academy")).toHaveValue("")
     // No shared default password: the server generates one per admin.
     expect(screen.queryByDisplayValue("Password@123")).toBeNull()
-    expect(screen.getByText(/senha provisória será gerada/)).toBeInTheDocument()
+    expect(screen.getByText("schoolFormTempPasswordHint")).toBeInTheDocument()
   })
 
   it("creates a school with admin data and shows errors", async () => {
     const onSuccess = vi.fn()
     apiFetch.mockResolvedValueOnce({ id: "new" }).mockRejectedValueOnce(new Error("")).mockResolvedValueOnce(null)
     render(<SchoolForm onSuccess={onSuccess} token="t" />)
-    fireEvent.change(screen.getByPlaceholderText("Nome do Administrador"), { target: { value: " Adm " } })
-    fireEvent.submit(screen.getByText("Cadastrar Escola & Admin").closest("form"))
+    fireEvent.change(screen.getByPlaceholderText("schoolFormAdminNamePlaceholder"), { target: { value: " Adm " } })
+    fireEvent.submit(screen.getByText("createSchoolAndAdmin").closest("form"))
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith({ school: { id: "new" }, adminAccount: null }))
     expect(apiFetch.mock.calls[0][1].body).toMatchObject({ adminName: "Adm" })
     expect(apiFetch.mock.calls[0][1].body).not.toHaveProperty("adminPassword")
 
-    fireEvent.submit(screen.getByText("Cadastrar Escola & Admin").closest("form"))
-    expect(await screen.findByText("Falha ao salvar escola.")).toBeInTheDocument()
+    fireEvent.submit(screen.getByText("createSchoolAndAdmin").closest("form"))
+    expect(await screen.findByText("schoolSaveError")).toBeInTheDocument()
 
     render(<SchoolForm school={{ id: "s9", name: "Keep" }} token="t" />)
     fireEvent.submit(screen.getByText("save").closest("form"))
@@ -366,7 +366,7 @@ describe("SchoolForm", () => {
   it("shows a saving label", async () => {
     apiFetch.mockImplementation(() => new Promise(() => {}))
     render(<SchoolForm token="t" />)
-    fireEvent.submit(screen.getByText("Cadastrar Escola & Admin").closest("form"))
+    fireEvent.submit(screen.getByText("createSchoolAndAdmin").closest("form"))
     expect(await screen.findByText("saving")).toBeInTheDocument()
   })
 })

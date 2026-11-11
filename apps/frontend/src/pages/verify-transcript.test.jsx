@@ -23,21 +23,21 @@ describe("VerifyTranscript", () => {
       academicYear: { year: "2025-2026" },
     })
     open()
-    expect(screen.getByText("Vérification en cours…")).toBeInTheDocument()
-    expect(await screen.findByText("Document authentique")).toBeInTheDocument()
+    expect(screen.getByText("verifyLoading")).toBeInTheDocument()
+    expect(await screen.findByText("verifyAuthentic")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/public/scorecards/card-1/verify")
     expect(screen.getByText("Ana Lima")).toBeInTheDocument()
-    expect(screen.getByText("Moyenne : 13.5/20")).toBeInTheDocument()
-    expect(screen.getByText("Décision : Admis(e)")).toBeInTheDocument()
-    expect(screen.getByText("Empreinte : abc123")).toBeInTheDocument()
+    expect(screen.getByText("verifyAverage 13.5/20")).toBeInTheDocument()
+    expect(screen.getByText("verifyDecision verifyPassed")).toBeInTheDocument()
+    expect(screen.getByText("verifyFingerprint abc123")).toBeInTheDocument()
   })
 
   it("shows fallbacks for partial data and a failed decision", async () => {
     apiFetch.mockResolvedValue({ valid: true, verificationHash: "h", scorecard: { averageScore: null, passStatus: false } })
     open()
-    expect(await screen.findByText("Décision : Non admis(e)")).toBeInTheDocument()
-    expect(screen.getByText("Moyenne : -")).toBeInTheDocument()
-    expect(screen.getByText("Matricule : -")).toBeInTheDocument()
+    expect(await screen.findByText("verifyDecision verifyFailed")).toBeInTheDocument()
+    expect(screen.getByText("verifyAverage -")).toBeInTheDocument()
+    expect(screen.getByText("verifyEnrollment -")).toBeInTheDocument()
   })
 
   it.each([
@@ -46,7 +46,7 @@ describe("VerifyTranscript", () => {
   ])("rejects %s", async (_label, arrange) => {
     arrange()
     open("x y")
-    expect(await screen.findByRole("alert")).toHaveTextContent("non valide")
+    expect(await screen.findByRole("alert")).toHaveTextContent("verifyInvalid")
     expect(apiFetch.mock.calls[0][0]).toBe("/public/scorecards/x%20y/verify")
   })
 

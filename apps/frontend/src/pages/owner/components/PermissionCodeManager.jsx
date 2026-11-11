@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next"
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../../lib/api.js'
 import { sanitizeText } from '../../../lib/string.js'
 
 function PermissionCodeManager({ schoolId, token }) {
+  const { t } = useTranslation()
   const [codes, setCodes] = useState([])
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -45,7 +47,7 @@ function PermissionCodeManager({ schoolId, token }) {
   }
 
   const handleRevoke = async (codeId) => {
-    if (!window.confirm('Revogar este código?')) return
+    if (!window.confirm(t("revokeCodeConfirm"))) return
 
     try {
       await apiFetch(`/owner/permission-codes/${codeId}`, {
@@ -60,21 +62,21 @@ function PermissionCodeManager({ schoolId, token }) {
 
   return (
     <div className="space-y-3">
-      <h4 className="font-semibold text-brand-navy text-sm">Códigos de Permissão</h4>
+      <h4 className="font-semibold text-brand-navy text-sm">{t("permissionCodesTitle")}</h4>
       {error && <p className="text-xs text-brand-red">{error}</p>}
 
       <button
         onClick={() => setShowForm(!showForm)}
         className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
       >
-        {showForm ? 'Cancelar' : '+ Gerar Código'}
+        {showForm ? t("adminCancel") : t("generateCodeAction")}
       </button>
 
       {showForm && (
         <form onSubmit={handleGenerate} className="flex gap-2 text-xs">
           <input
             type="text"
-            placeholder="Nome (opcional)"
+            placeholder={t("nameOptional")}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="flex-1 rounded border border-brand-navy/10 px-2 py-1"
@@ -84,22 +86,22 @@ function PermissionCodeManager({ schoolId, token }) {
             onChange={(e) => setForm({ ...form, expiresIn: parseInt(e.target.value) })}
             className="rounded border border-brand-navy/10 px-2 py-1"
           >
-            <option value={7}>7 dias</option>
-            <option value={30}>30 dias</option>
-            <option value={90}>90 dias</option>
+            <option value={7}>{t("daysCount", { count: 7 })}</option>
+            <option value={30}>{t("daysCount", { count: 30 })}</option>
+            <option value={90}>{t("daysCount", { count: 90 })}</option>
           </select>
           <button
             type="submit"
             disabled={loading}
             className="rounded bg-blue-500 text-white px-3 py-1 hover:bg-blue-600 disabled:opacity-50"
           >
-            Gerar
+            {t("generate")}
           </button>
         </form>
       )}
 
       {codes.length === 0 ? (
-        <p className="text-xs text-brand-navy/50">Nenhum código gerado</p>
+        <p className="text-xs text-brand-navy/50">{t("noCodesGenerated")}</p>
       ) : (
         <div className="space-y-2">
           {codes.map((code) => (
@@ -107,13 +109,13 @@ function PermissionCodeManager({ schoolId, token }) {
               <div>
                 <p className="font-mono font-bold text-brand-navy">{code.code}</p>
                 {code.name && <p className="text-gray-600">{sanitizeText(code.name)}</p>}
-                {code.usedAt && <p className="text-gray-500">Usado por: {sanitizeText(code.usedBy)}</p>}
+                {code.usedAt && <p className="text-gray-500">{t("usedBy")} {sanitizeText(code.usedBy)}</p>}
               </div>
               <button
                 onClick={() => handleRevoke(code.id)}
                 className="text-brand-red hover:underline text-xs"
               >
-                Revogar
+                {t("revoke")}
               </button>
             </div>
           ))}

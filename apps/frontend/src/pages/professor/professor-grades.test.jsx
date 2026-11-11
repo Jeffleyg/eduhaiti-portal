@@ -131,7 +131,7 @@ describe("ProfessorGrades", () => {
     expect(await screen.findByText("selectClassAndDiscipline")).toBeInTheDocument()
 
     await pick("selectClass", "5e")
-    expect(await screen.findByText("Sem nota")).toBeInTheDocument()
+    expect(await screen.findByText("noGrade")).toBeInTheDocument()
 
     await pick("selectClass", "3e")
     await waitFor(() => expect(screen.getByDisplayValue("15")).toBeInTheDocument())

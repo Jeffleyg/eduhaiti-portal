@@ -12,8 +12,9 @@ import { UpdateAcademicPeriodDto } from './dto/update-academic-period.dto';
 export class AcademicPeriodsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async resolveSchoolId(schoolRef: string) {
-    const normalized = schoolRef.trim();
+  private async resolveSchoolId(schoolRef?: string | null) {
+    // Admins without a linked school may call without ?schoolId
+    const normalized = (schoolRef ?? '').trim();
 
     if (!normalized) {
       throw new BadRequestException('School identifier is required');
@@ -85,7 +86,7 @@ export class AcademicPeriodsService {
     }
   }
 
-  async listBySchool(schoolId: string) {
+  async listBySchool(schoolId?: string | null) {
     const resolvedSchoolId = await this.resolveSchoolId(schoolId);
 
     return this.prisma.academicPeriod.findMany({

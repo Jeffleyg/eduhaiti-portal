@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
@@ -5,6 +6,7 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { sanitizeText, displayName } from "../../lib/string.js"
 
 function ProfessorLessonPlans() {
+  const { t } = useTranslation()
   const { token } = useAuth()
   const [classes, setClasses] = useState([])
   const [selectedClass, setSelectedClass] = useState("")
@@ -88,7 +90,7 @@ function ProfessorLessonPlans() {
 
     try {
       await apiFetch("/lessons", { method: "POST", body: payload, token })
-      setMessage("Plano de aula salvo com sucesso.")
+      setMessage(t("lessonPlanSaved"))
       setForm({ date: "", title: "", objectives: "", content: "", methodology: "", tags: "", visibility: "SCHOOL" })
       // try to refresh
       const refreshed = await apiFetch(`/lessons?classId=${encodeURIComponent(selectedClass)}`, { token })
@@ -101,20 +103,20 @@ function ProfessorLessonPlans() {
       const updated = [newPlan, ...existing]
       localStorage.setItem(key, JSON.stringify(updated))
       setPlans(updated)
-      setMessage("Plano salvo localmente (sem backend).")
+      setMessage(t("lessonPlanSavedLocally"))
     }
   }
 
-  if (loading) return <div className="text-center text-brand-navy">Carregando...</div>
+  if (loading) return <div className="text-center text-brand-navy">{t("common.loading")}</div>
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Planos de Aula" subtitle="Crie e agende planos de aula para suas turmas." />
+      <SectionHeader title={t("lessons.title")} subtitle={t("lessonPlansTeacherSubtitle")} />
 
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="font-semibold text-brand-navy">Novo plano de aula</h3>
+        <h3 className="font-semibold text-brand-navy">{t("newLessonPlan")}</h3>
         <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={submitPlan}>
           <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className="rounded-2xl border px-3 py-2 bg-sand">
             {(classes ?? []).map((c) => (
@@ -124,27 +126,27 @@ function ProfessorLessonPlans() {
 
           <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="rounded-2xl border px-3 py-2 bg-sand" required />
 
-          <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Título" className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" required />
+          <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder={t("titleLabel")} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" required />
 
-          <textarea value={form.objectives} onChange={(e) => setForm((p) => ({ ...p, objectives: e.target.value }))} placeholder="Objetivos" rows={3} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <textarea value={form.objectives} onChange={(e) => setForm((p) => ({ ...p, objectives: e.target.value }))} placeholder={t("objectives")} rows={3} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
-          <textarea value={form.methodology} onChange={(e) => setForm((p) => ({ ...p, methodology: e.target.value }))} placeholder="Metodologia (ex: aprendizagem baseada em projetos)" rows={2} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <textarea value={form.methodology} onChange={(e) => setForm((p) => ({ ...p, methodology: e.target.value }))} placeholder={t("methodologyPlaceholder")} rows={2} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
-          <textarea value={form.content} onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} placeholder="Conteúdo / Atividades" rows={4} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <textarea value={form.content} onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} placeholder={t("contentActivities")} rows={4} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
-          <input value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} placeholder="Tags separadas por virgula (ex: matematica, jogo, avaliacao)" className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <input value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} placeholder={t("tagsPlaceholder")} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
           <select value={form.visibility} onChange={(e) => setForm((p) => ({ ...p, visibility: e.target.value }))} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2">
-            <option value="SCHOOL">Compartilhar com outros professores</option>
-            <option value="CLASS">Apenas turma atual</option>
+            <option value="SCHOOL">{t("shareWithTeachers")}</option>
+            <option value="CLASS">{t("currentClassOnly")}</option>
           </select>
 
-          <button className="primary-button md:col-span-2" type="submit">Save lesson plan</button>
+          <button className="primary-button md:col-span-2" type="submit">{t("saveLessonPlan")}</button>
         </form>
       </section>
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="font-semibold text-brand-navy">Planos existentes</h3>
+        <h3 className="font-semibold text-brand-navy">{t("existingPlans")}</h3>
         <div className="mt-3 space-y-3">
           {plans.length ? (
             plans.map((p) => (
@@ -157,17 +159,17 @@ function ProfessorLessonPlans() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-brand-navy/60">Nenhum plano encontrado.</p>
+            <p className="text-sm text-brand-navy/60">{t("noPlansFound")}</p>
           )}
         </div>
       </section>
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-        <h3 className="font-semibold text-brand-navy">Repositorio colaborativo de metodologias</h3>
+        <h3 className="font-semibold text-brand-navy">{t("methodologyRepository")}</h3>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por titulo, tags ou metodologia"
+          placeholder={t("searchPlansPlaceholder")}
           className="mt-3 w-full rounded-2xl border px-3 py-2 bg-sand"
         />
         <div className="mt-3 space-y-2">
@@ -181,7 +183,7 @@ function ProfessorLessonPlans() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-brand-navy/60">Sem resultados no repositorio.</p>
+            <p className="text-sm text-brand-navy/60">{t("repositoryEmpty")}</p>
           )}
         </div>
       </section>

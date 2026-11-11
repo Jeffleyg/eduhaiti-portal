@@ -67,7 +67,7 @@ describe("StudentTranscript", () => {
     expect(screen.getByText("85.0%")).toBeInTheDocument()
     expect(screen.getAllByText("Admis(e)")).toHaveLength(2)
     expect(screen.getByText(/Excellent rendement/)).toBeInTheDocument()
-    expect(screen.getByAltText("QR Code de vérification")).toHaveAttribute("src", "data:image/png;base64,QR")
+    expect(screen.getByAltText("verificationQrCode")).toHaveAttribute("src", "data:image/png;base64,QR")
     // The QR points to the public verification page of the issued record.
     expect(screen.getByText("card-y2")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/grades/transcript/y2/issue", { method: "POST", token: "tok" })
@@ -141,7 +141,7 @@ describe("StudentTranscript", () => {
     renderWithRouter(<StudentTranscript />)
     await screen.findByText("Année Académique 2026")
     await userEvent.click(screen.getByText("PDF"))
-    expect(await screen.findByText("Veuillez sélectionner une année académique")).toBeInTheDocument()
+    expect(await screen.findByText("transcriptYearRequired")).toBeInTheDocument()
   })
 
   it("uses the first year without an active one, prints, and handles QR and load errors", async () => {
@@ -152,13 +152,13 @@ describe("StudentTranscript", () => {
     const first = renderWithRouter(<StudentTranscript />)
     expect(await screen.findByText("Année Académique 2025")).toBeInTheDocument()
     expect(error).toHaveBeenCalledWith("Erro ao emitir histórico verificável:", expect.any(Error))
-    await userEvent.click(screen.getByText("Imprimer"))
+    await userEvent.click(screen.getByText("print"))
     expect(print).toHaveBeenCalled()
     first.unmount()
 
     routes({ "/grades/my-academic-years": null, "/grades/my-grades": null })
     const second = renderWithRouter(<StudentTranscript />)
-    expect(await screen.findByText("Relevé de Notes Académique")).toBeInTheDocument()
+    expect(await screen.findByText("transcriptPageTitle")).toBeInTheDocument()
     expect(screen.getByText("PDF").closest("button")).toBeDisabled()
     second.unmount()
 
@@ -171,7 +171,7 @@ describe("StudentTranscript", () => {
     routes({ "/grades/report/y2": { grades: [] } })
     renderWithRouter(<StudentTranscript />)
     await screen.findByText("Année Académique 2026")
-    expect(screen.queryByAltText("QR Code de vérification")).toBeNull()
+    expect(screen.queryByAltText("verificationQrCode")).toBeNull()
     expect(apiFetch.mock.calls.some(([path]) => path.includes("/issue"))).toBe(false)
     await userEvent.click(screen.getByText("PDF"))
     await waitFor(() => expect(pdf.save).toHaveBeenCalled())

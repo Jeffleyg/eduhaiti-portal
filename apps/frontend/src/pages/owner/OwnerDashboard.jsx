@@ -239,7 +239,7 @@ function OwnerDashboard() {
           <div>
             {analyticsBlocked && (
               <SurvivalModeBlockedBanner
-                message="Análise de uso bloqueada para economizar dados"
+                message={t("usageAnalysisBlocked")}
                 reason="non-essential"
                 onDismiss={() => setAnalyticsBlocked(false)}
               />

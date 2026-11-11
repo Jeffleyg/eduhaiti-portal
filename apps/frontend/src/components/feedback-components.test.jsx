@@ -99,9 +99,9 @@ describe("SkeletonLoader", () => {
 describe("Utils", () => {
   it("shows tooltips on hover in each position", () => {
     const { rerender } = render(<Tooltip content="help" />)
-    fireEvent.mouseEnter(screen.getByLabelText("More information"))
+    fireEvent.mouseEnter(screen.getByLabelText("moreInformation"))
     expect(screen.getByRole("tooltip")).toHaveTextContent("help")
-    fireEvent.mouseLeave(screen.getByLabelText("More information"))
+    fireEvent.mouseLeave(screen.getByLabelText("moreInformation"))
     expect(screen.queryByRole("tooltip")).toBeNull()
     for (const position of ["bottom", "left", "right"]) {
       rerender(<Tooltip content="x" position={position} icon={Star} />)
@@ -152,7 +152,7 @@ describe("Toast", () => {
     vi.useFakeTimers()
     const onClose = vi.fn()
     render(<Toast type="weird" duration={0} onClose={onClose} />)
-    fireEvent.click(screen.getByLabelText("Close notification"))
+    fireEvent.click(screen.getByLabelText("closeNotification"))
     act(() => vi.advanceTimersByTime(400))
     expect(onClose).toHaveBeenCalledTimes(1)
   })

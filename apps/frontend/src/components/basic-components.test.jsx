@@ -58,11 +58,11 @@ describe("simple layout components", () => {
     const onClose = vi.fn()
     const { rerender } = render(<Feedback type="error" message="failed" onClose={onClose} />)
     expect(screen.getByText("failed")).toHaveClass("text-brand-red")
-    await userEvent.click(screen.getByLabelText("Fechar mensagem"))
+    await userEvent.click(screen.getByLabelText("closeMessage"))
     expect(onClose).toHaveBeenCalled()
     rerender(<Feedback type="success" message="saved" />)
     expect(screen.getByText("saved")).toHaveClass("text-emerald-600")
-    expect(screen.queryByLabelText("Fechar mensagem")).toBeNull()
+    expect(screen.queryByLabelText("closeMessage")).toBeNull()
   })
 })
 
@@ -198,9 +198,9 @@ describe("navigation and tables", () => {
     )
     expect(screen.getByText("no-id")).toBeInTheDocument()
     rerender(<LoadMoreList items={[]} renderItem={() => null} />)
-    expect(screen.getByText("Nenhum item.")).toBeInTheDocument()
+    expect(screen.getByText("noItems")).toBeInTheDocument()
     rerender(<LoadMoreList items={null} renderItem={() => null} />)
-    expect(screen.getByText("Nenhum item.")).toBeInTheDocument()
+    expect(screen.getByText("noItems")).toBeInTheDocument()
   })
 })
 
@@ -274,7 +274,7 @@ describe("display components", () => {
       </Modal>,
     )
     expect(document.body.style.overflow).toBe("hidden")
-    await userEvent.click(screen.getByLabelText("Close modal"))
+    await userEvent.click(screen.getByLabelText("closeDialog"))
     fireEvent.click(screen.getByText("body"))
     fireEvent.click(container.firstChild)
     expect(onClose).toHaveBeenCalledTimes(2)
@@ -297,9 +297,9 @@ describe("display components", () => {
       </>,
     )
     expect(screen.getByText("Done")).toBeInTheDocument()
-    await userEvent.click(screen.getByLabelText("Close alert"))
+    await userEvent.click(screen.getByLabelText("closeAlert"))
     expect(onClose).toHaveBeenCalledTimes(1)
-    expect(screen.getAllByLabelText("Close alert")).toHaveLength(1)
+    expect(screen.getAllByLabelText("closeAlert")).toHaveLength(1)
   })
 
   it("renders empty states", async () => {
@@ -310,7 +310,7 @@ describe("display components", () => {
         <EmptyState title="Empty" description="" action={action} actionLabel="Add" />
       </>,
     )
-    expect(screen.getByText("Nenhum dado")).toBeInTheDocument()
+    expect(screen.getByText("noData")).toBeInTheDocument()
     await userEvent.click(screen.getByText("Add"))
     expect(action).toHaveBeenCalled()
   })
@@ -318,10 +318,10 @@ describe("display components", () => {
   it("renders the survival-mode banner", async () => {
     const onDismiss = vi.fn()
     const { rerender } = render(<SurvivalModeBlockedBanner />)
-    expect(screen.getByText(/não é essencial/)).toBeInTheDocument()
+    expect(screen.getByText("survivalBlockedNonEssential")).toBeInTheDocument()
     rerender(<SurvivalModeBlockedBanner reason="low-battery" message="custom" onDismiss={onDismiss} />)
     expect(screen.getByText("custom")).toBeInTheDocument()
-    await userEvent.click(screen.getByLabelText("Descartar"))
+    await userEvent.click(screen.getByLabelText("dismiss"))
     expect(onDismiss).toHaveBeenCalled()
   })
 })

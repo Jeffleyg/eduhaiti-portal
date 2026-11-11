@@ -5,6 +5,7 @@
  * Fornece validação automática, erro visual e acessibilidade WCAG 2.1 AA
  */
 
+import { useTranslation } from "react-i18next"
 import React from 'react'
 import { Controller } from 'react-hook-form'
 import { AlertCircle } from 'lucide-react'
@@ -38,6 +39,7 @@ export const FormField = ({
   rows = 4,
   ...props
 }) => {
+  const { t } = useTranslation()
   const fieldId = `field-${name}`
   const errorId = `error-${name}`
   const hintId = `hint-${name}`
@@ -99,7 +101,7 @@ export const FormField = ({
                   role="alert"
                 >
                   <AlertCircle size={16} />
-                  {error}
+                  {t(error)}
                 </div>
               )}
 
@@ -146,7 +148,7 @@ export const FormField = ({
                 role="alert"
               >
                 <AlertCircle size={16} />
-                {error}
+                {t(error)}
               </div>
             )}
 

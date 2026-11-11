@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import React, { useState, useEffect } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 import Sidebar from "./Sidebar.jsx"
@@ -6,6 +7,7 @@ import TopBar from "./TopBar.jsx"
 import { useSurvivalMode } from "../context/useSurvivalMode.js"
 
 function AppShell({ role }) {
+  const { t } = useTranslation()
   const { disableImages, disableAnimations } = useSurvivalMode()
   const location = useLocation()
   // The drawer remembers the route it was opened on, so navigating closes it
@@ -73,7 +75,7 @@ function AppShell({ role }) {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Navegação Principal"
+          aria-label={t("mainNavigation")}
           className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-sand shadow-2xl lg:hidden ${
             disableAnimations
               ? ""
@@ -83,13 +85,13 @@ function AppShell({ role }) {
           {/* Cabeçalho do Drawer com botão fechar */}
           <div className="flex items-center justify-between border-b border-brand-navy/10 px-5 py-4">
             <span className="text-xs font-bold uppercase tracking-wider text-brand-navy/70">
-              Navegação
+              {t("navigation")}
             </span>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
               className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-navy/70 hover:bg-brand-navy/10 hover:text-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy"
-              aria-label="Fechar navegação"
+              aria-label={t("closeNavigation")}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -115,7 +117,7 @@ function AppShell({ role }) {
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-              <span>Menu</span>
+              <span>{t("menu")}</span>
             </button>
 
             <span className="text-xs font-semibold uppercase tracking-wider text-brand-navy/60">

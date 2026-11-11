@@ -15,42 +15,42 @@ import Button from "./Button"
 const createTeacherSchema = z.object({
   email: z
     .string()
-    .min(1, "Email é obrigatório")
-    .email("Email deve ser válido"),
+    .min(1, "validation.emailRequired")
+    .email("validation.emailInvalid"),
   firstName: z
     .string()
-    .min(2, "Primeiro nome deve ter pelo menos 2 caracteres")
-    .max(100, "Primeiro nome não pode ter mais de 100 caracteres"),
+    .min(2, "validation.firstNameMin")
+    .max(100, "validation.firstNameMax"),
   lastName: z
     .string()
-    .min(2, "Último nome deve ter pelo menos 2 caracteres")
-    .max(100, "Último nome não pode ter mais de 100 caracteres"),
+    .min(2, "validation.lastNameMin")
+    .max(100, "validation.lastNameMax"),
   dateOfBirth: z
     .string()
-    .min(1, "Data de nascimento é obrigatória"),
+    .min(1, "validation.dateOfBirthRequired"),
   address: z
     .string()
-    .min(5, "Endereço deve ter pelo menos 5 caracteres")
-    .max(255, "Endereço não pode ter mais de 255 caracteres"),
+    .min(5, "validation.addressMin")
+    .max(255, "validation.addressMax"),
   gender: z
     .enum(["MALE", "FEMALE", "OTHER"], {
-      error: "Selecione um gênero válido",
+      error: "validation.genderRequired",
     }),
   fatherName: z
     .string()
-    .max(100, "Nome do pai não pode ter mais de 100 caracteres")
+    .max(100, "validation.fatherNameMax")
     .optional()
     .nullable()
     .transform((v) => v || null),
   motherName: z
     .string()
-    .max(100, "Nome da mãe não pode ter mais de 100 caracteres")
+    .max(100, "validation.motherNameMax")
     .optional()
     .nullable()
     .transform((v) => v || null),
   subjects: z
     .string()
-    .min(2, "Informe ao menos uma disciplina (ex: Mathématiques, Français)"),
+    .min(2, "validation.subjectsRequired"),
   classIds: z
     .array(z.string())
     .optional()
@@ -215,10 +215,10 @@ function CreateTeacherModal({
           name="subjects"
           label={t("subjects") || "Disciplines"}
           type="text"
-          placeholder="Ex: Mathématiques, Sciences Naturelles"
+          placeholder={t("subjectsExample")}
           required
           error={errors.subjects?.message}
-          hint="Separe por vírgulas"
+          hint={t("separateWithCommas")}
         />
 
         {/* Endereço */}
@@ -239,7 +239,7 @@ function CreateTeacherModal({
           name="fatherName"
           label={t("fatherName") || "Nom du père"}
           type="text"
-          placeholder="Opcional"
+          placeholder={t("optional")}
           error={errors.fatherName?.message}
         />
 
@@ -248,7 +248,7 @@ function CreateTeacherModal({
           name="motherName"
           label={t("motherName") || "Nom de la mère"}
           type="text"
-          placeholder="Opcional"
+          placeholder={t("optional")}
           error={errors.motherName?.message}
         />
       </div>

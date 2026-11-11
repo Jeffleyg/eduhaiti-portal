@@ -201,7 +201,7 @@ export default function ProfessorAssignments() {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Devoir de Mathématiques #1"
+                  placeholder={t("assignmentTitleExample")}
                   required
                 />
               </div>
@@ -228,7 +228,7 @@ export default function ProfessorAssignments() {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enstriksyon pou elèv yo..."
+                  placeholder={t("assignmentInstructionsPlaceholder")}
                 />
               </div>
 

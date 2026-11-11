@@ -56,7 +56,7 @@ export default function GuardiansEditor({ studentId, token, onClose }) {
       const guardians = ROLES.filter(({ relationship }) => rows[relationship].phoneNumber.trim()).map(
         ({ relationship }) => ({
           relationship,
-          fullName: rows[relationship].fullName.trim() || (relationship === "FATHER" ? "Pai" : "Mãe"),
+          fullName: rows[relationship].fullName.trim() || (relationship === "FATHER" ? t("father") : t("mother")),
           phoneNumber: rows[relationship].phoneNumber.trim(),
         }),
       )

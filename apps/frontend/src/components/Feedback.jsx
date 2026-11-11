@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import React from "react"
 
 /**
@@ -6,6 +7,7 @@ import React from "react"
  *  - <Feedback type="error|success" message={...} onClose={...} />
  */
 export default function Feedback({ error, message, type, onClose }) {
+  const { t } = useTranslation()
   const errorText = error ?? (type === "error" ? message : null)
   const successText = type === "error" ? null : message
 
@@ -21,7 +23,7 @@ export default function Feedback({ error, message, type, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fechar mensagem"
+          aria-label={t("closeMessage")}
           className="text-sm text-brand-navy/50 hover:text-brand-navy"
         >
           ×

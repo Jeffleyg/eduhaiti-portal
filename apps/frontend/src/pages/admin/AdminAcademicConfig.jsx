@@ -138,24 +138,24 @@ export default function AdminAcademicConfig() {
           isActive: yearForm.isActive,
         },
       })
-      setMessage("Année académique enregistrée avec succès !")
+      setMessage(t("academicYearSaved"))
       setYearForm({ year: "", startDate: "", endDate: "", isActive: true })
       await loadYears()
     } catch (err) {
-      setError(err.message || "Erreur lors de la création de l'année académique")
+      setError(err.message || t("academicYearCreateError"))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeleteYear = async (yearId) => {
-    if (!window.confirm("Supprimer cette année académique ?")) return
+    if (!window.confirm(t("academicYearDeleteConfirm"))) return
     try {
       await apiFetch(`/admin/academic-years/${yearId}`, { method: "DELETE", token })
-      setMessage("Année supprimée !")
+      setMessage(t("academicYearDeleted"))
       await loadYears()
     } catch (err) {
-      setError(err.message || "Impossible de supprimer l'année.")
+      setError(err.message || t("academicYearDeleteError"))
     }
   }
 
@@ -173,24 +173,24 @@ export default function AdminAcademicConfig() {
           code: seriesForm.code.trim() || undefined,
         },
       })
-      setMessage("Série / Niveau créé(e) avec succès !")
+      setMessage(t("seriesSaved"))
       setSeriesForm({ name: "", code: "" })
       await loadSeries()
     } catch (err) {
-      setError(err.message || "Erreur lors de la création de la série")
+      setError(err.message || t("seriesCreateError"))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeleteSeries = async (seriesId) => {
-    if (!window.confirm("Supprimer cette série ?")) return
+    if (!window.confirm(t("seriesDeleteConfirm"))) return
     try {
       await apiFetch(`/admin/series/${seriesId}`, { method: "DELETE", token })
-      setMessage("Série supprimée !")
+      setMessage(t("seriesDeleted"))
       await loadSeries()
     } catch (err) {
-      setError(err.message || "Impossible de supprimer la série.")
+      setError(err.message || t("seriesDeleteError"))
     }
   }
 
@@ -209,7 +209,7 @@ export default function AdminAcademicConfig() {
         },
       })
       setPeriodForm(initialPeriod)
-      setMessage("Période créée avec succès !")
+      setMessage(t("periodSaved"))
       await loadPeriods()
     } catch (err) {
       setError(err.message)
@@ -222,7 +222,7 @@ export default function AdminAcademicConfig() {
     <div className="space-y-6">
       <SectionHeader
         title={t("academicAdminTitle", "Configuration Académique")}
-        subtitle="Gérez les années scolaires, les niveaux (séries) et les trimestres de votre école."
+        subtitle={t("academicConfigSubtitle")}
       />
 
       <Feedback error={error} message={message} />
@@ -230,8 +230,8 @@ export default function AdminAcademicConfig() {
       {/* Barra com as 5 abas */}
       <AdminSectionToolbar
         sections={[
-          { key: "years", label: "Années Académiques" },
-          { key: "series", label: "Séries & Niveaux" },
+          { key: "years", label: t("academicYearsTab") },
+          { key: "series", label: t("seriesTab") },
           { key: "periods", label: t("periods", "Périodes") },
           { key: "settings", label: t("settings", "Paramètres") },
           { key: "context", label: t("schoolContext", "Contexte de l'École") },
@@ -252,8 +252,8 @@ export default function AdminAcademicConfig() {
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-brand-navy">Créer une Année Académique</h3>
-                <p className="text-xs text-brand-navy/60">Exemple: 2025-2026 ou 2026-2027</p>
+                <h3 className="text-base font-bold text-brand-navy">{t("academicYearCreateTitle")}</h3>
+                <p className="text-xs text-brand-navy/60">{t("academicYearExample")}</p>
               </div>
             </div>
 
@@ -261,7 +261,7 @@ export default function AdminAcademicConfig() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                    Année Scolaire *
+                    {t("schoolYearRequiredLabel")}
                   </label>
                   <input
                     type="text"
@@ -275,7 +275,7 @@ export default function AdminAcademicConfig() {
 
                 <div>
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                    Date de début
+                    {t("startDate")}
                   </label>
                   <input
                     type="date"
@@ -287,7 +287,7 @@ export default function AdminAcademicConfig() {
 
                 <div>
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                    Date de fin
+                    {t("endDate")}
                   </label>
                   <input
                     type="date"
@@ -306,11 +306,11 @@ export default function AdminAcademicConfig() {
                     onChange={(e) => setYearForm({ ...yearForm, isActive: e.target.checked })}
                     className="w-4 h-4 accent-brand-navy rounded"
                   />
-                  Définir comme année académique active en cours
+                  {t("academicYearSetActive")}
                 </label>
 
                 <Button type="submit" variant="primary" disabled={loading}>
-                  {loading ? "Enregistrement..." : "+ Enregistrer l'Année"}
+                  {loading ? t("saving") : t("academicYearSaveAction")}
                 </Button>
               </div>
             </form>
@@ -319,10 +319,10 @@ export default function AdminAcademicConfig() {
           {/* Lista de Anos */}
           <SectionCard>
             <h3 className="text-sm font-bold uppercase tracking-wider text-brand-navy mb-4">
-              Années Académiques Enregistrées
+              {t("academicYearsSaved")}
             </h3>
             {years.length === 0 ? (
-              <p className="text-xs text-slate-400">Aucune année académique enregistrée pour votre école.</p>
+              <p className="text-xs text-slate-400">{t("academicYearsEmpty")}</p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {years.map((y) => (
@@ -331,7 +331,7 @@ export default function AdminAcademicConfig() {
                       <strong className="text-sm text-brand-navy font-bold">{y.year || y.name}</strong>
                       {y.isActive && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          <CheckCircle2 className="w-3 h-3" /> Active
+                          <CheckCircle2 className="w-3 h-3" /> {t("active")}
                         </span>
                       )}
                     </div>
@@ -339,7 +339,7 @@ export default function AdminAcademicConfig() {
                       type="button"
                       onClick={() => handleDeleteYear(y.id)}
                       className="text-slate-400 hover:text-rose-600 p-1.5 transition-colors"
-                      title="Supprimer"
+                      title={t("adminDelete")}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -360,8 +360,8 @@ export default function AdminAcademicConfig() {
                 <Layers className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-brand-navy">Créer une Série ou Niveau</h3>
-                <p className="text-xs text-brand-navy/60">Ex: 3ème Année Fondamentale, NS1, Philo, etc.</p>
+                <h3 className="text-base font-bold text-brand-navy">{t("seriesCreateTitle")}</h3>
+                <p className="text-xs text-brand-navy/60">{t("seriesExample")}</p>
               </div>
             </div>
 
@@ -369,12 +369,12 @@ export default function AdminAcademicConfig() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                    Nom de la Série / Niveau *
+                    {t("seriesNameLabel")}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ex: 3ème Année Fondamentale"
+                    placeholder={t("seriesNameExample")}
                     value={seriesForm.name}
                     onChange={(e) => setSeriesForm({ ...seriesForm, name: e.target.value })}
                     className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-brand-navy focus:outline-none"
@@ -383,7 +383,7 @@ export default function AdminAcademicConfig() {
 
                 <div>
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                    Code Abrégé (Optionnel)
+                    {t("seriesCodeLabel")}
                   </label>
                   <input
                     type="text"
@@ -397,7 +397,7 @@ export default function AdminAcademicConfig() {
 
               <div className="flex justify-end">
                 <Button type="submit" variant="primary" disabled={loading}>
-                  {loading ? "Enregistrement..." : "+ Enregistrer la Série"}
+                  {loading ? t("saving") : t("seriesSaveAction")}
                 </Button>
               </div>
             </form>
@@ -406,10 +406,10 @@ export default function AdminAcademicConfig() {
           {/* Lista de Séries */}
           <SectionCard>
             <h3 className="text-sm font-bold uppercase tracking-wider text-brand-navy mb-4">
-              Séries Enregistrées
+              {t("seriesSavedList")}
             </h3>
             {seriesList.length === 0 ? (
-              <p className="text-xs text-slate-400">Aucune série configurée pour votre école.</p>
+              <p className="text-xs text-slate-400">{t("seriesEmpty")}</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {seriesList.map((s) => (
@@ -451,17 +451,17 @@ export default function AdminAcademicConfig() {
                   await apiFetch(`/admin/academic-periods/${p.id}/${p.isOpen ? "close" : "open"}`, { method: "PATCH", token })
                   await loadPeriods()
                 } catch (err) {
-                  setError(err.message || "Impossible de modifier la période.")
+                  setError(err.message || t("periodUpdateError"))
                 }
               }}
               removePeriod={async (id) => {
-                if (!window.confirm("Supprimer la période ?")) return
+                if (!window.confirm(t("periodDeleteConfirm"))) return
                 clearFeedback()
                 try {
                   await apiFetch(`/admin/academic-periods/${id}`, { method: "DELETE", token })
                   await loadPeriods()
                 } catch (err) {
-                  setError(err.message || "Impossible de supprimer la période.")
+                  setError(err.message || t("periodDeleteError"))
                 }
               }}
             />
@@ -485,9 +485,9 @@ export default function AdminAcademicConfig() {
                   token,
                   body: settingsForm,
                 })
-                setMessage("Paramètres enregistrés avec succès")
+                setMessage(t("settingsSavedSuccess"))
               } catch (err) {
-                setError(err.message || "Impossible d'enregistrer les paramètres.")
+                setError(err.message || t("settingsSaveError"))
               }
             }}
             loading={loading}

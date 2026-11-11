@@ -131,7 +131,7 @@ function ProfessorResources() {
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
             className="w-full px-4 py-2 border border-brand-navy/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="Ex: Aula 01 - Matemática"
+            placeholder={t("resourceTitleExample")}
           />
         </div>
 
@@ -141,7 +141,7 @@ function ProfessorResources() {
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full px-4 py-2 border border-brand-navy/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="Descrição do material"
+            placeholder={t("materialDescription")}
             rows={3}
           />
         </div>
@@ -157,7 +157,7 @@ function ProfessorResources() {
           <label htmlFor="file-input" className="cursor-pointer flex flex-col items-center gap-2">
             {disableImages ? null : <Upload className="w-6 h-6 text-brand-navy/60" />}
             <span className="text-sm font-semibold text-brand-navy">{file ? file.name : t("clickToUpload")}</span>
-            {disableImages ? null : <span className="text-xs text-brand-navy/60">PDF, PowerPoint, Word, Excel</span>}
+            {disableImages ? null : <span className="text-xs text-brand-navy/60">{t("supportedDocumentTypes")}</span>}
           </label>
         </div>
 
@@ -171,7 +171,7 @@ function ProfessorResources() {
       </form>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-brand-navy">Recursos da Turma</h3>
+        <h3 className="font-semibold text-brand-navy">{t("classResources")}</h3>
         {resources.length > 0 ? (
           <LoadMoreList
             items={resources}
@@ -184,7 +184,7 @@ function ProfessorResources() {
                   {disableImages ? null : <p className="text-sm text-brand-navy/60">{resource.fileType.toUpperCase()}</p>}
                 </div>
                 <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
-                  {disableImages ? "TXT-DOWNLOAD" : "Download"}
+                  {disableImages ? "TXT-DOWNLOAD" : t("download")}
                 </a>
               </div>
             )}
@@ -195,7 +195,7 @@ function ProfessorResources() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
+        <h3 className="font-semibold text-brand-navy">{t("seriesDigitalLibrary")}</h3>
         {libraryResources.length > 0 ? (
           <LoadMoreList
             items={libraryResources}
@@ -208,7 +208,7 @@ function ProfessorResources() {
                   <p className="text-xs text-brand-navy/60">Turma: {sanitizeText(resource.class?.name) || "-"}</p>
                 </div>
                 <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red font-semibold hover:underline">
-                  Download
+                  {t("download")}
                 </a>
               </div>
             )}

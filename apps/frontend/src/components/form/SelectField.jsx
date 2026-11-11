@@ -8,6 +8,7 @@
  * - Styling com Tailwind
  */
 
+import { useTranslation } from "react-i18next"
 import React from 'react'
 import * as Select from '@radix-ui/react-select'
 import { ChevronDown, AlertCircle } from 'lucide-react'
@@ -39,6 +40,7 @@ export const SelectField = ({
   disabled = false,
   className = '',
 }) => {
+  const { t } = useTranslation()
   const fieldId = `field-${name}`
   const errorId = `error-${name}`
   const hintId = `hint-${name}`
@@ -124,7 +126,7 @@ export const SelectField = ({
               role="alert"
             >
               <AlertCircle size={16} />
-              {error}
+              {t(error)}
             </div>
           )}
 

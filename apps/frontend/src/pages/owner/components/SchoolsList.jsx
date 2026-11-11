@@ -40,8 +40,8 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
                 </p>
                 {school.usageAnalytics && (
                   <div className="mt-2 flex gap-4 text-xs text-brand-navy/70">
-                    <span>👥 {school.usageAnalytics.totalUsers} usuários</span>
-                    <span>📚 {school.usageAnalytics.classCount} turmas</span>
+                    <span>👥 {school.usageAnalytics.totalUsers} {t("usersUnit")}</span>
+                    <span>📚 {school.usageAnalytics.classCount} {t("classesUnit")}</span>
                     <span>✅ {school.usageAnalytics.attendanceRecords} presenças</span>
                   </div>
                 )}
@@ -76,7 +76,7 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
                     : "bg-slate-100 text-slate-400 border border-slate-200"
                 }`}
               >
-                Finanças: {school.enableFinance ? "Ativo" : "Bloqueado"}
+                {t("financeShort")} {school.enableFinance ? t("active") : t("blocked")}
               </span>
 
               <span
@@ -86,7 +86,7 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
                     : "bg-slate-100 text-slate-400 border border-slate-200"
                 }`}
               >
-                Família: {school.enableFamilyAccess ? "Ativo" : "Bloqueado"}
+                {t("familyShort")} {school.enableFamilyAccess ? t("active") : t("blocked")}
               </span>
 
               <span
@@ -96,7 +96,7 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
                     : "bg-slate-100 text-slate-400 border border-slate-200"
                 }`}
               >
-                MonCash: {school.enablePayment ? "Ativo" : "Bloqueado"}
+                MonCash: {school.enablePayment ? t("active") : t("blocked")}
               </span>
             </div>
 

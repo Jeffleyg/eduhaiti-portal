@@ -37,8 +37,8 @@ describe("GuardiansEditor", () => {
       token: "tok",
       body: {
         guardians: [
-          { relationship: "FATHER", fullName: "Pai", phoneNumber: "+50937123456" },
-          { relationship: "MOTHER", fullName: "Mãe", phoneNumber: "3800 0000" },
+          { relationship: "FATHER", fullName: "father", phoneNumber: "+50937123456" },
+          { relationship: "MOTHER", fullName: "mother", phoneNumber: "3800 0000" },
         ],
       },
     })

@@ -20,8 +20,8 @@ describe("CreateStudentModal", () => {
     const onSubmit = vi.fn()
     render(<CreateStudentModal onClose={vi.fn()} onSubmit={onSubmit} classes={classes} />)
     await userEvent.click(screen.getByText("createStudentAction"))
-    expect(await screen.findByText("Email é obrigatório")).toBeInTheDocument()
-    expect(screen.getByText("Selecione um gênero válido")).toBeInTheDocument()
+    expect(await screen.findByText("validation.emailRequired")).toBeInTheDocument()
+    expect(screen.getByText("validation.genderRequired")).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -61,7 +61,7 @@ describe("CreateStudentModal", () => {
     await pick("class", "3e (A)")
     type("fatherPhone", "12ab")
     await userEvent.click(screen.getByText("createStudentAction"))
-    expect(await screen.findByText("Telefone do pai inválido")).toBeInTheDocument()
+    expect(await screen.findByText("validation.fatherPhoneInvalid")).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
 
     type("fatherPhone", " +509 3712-3456 ")
@@ -186,6 +186,6 @@ describe("CreateTeacherModal", () => {
   it("shows validation errors", async () => {
     render(<CreateTeacherModal onClose={vi.fn()} onSubmit={vi.fn()} />)
     await userEvent.click(screen.getByText("createTeacherAction"))
-    expect(await screen.findByText(/Informe ao menos uma disciplina/)).toBeInTheDocument()
+    expect(await screen.findByText("validation.subjectsRequired")).toBeInTheDocument()
   })
 })

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import React from "react"
 import { InboxIcon, FileText } from "lucide-react"
 
@@ -7,13 +8,18 @@ import { InboxIcon, FileText } from "lucide-react"
  */
 export default function EmptyState({
   icon: Icon = InboxIcon,
-  title = "Nenhum dado",
-  description = "Não há dados para exibir no momento.",
+  title,
+  description,
   action,
-  actionLabel = "Criar",
+  actionLabel,
   className = "",
   ...props
 }) {
+  const { t } = useTranslation()
+  // Defaults are translated; pass description={null} to hide it.
+  title = title ?? t("noData")
+  description = description === undefined ? t("emptyStateDescription") : description
+  actionLabel = actionLabel ?? t("adminCreate")
   return (
     <div
       className={`flex flex-col items-center justify-center py-3xl px-lg text-center ${className}`}

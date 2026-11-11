@@ -57,7 +57,7 @@ describe("ProfessorDashboard", () => {
   it("handles empty responses and errors", async () => {
     apiFetch.mockResolvedValue(null)
     const { unmount } = renderWithRouter(<ProfessorDashboard />)
-    expect(await screen.findByText("Sem dados de gamificacao para a turma selecionada.")).toBeInTheDocument()
+    expect(await screen.findByText("gamificationEmpty")).toBeInTheDocument()
     expect(screen.getAllByText("noData")).toHaveLength(2)
     unmount()
 
@@ -128,7 +128,7 @@ describe("StudentDashboard", () => {
     auth.user = null
     apiFetch.mockResolvedValue(null)
     renderWithRouter(<StudentDashboard />)
-    expect(await screen.findByText("Continue participando para desbloquear medalhas.")).toBeInTheDocument()
+    expect(await screen.findByText("badgesHint")).toBeInTheDocument()
     expect(screen.getByText("0%")).toBeInTheDocument()
     expect(screen.getByText("-")).toBeInTheDocument()
     expect(screen.getAllByText("noData")).toHaveLength(2)
@@ -141,14 +141,14 @@ describe("StudentDashboard", () => {
     unmount()
     apiFetch.mockRejectedValue(new Error(""))
     renderWithRouter(<StudentDashboard />)
-    expect(await screen.findByText("Erro ao carregar dados")).toBeInTheDocument()
+    expect(await screen.findByText("common.errorLoading")).toBeInTheDocument()
   })
 
   it("uses the cache in survival mode and shows the loader otherwise", () => {
     writeHomeCache("student", { classes: [], recentMessages: [], stats: {}, gamification: null })
     survival.disableBackgroundSync = true
     const { unmount } = renderWithRouter(<StudentDashboard />)
-    expect(screen.getByText("Continue participando para desbloquear medalhas.")).toBeInTheDocument()
+    expect(screen.getByText("badgesHint")).toBeInTheDocument()
     unmount()
     localStorage.clear()
     survival.disableBackgroundSync = false

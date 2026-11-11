@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next"
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../../lib/api.js'
 import { CreditCard, Users, Globe, Wifi, BookOpen, MessageSquare, Gamepad2, Package } from 'lucide-react'
 
 function SchoolFeatures({ schoolId, token }) {
+  const { t } = useTranslation()
   const [features, setFeatures] = useState({})
   const [loading, setLoading] = useState(true)
   const [savingKey, setSavingKey] = useState(null)
@@ -37,51 +39,51 @@ function SchoolFeatures({ schoolId, token }) {
       })
       setFeatures(updated)
     } catch (err) {
-      setError(err.message || 'Falha ao atualizar módulo.')
+      setError(err.message || t("moduleUpdateError"))
     } finally {
       setSavingKey(null)
     }
   }
 
   if (loading) {
-    return <div className="text-xs text-brand-navy/60 p-4">Carregando permissões dos módulos...</div>
+    return <div className="text-xs text-brand-navy/60 p-4">{t("moduleLoading")}</div>
   }
 
   const modules = [
     {
       key: 'enableFinance',
-      name: 'Módulo Financeiro',
-      desc: 'Cobranças, controle de mensalidades e extratos.',
+      name: t("moduleFinance"),
+      desc: t("moduleFinanceDesc"),
       icon: CreditCard,
     },
     {
       key: 'enableFamilyAccess',
-      name: 'Espaço Família',
-      desc: 'Visualização de boletins e canal com responsáveis.',
+      name: t("moduleFamily"),
+      desc: t("moduleFamilyDesc"),
       icon: Users,
     },
     {
       key: 'enablePayment',
-      name: 'Pagamentos Online',
-      desc: 'Integração direta com MonCash e Natcash.',
+      name: t("modulePayments"),
+      desc: t("modulePaymentsDesc"),
       icon: Globe,
     },
     {
       key: 'enableSync',
-      name: 'Modo Offline (Survival)',
-      desc: 'Permite lançar presenças e notas sem internet.',
+      name: t("moduleOffline"),
+      desc: t("moduleOfflineDesc"),
       icon: Wifi,
     },
     {
       key: 'enableLessons',
-      name: 'Planos de Aulas',
-      desc: 'Publicação de ementas e materiais pedagógicos.',
+      name: t("moduleLessons"),
+      desc: t("moduleLessonsDesc"),
       icon: BookOpen,
     },
     {
       key: 'enableForums',
-      name: 'Fóruns da Escola',
-      desc: 'Espaço de debates e dúvidas entre turmas.',
+      name: t("moduleForums"),
+      desc: t("moduleForumsDesc"),
       icon: MessageSquare,
     },
   ]
@@ -90,9 +92,9 @@ function SchoolFeatures({ schoolId, token }) {
     <div className="space-y-3 bg-white p-5 rounded-2xl border border-brand-navy/10">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="font-bold text-brand-navy text-sm">Controle de Módulos da Escola</h4>
+          <h4 className="font-bold text-brand-navy text-sm">{t("moduleControlTitle")}</h4>
           <p className="text-xs text-brand-navy/60">
-            Ative ou desative o que esta instituição pode acessar no portal.
+            {t("moduleControlHint")}
           </p>
         </div>
       </div>
@@ -131,7 +133,7 @@ function SchoolFeatures({ schoolId, token }) {
                       : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                   }`}
                 >
-                  {isSaving ? '...' : isActive ? 'Ativo' : 'Inativo'}
+                  {isSaving ? '...' : isActive ? t("active") : t("inactive")}
                 </button>
               </div>
 

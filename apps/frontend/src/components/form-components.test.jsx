@@ -101,7 +101,7 @@ describe("ListItemCard", () => {
     expect(screen.getByText("Active")).toHaveClass("bg-emerald-100")
     await userEvent.click(screen.getByText("Title"))
     expect(onClick).toHaveBeenCalledWith("x")
-    await userEvent.click(screen.getByTitle("Edit"))
+    await userEvent.click(screen.getByTitle("edit"))
     expect(onEdit).toHaveBeenCalled()
     expect(onClick).toHaveBeenCalledTimes(1)
   })
@@ -122,7 +122,7 @@ describe("ListItemCard", () => {
         ]}
       />,
     )
-    await userEvent.click(screen.getByTitle("Delete"))
+    await userEvent.click(screen.getByTitle("deleteAction"))
     expect(onDelete).toHaveBeenCalled()
     const more = container.querySelector(".relative > button")
     await userEvent.click(more)

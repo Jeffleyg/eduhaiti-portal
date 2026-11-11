@@ -6,6 +6,7 @@ import { HelpCircle } from "lucide-react"
  * Tooltip component for help text and additional information
  */
 export function Tooltip({ children, content, position = "top", icon: Icon = HelpCircle }) {
+  const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(false)
 
   const positionClass = {
@@ -23,7 +24,7 @@ export function Tooltip({ children, content, position = "top", icon: Icon = Help
         className="text-gray-400 hover:text-gray-600 transition-colors inline-flex"
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
-        aria-label="More information"
+        aria-label={t("moreInformation")}
         aria-describedby="tooltip-content"
       >
         <Icon size={16} />

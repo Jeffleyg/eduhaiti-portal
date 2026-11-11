@@ -75,10 +75,10 @@ function StudentResources() {
         url,
       })
       setOfflineAssets(next)
-      setFeedback(`"${resource.title}" salvo para acesso offline.`)
+      setFeedback(t("resourceSavedOffline", { title: resource.title }))
     } catch (error) {
       console.error("Failed to save offline asset:", error)
-      setFeedback("Could not save offline. Please try again.")
+      setFeedback(t("offlineError"))
     } finally {
       setSavingId("")
     }
@@ -87,7 +87,7 @@ function StudentResources() {
   const handleRemoveOffline = async (resource) => {
     const next = await removeOffline(resource.id, apiAssetUrl(resource.filePath))
     setOfflineAssets(next)
-    setFeedback(`"${resource.title}" removido da biblioteca offline.`)
+    setFeedback(t("resourceRemovedOffline", { title: resource.title }))
   }
 
   const renderResourceCard = (resource) => (
@@ -109,7 +109,7 @@ function StudentResources() {
                 onClick={() => handleRemoveOffline(resource)}
                 className="rounded-md border border-brand-navy/20 px-2 py-1 text-xs font-semibold text-brand-navy hover:bg-brand-navy/5"
               >
-                Remover
+                {t("remove")}
               </button>
             ) : (
               <button
@@ -134,18 +134,18 @@ function StudentResources() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Recursos de Aula"
+        title={t("lessonResources")}
         subtitle={
           disableImages
-            ? "Modo texto ativo para economizar bateria e dados."
-            : "PDFs, slides e documentos compartilhados pelos professores"
+            ? t("textModeActive")
+            : t("resourcesSharedByTeachers")
         }
       />
 
       {feedback ? <p className="text-sm text-brand-navy/80">{feedback}</p> : null}
 
       <div className="rounded-2xl border border-brand-navy/10 bg-sand p-4">
-        <p className="text-sm text-brand-navy font-semibold">Biblioteca Offline</p>
+        <p className="text-sm text-brand-navy font-semibold">{t("offlineLibrary")}</p>
         <p className="text-xs text-brand-navy/70 mt-1">
           Itens salvos: {offlineAssets.length}. Eles permanecem acessiveis mesmo sem internet no mesmo dispositivo.
         </p>
@@ -160,12 +160,12 @@ function StudentResources() {
             renderItem={renderResourceCard}
           />
         ) : (
-          <p className="text-center text-brand-navy/60">Nenhum recurso disponível</p>
+          <p className="text-center text-brand-navy/60">{t("noResourcesAvailable")}</p>
         )}
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-brand-navy">Biblioteca Digital da Serie</h3>
+        <h3 className="font-semibold text-brand-navy">{t("seriesDigitalLibrary")}</h3>
         {libraryResources.length > 0 ? (
           <LoadMoreList
             items={libraryResources}
@@ -174,7 +174,7 @@ function StudentResources() {
             renderItem={renderResourceCard}
           />
         ) : (
-          <p className="text-center text-brand-navy/60">Sem itens na biblioteca da serie.</p>
+          <p className="text-center text-brand-navy/60">{t("seriesLibraryEmpty")}</p>
         )}
       </div>
     </div>

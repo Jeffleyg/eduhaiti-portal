@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next"
 import { useEffect } from "react"
 
 function Modal({ isOpen, onClose, title, children, size = "md", actions }) {
+  const { t } = useTranslation()
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -36,7 +38,7 @@ function Modal({ isOpen, onClose, title, children, size = "md", actions }) {
           <button
             onClick={onClose}
             className="text-2xl leading-none text-brand-navy/50 hover:text-brand-navy"
-            aria-label="Close modal"
+            aria-label={t("closeDialog")}
           >
             ×
           </button>

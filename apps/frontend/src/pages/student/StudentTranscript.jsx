@@ -76,7 +76,7 @@ function StudentTranscript() {
 
   const generateProfessionalPdf = async () => {
     if (!selectedYearId || !report) {
-      setError("Veuillez sélectionner une année académique")
+      setError(t("transcriptYearRequired"))
       return
     }
 
@@ -270,7 +270,7 @@ function StudentTranscript() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Relevé de Notes Académique" subtitle="Historique complet de votre parcours académique" />
+      <SectionHeader title={t("transcriptPageTitle")} subtitle={t("transcriptPageSubtitle")} />
 
       {error ? <div className="rounded-2xl border border-brand-red/20 bg-brand-red/5 p-3 text-sm text-brand-red">{error}</div> : null}
 
@@ -281,7 +281,7 @@ function StudentTranscript() {
           onChange={(event) => handleYearChange(event.target.value)}
           className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
         >
-          <option value="">Sélectionner une année académique</option>
+          <option value="">{t("transcriptSelectYear")}</option>
           {academicYears.map((year) => (
             <option key={year.id} value={year.id}>
               {year.year}
@@ -294,7 +294,7 @@ function StudentTranscript() {
             className="flex items-center gap-2 rounded-2xl border border-brand-navy/20 bg-white px-3 py-2 text-sm font-semibold text-brand-navy hover:bg-brand-navy/5 transition-colors"
           >
             <Printer className="h-4 w-4" />
-            Imprimer
+            {t("print")}
           </button>
           <button
             onClick={generateProfessionalPdf}
@@ -415,7 +415,7 @@ function StudentTranscript() {
             </div>
             {qrCodeUrl && (
               <div className="flex justify-center md:justify-end">
-                <img src={qrCodeUrl} alt="QR Code de vérification" className="h-32 w-32 border-2 border-emerald-600 rounded-lg p-1 bg-white" />
+                <img src={qrCodeUrl} alt={t("verificationQrCode")} className="h-32 w-32 border-2 border-emerald-600 rounded-lg p-1 bg-white" />
               </div>
             )}
           </div>

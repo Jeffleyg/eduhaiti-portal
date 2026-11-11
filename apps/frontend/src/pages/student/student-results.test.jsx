@@ -81,8 +81,8 @@ describe("StudentResults", () => {
     renderWithRouter(<StudentResults />)
     await screen.findByText("15/20")
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "y1" } })
-    expect(await screen.findByText("Sem dados suficientes para o periodo selecionado.")).toBeInTheDocument()
-    expect(screen.getByText("Sem dados por disciplina no periodo selecionado.")).toBeInTheDocument()
+    expect(await screen.findByText("timelineEmpty")).toBeInTheDocument()
+    expect(screen.getByText("averageBySubjectEmpty")).toBeInTheDocument()
 
     apiFetch.mockRejectedValueOnce(new Error("switch error"))
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "y2" } })

@@ -1,3 +1,4 @@
+import { uiLocale } from "../../../lib/locale.js"
 import DataTablePaginated from "../../../components/DataTablePaginated.jsx"
 import Button from "../../../components/Button.jsx"
 import { useTranslation } from "react-i18next"
@@ -49,11 +50,11 @@ function FinancePaymentHistory({ payments, loading, pagination, onPageChange }) 
                   : t("paymentStatusOverdue")}
           </span>
         ),
-      dueDate: new Date(payment.dueDate).toLocaleDateString("pt-BR"),
+      dueDate: new Date(payment.dueDate).toLocaleDateString(uiLocale()),
       paidDate: payment.paidDate ? (
         <div className="flex items-center gap-1 text-emerald-700">
           <FileCheck className="h-3 w-3" />
-          {new Date(payment.paidDate).toLocaleDateString("pt-BR")}
+          {new Date(payment.paidDate).toLocaleDateString(uiLocale())}
         </div>
       ) : (
         "—"

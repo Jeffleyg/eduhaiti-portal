@@ -1,3 +1,4 @@
+import { uiLocale } from "../lib/locale.js"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -215,7 +216,7 @@ function FamilyPortal() {
                           </div>
                           <div className="module-card compact p-2 bg-sand text-sm">
                             <p className="font-semibold text-brand-navy">{t("lastRecordLabel")}</p>
-                            <p className="text-brand-navy/75">{lastRecord ? new Date(lastRecord.date).toLocaleString("pt-BR") : "-"}</p>
+                            <p className="text-brand-navy/75">{lastRecord ? new Date(lastRecord.date).toLocaleString(uiLocale()) : "-"}</p>
                           </div>
                         </div>
 
@@ -227,7 +228,7 @@ function FamilyPortal() {
                             renderItem={(item) => (
                               <div className="module-card compact p-2 text-sm">
                                 <p className="font-semibold text-brand-navy text-sm">
-                                  {new Date(item.date).toLocaleDateString("pt-BR")} - {sanitizeText(item.class?.name)}
+                                  {new Date(item.date).toLocaleDateString(uiLocale())} - {sanitizeText(item.class?.name)}
                                 </p>
                                 <p className="text-brand-navy/75">{t("status")}: {item.status}</p>
                                 {item.remarks ? <p className="text-brand-navy/60">{t("remarksLabel")}: {item.remarks}</p> : null}
@@ -276,7 +277,7 @@ function FamilyPortal() {
                         <div className="module-card compact p-2 text-sm">
                           <p className="font-semibold text-brand-navy">{String(item.title ?? "Recado")}</p>
                           <p className="text-brand-navy/75">{String(item.body ?? "")}</p>
-                          <p className="text-xs text-brand-navy/60">{new Date(item.createdAt).toLocaleString("pt-BR")}</p>
+                          <p className="text-xs text-brand-navy/60">{new Date(item.createdAt).toLocaleString(uiLocale())}</p>
                         </div>
                       )}
                     />

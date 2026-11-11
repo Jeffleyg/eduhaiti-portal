@@ -1,3 +1,4 @@
+import i18n from "../i18n.js"
 import { useCallback, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api.js"
 import { useAuth } from "./AuthContext.jsx"
@@ -104,7 +105,7 @@ export function SyncControlProvider({ children }) {
         appendSyncHistory(successEntry)
         setSyncHistory(readSyncHistory(10))
       } catch (syncError) {
-        const message = syncError instanceof Error ? syncError.message : "Sync failed"
+        const message = syncError instanceof Error ? syncError.message : i18n.t("syncFailed")
         setError(message)
 
         const failEntry = {

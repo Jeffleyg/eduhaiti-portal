@@ -25,54 +25,54 @@ const optionalPhone = (message) =>
 const createStudentSchema = z.object({
   email: z
     .string()
-    .min(1, 'Email é obrigatório')
-    .email('Email deve ser válido'),
+    .min(1, "validation.emailRequired")
+    .email("validation.emailInvalid"),
 
   firstName: z
     .string()
-    .min(2, 'Primeiro nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Primeiro nome não pode ter mais de 100 caracteres'),
+    .min(2, "validation.firstNameMin")
+    .max(100, "validation.firstNameMax"),
 
   lastName: z
     .string()
-    .min(2, 'Último nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Último nome não pode ter mais de 100 caracteres'),
+    .min(2, "validation.lastNameMin")
+    .max(100, "validation.lastNameMax"),
 
   dateOfBirth: z
     .string()
-    .min(1, 'Data de nascimento é obrigatória'),
+    .min(1, "validation.dateOfBirthRequired"),
 
   address: z
     .string()
-    .min(5, 'Endereço deve ter pelo menos 5 caracteres')
-    .max(255, 'Endereço não pode ter mais de 255 caracteres'),
+    .min(5, "validation.addressMin")
+    .max(255, "validation.addressMax"),
 
   gender: z
     .enum(['MALE', 'FEMALE', 'OTHER'], {
-      error: 'Selecione um gênero válido',
+      error: "validation.genderRequired",
     }),
 
   fatherName: z
     .string()
-    .max(100, 'Nome do pai não pode ter mais de 100 caracteres')
+    .max(100, "validation.fatherNameMax")
     .optional()
     .nullable()
     .transform(v => v || null),
 
   motherName: z
     .string()
-    .max(100, 'Nome da mãe não pode ter mais de 100 caracteres')
+    .max(100, "validation.motherNameMax")
     .optional()
     .nullable()
     .transform(v => v || null),
 
   // Telefones dos responsáveis: SMS de faltas, gateway SMS/IVR e acesso da família.
-  fatherPhone: optionalPhone('Telefone do pai inválido'),
-  motherPhone: optionalPhone('Telefone da mãe inválido'),
+  fatherPhone: optionalPhone("validation.fatherPhoneInvalid"),
+  motherPhone: optionalPhone("validation.motherPhoneInvalid"),
 
   classId: z
     .string()
-    .min(1, 'Selecione uma turma'),
+    .min(1, "validation.classRequired"),
 })
 
 /**

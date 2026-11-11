@@ -19,7 +19,7 @@ function LoadMoreList({
 
 
   if (!Array.isArray(items) || items.length === 0) {
-    return <div className="text-sm text-brand-navy/60">Nenhum item.</div>
+    return <div className="text-sm text-brand-navy/60">{t("noItems")}</div>
   }
 
   // Clamp during render: when items shrink the current page may no longer exist.

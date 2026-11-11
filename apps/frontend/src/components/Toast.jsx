@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { useState, useEffect } from "react"
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react"
 
@@ -12,6 +13,7 @@ export function ToastContainer() {
  * Toast component - individual notification
  */
 export function Toast({ type = "info", title, message, duration = 4000, onClose }) {
+  const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function Toast({ type = "info", title, message, duration = 4000, onClose 
           setTimeout(onClose, 300)
         }}
         className="flex-shrink-0 hover:opacity-70 transition-opacity"
-        aria-label="Close notification"
+        aria-label={t("closeNotification")}
       >
         <X size={20} />
       </button>

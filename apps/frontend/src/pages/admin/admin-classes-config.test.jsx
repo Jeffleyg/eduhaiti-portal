@@ -141,7 +141,7 @@ describe("AdminClassManagement", () => {
     await screen.findByText("3e A")
     fireEvent.change(screen.getAllByRole("combobox")[1], { target: { value: "s1" } })
 
-    await userEvent.click(screen.getAllByTitle("Edit")[1])
+    await userEvent.click(screen.getAllByTitle("edit")[1])
     expect(screen.getByText("adminEditClass")).toBeInTheDocument()
     expect(screen.getByPlaceholderText("adminClassName")).toHaveValue("4e B")
     expect(screen.getByPlaceholderText("adminMaxStudents")).toHaveValue(30)
@@ -149,12 +149,12 @@ describe("AdminClassManagement", () => {
     expect(await screen.findByText("adminClassUpdated")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/classes/c2", { method: "PUT", token: "tok", body: { name: "4e B", teacherId: null, maxStudents: 30 } })
 
-    await userEvent.click(screen.getAllByTitle("Edit")[0])
+    await userEvent.click(screen.getAllByTitle("edit")[0])
     expect(screen.getByPlaceholderText("adminClassLevel")).toHaveValue("NS1")
     await userEvent.click(screen.getByText("adminCancel"))
     expect(screen.getByText("adminCreateClass")).toBeInTheDocument()
 
-    await userEvent.click(screen.getAllByTitle("Edit")[0])
+    await userEvent.click(screen.getAllByTitle("edit")[0])
     apiFetch.mockRejectedValueOnce(new Error("update failed"))
     fireEvent.submit(screen.getByText("adminUpdate").closest("form"))
     expect(await screen.findByText("update failed")).toBeInTheDocument()
@@ -166,21 +166,21 @@ describe("AdminClassManagement", () => {
     await screen.findByText("3e A")
 
     confirmSpy.mockReturnValueOnce(false)
-    await userEvent.click(screen.getAllByTitle("Delete")[0])
+    await userEvent.click(screen.getAllByTitle("deleteAction")[0])
     expect(apiFetch).not.toHaveBeenCalledWith("/admin/classes/c1", expect.anything())
 
-    await userEvent.click(screen.getAllByTitle("Edit")[0])
-    await userEvent.click(screen.getAllByTitle("Delete")[0])
+    await userEvent.click(screen.getAllByTitle("edit")[0])
+    await userEvent.click(screen.getAllByTitle("deleteAction")[0])
     expect(await screen.findByText("adminClassDeleted")).toBeInTheDocument()
     expect(screen.getByText("adminCreateClass")).toBeInTheDocument()
 
-    await userEvent.click(screen.getAllByTitle("Edit")[1])
-    await userEvent.click(screen.getAllByTitle("Delete")[0])
+    await userEvent.click(screen.getAllByTitle("edit")[1])
+    await userEvent.click(screen.getAllByTitle("deleteAction")[0])
     await screen.findByText("adminClassDeleted")
     expect(screen.getByText("adminEditClass")).toBeInTheDocument()
 
     apiFetch.mockRejectedValueOnce(new Error("delete failed"))
-    await userEvent.click(screen.getAllByTitle("Delete")[0])
+    await userEvent.click(screen.getAllByTitle("deleteAction")[0])
     expect(await screen.findByText("delete failed")).toBeInTheDocument()
   })
 
@@ -241,7 +241,7 @@ describe("AdminAcademicConfig", () => {
     renderWithRouter(<AdminAcademicConfig />)
     expect(await screen.findByText("2025-2026")).toBeInTheDocument()
     expect(screen.getByText("Legacy")).toBeInTheDocument()
-    expect(screen.getByText("Active")).toBeInTheDocument()
+    expect(screen.getByText("active")).toBeInTheDocument()
 
     const [yearInput, start, end] = document.querySelectorAll("form input")
     fireEvent.change(yearInput, { target: { value: " 2027-2028 " } })
@@ -249,7 +249,7 @@ describe("AdminAcademicConfig", () => {
     fireEvent.change(end, { target: { value: "2028-06-30" } })
     fireEvent.click(screen.getByRole("checkbox"))
     fireEvent.submit(yearInput.closest("form"))
-    expect(await screen.findByText("Année académique enregistrée avec succès !")).toBeInTheDocument()
+    expect(await screen.findByText("academicYearSaved")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/academic-years", {
       method: "POST",
       token: "tok",
@@ -263,10 +263,10 @@ describe("AdminAcademicConfig", () => {
     expect(apiFetch.mock.calls.filter((c) => c[1]?.method === "POST")[1][1].body).toMatchObject({ startDate: undefined, endDate: undefined })
 
     confirmSpy.mockReturnValueOnce(false)
-    await userEvent.click(screen.getAllByTitle("Supprimer")[0])
+    await userEvent.click(screen.getAllByTitle("adminDelete")[0])
     expect(apiFetch).not.toHaveBeenCalledWith("/admin/academic-years/y1", expect.anything())
-    await userEvent.click(screen.getAllByTitle("Supprimer")[0])
-    expect(await screen.findByText("Année supprimée !")).toBeInTheDocument()
+    await userEvent.click(screen.getAllByTitle("adminDelete")[0])
+    expect(await screen.findByText("academicYearDeleted")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/academic-years/y1", { method: "DELETE", token: "tok" })
   })
 
@@ -275,9 +275,9 @@ describe("AdminAcademicConfig", () => {
     renderWithRouter(<AdminAcademicConfig />)
     await screen.findByText("2025-2026")
     fireEvent.submit(document.querySelector("form"))
-    expect(await screen.findByText("Erreur lors de la création de l'année académique")).toBeInTheDocument()
-    await userEvent.click(screen.getAllByTitle("Supprimer")[0])
-    expect(await screen.findByText("Impossible de supprimer l'année.")).toBeInTheDocument()
+    expect(await screen.findByText("academicYearCreateError")).toBeInTheDocument()
+    await userEvent.click(screen.getAllByTitle("adminDelete")[0])
+    expect(await screen.findByText("academicYearDeleteError")).toBeInTheDocument()
   })
 
   it("reports year errors with the server message", async () => {
@@ -286,24 +286,24 @@ describe("AdminAcademicConfig", () => {
     await screen.findByText("2025-2026")
     fireEvent.submit(document.querySelector("form"))
     expect(await screen.findByText("dup year")).toBeInTheDocument()
-    await userEvent.click(screen.getAllByTitle("Supprimer")[0])
+    await userEvent.click(screen.getAllByTitle("adminDelete")[0])
     expect(await screen.findByText("in use")).toBeInTheDocument()
   })
 
   it("lists, creates and deletes series", async () => {
     routes()
     renderWithRouter(<AdminAcademicConfig />)
-    await userEvent.click(screen.getByText("Séries & Niveaux"))
+    await userEvent.click(screen.getByText("seriesTab"))
     expect(await screen.findByText("NS1")).toBeInTheDocument()
     expect(screen.getByText("N1")).toBeInTheDocument()
 
-    fireEvent.change(screen.getByPlaceholderText("Ex: 3ème Année Fondamentale"), { target: { value: " Rhéto " } })
+    fireEvent.change(screen.getByPlaceholderText("seriesNameExample"), { target: { value: " Rhéto " } })
     fireEvent.change(screen.getByPlaceholderText("Ex: 3AF ou NS1"), { target: { value: " RH " } })
     fireEvent.submit(screen.getByPlaceholderText("Ex: 3AF ou NS1").closest("form"))
-    expect(await screen.findByText("Série / Niveau créé(e) avec succès !")).toBeInTheDocument()
+    expect(await screen.findByText("seriesSaved")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/series", { method: "POST", token: "tok", body: { name: "Rhéto", code: "RH" } })
 
-    fireEvent.change(screen.getByPlaceholderText("Ex: 3ème Année Fondamentale"), { target: { value: "X" } })
+    fireEvent.change(screen.getByPlaceholderText("seriesNameExample"), { target: { value: "X" } })
     fireEvent.submit(screen.getByPlaceholderText("Ex: 3AF ou NS1").closest("form"))
     await waitFor(() => expect(apiFetch.mock.calls.filter((c) => c[0] === "/admin/series" && c[1]?.method === "POST")).toHaveLength(2))
     expect(apiFetch.mock.calls.filter((c) => c[0] === "/admin/series" && c[1]?.method === "POST")[1][1].body.code).toBeUndefined()
@@ -312,25 +312,25 @@ describe("AdminAcademicConfig", () => {
     confirmSpy.mockReturnValueOnce(false)
     fireEvent.click(deleteButtons()[0])
     fireEvent.click(deleteButtons()[0])
-    expect(await screen.findByText("Série supprimée !")).toBeInTheDocument()
+    expect(await screen.findByText("seriesDeleted")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/series/s1", { method: "DELETE", token: "tok" })
   })
 
   it("reports series errors with and without a message", async () => {
     routes({ "POST /admin/series": new Error(""), "DELETE /admin/series/s1": new Error("") })
     renderWithRouter(<AdminAcademicConfig />)
-    await userEvent.click(screen.getByText("Séries & Niveaux"))
+    await userEvent.click(screen.getByText("seriesTab"))
     await screen.findByText("NS1")
     fireEvent.submit(screen.getByPlaceholderText("Ex: 3AF ou NS1").closest("form"))
-    expect(await screen.findByText("Erreur lors de la création de la série")).toBeInTheDocument()
+    expect(await screen.findByText("seriesCreateError")).toBeInTheDocument()
     fireEvent.click(screen.getByText("NS1").closest("div").parentElement.querySelector("button"))
-    expect(await screen.findByText("Impossible de supprimer la série.")).toBeInTheDocument()
+    expect(await screen.findByText("seriesDeleteError")).toBeInTheDocument()
   })
 
   it("reports series errors with the server message", async () => {
     routes({ "POST /admin/series": new Error("dup series"), "DELETE /admin/series/s1": new Error("has classes") })
     renderWithRouter(<AdminAcademicConfig />)
-    await userEvent.click(screen.getByText("Séries & Niveaux"))
+    await userEvent.click(screen.getByText("seriesTab"))
     await screen.findByText("NS1")
     fireEvent.submit(screen.getByPlaceholderText("Ex: 3AF ou NS1").closest("form"))
     expect(await screen.findByText("dup series")).toBeInTheDocument()
@@ -346,7 +346,7 @@ describe("AdminAcademicConfig", () => {
 
     fireEvent.change(screen.getByLabelText("period-name"), { target: { value: "T3" } })
     await userEvent.click(screen.getByText("create-period"))
-    expect(await screen.findByText("Période créée avec succès !")).toBeInTheDocument()
+    expect(await screen.findByText("periodSaved")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/academic-periods", {
       method: "POST",
       token: "tok",
@@ -377,9 +377,9 @@ describe("AdminAcademicConfig", () => {
     await userEvent.click(screen.getByText("create-period"))
     expect(await screen.findByText("overlap")).toBeInTheDocument()
     await userEvent.click(screen.getByText("toggle-p1"))
-    expect(await screen.findByText("Impossible de modifier la période.")).toBeInTheDocument()
+    expect(await screen.findByText("periodUpdateError")).toBeInTheDocument()
     await userEvent.click(screen.getByText("remove-p1"))
-    expect(await screen.findByText("Impossible de supprimer la période.")).toBeInTheDocument()
+    expect(await screen.findByText("periodDeleteError")).toBeInTheDocument()
   })
 
   it("reports period errors with the server message", async () => {
@@ -402,7 +402,7 @@ describe("AdminAcademicConfig", () => {
     await userEvent.click(screen.getByText("settings"))
     expect(await screen.findByText("pass:12|abs:3|late:2|review:7")).toBeInTheDocument()
     await userEvent.click(screen.getByText("save-settings"))
-    expect(await screen.findByText("Paramètres enregistrés avec succès")).toBeInTheDocument()
+    expect(await screen.findByText("settingsSavedSuccess")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/admin/academic-settings/sch1", {
       method: "PUT",
       token: "tok",
@@ -415,7 +415,7 @@ describe("AdminAcademicConfig", () => {
     renderWithRouter(<AdminAcademicConfig />)
     await userEvent.click(screen.getByText("settings"))
     await userEvent.click(screen.getByText("save-settings"))
-    expect(await screen.findByText("Impossible d'enregistrer les paramètres.")).toBeInTheDocument()
+    expect(await screen.findByText("settingsSaveError")).toBeInTheDocument()
 
     routes({ "PUT /admin/academic-settings/sch1": new Error("invalid average") })
     await userEvent.click(screen.getByText("save-settings"))
@@ -445,7 +445,7 @@ describe("AdminAcademicConfig", () => {
     })
     const first = renderWithRouter(<AdminAcademicConfig />)
     expect(await screen.findByText("Wrapped")).toBeInTheDocument()
-    await userEvent.click(screen.getByText("Séries & Niveaux"))
+    await userEvent.click(screen.getByText("seriesTab"))
     expect(await screen.findByText("WrappedSeries")).toBeInTheDocument()
     await userEvent.click(screen.getByText("periods"))
     expect(await screen.findByText("WrappedPeriod")).toBeInTheDocument()
@@ -461,15 +461,15 @@ describe("AdminAcademicConfig", () => {
     })
     const second = renderWithRouter(<AdminAcademicConfig />)
     expect(await screen.findByText("DataYear")).toBeInTheDocument()
-    await userEvent.click(screen.getByText("Séries & Niveaux"))
-    expect(await screen.findByText("Aucune série configurée pour votre école.")).toBeInTheDocument()
+    await userEvent.click(screen.getByText("seriesTab"))
+    expect(await screen.findByText("seriesEmpty")).toBeInTheDocument()
     await userEvent.click(screen.getByText("periods"))
     expect(screen.queryByText("toggle-p1")).toBeNull()
     second.unmount()
 
     routes({ "GET /admin/academic-years": {} })
     const third = renderWithRouter(<AdminAcademicConfig />)
-    expect(await screen.findByText("Aucune année académique enregistrée pour votre école.")).toBeInTheDocument()
+    expect(await screen.findByText("academicYearsEmpty")).toBeInTheDocument()
     third.unmount()
 
     routes({
@@ -490,9 +490,9 @@ describe("AdminAcademicConfig", () => {
     expect(apiFetch.mock.calls.some((c) => c[0].startsWith("/admin/academic-settings"))).toBe(false)
 
     fireEvent.submit(document.querySelector("form"))
-    expect(await screen.findByText("Enregistrement...")).toBeInTheDocument()
-    await userEvent.click(screen.getByText("Séries & Niveaux"))
-    expect(screen.getByText("Enregistrement...")).toBeInTheDocument()
+    expect(await screen.findByText("saving")).toBeInTheDocument()
+    await userEvent.click(screen.getByText("seriesTab"))
+    expect(screen.getByText("saving")).toBeInTheDocument()
     await userEvent.click(screen.getByText("periods"))
     expect(screen.getByText("period-loading")).toBeInTheDocument()
     await userEvent.click(screen.getByText("schoolContext"))

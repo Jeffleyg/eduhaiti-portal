@@ -1,3 +1,4 @@
+import { uiLocale } from "../../lib/locale.js"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
@@ -70,8 +71,8 @@ function AdminFamilyCommunication() {
       await loadRequests()
       setMessage(
         result?.smsWithoutRecipient
-          ? `Comunicado registrado. ${t("familySmsNoRecipient")}`
-          : "Comunicado enviado para a familia com sucesso.",
+          ? `${t("familyNoticeRecorded")} ${t("familySmsNoRecipient")}`
+          : t("familyNoticeSent"),
       )
     } catch (err) {
       setError(err.message)
@@ -84,7 +85,7 @@ function AdminFamilyCommunication() {
     const responseMessage = responseDrafts[requestId]?.trim()
 
     if (!responseMessage) {
-      setError("Escreva uma resposta antes de enviar.")
+      setError(t("familyResponseRequired"))
       return
     }
 
@@ -102,7 +103,7 @@ function AdminFamilyCommunication() {
         },
       })
 
-      setMessage("Resposta enviada para a familia.")
+      setMessage(t("familyResponseSent"))
       setResponseDrafts((prev) => ({ ...prev, [requestId]: "" }))
       await loadRequests()
     } catch (err) {
@@ -243,7 +244,7 @@ function AdminFamilyCommunication() {
                       {sanitizeText(request.response.responseMessage)}
                     </p>
                     <p className="mt-1 text-xs text-emerald-700">
-                      {new Date(request.response.respondedAt).toLocaleString("pt-BR")}
+                      {new Date(request.response.respondedAt).toLocaleString(uiLocale())}
                     </p>
                   </div>
                 ) : (

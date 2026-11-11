@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next"
 import { ArrowRight, CheckCircle, AlertCircle } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
 import { apiFetch } from "../../lib/api.js"
 
 function RedeemAccess() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const code = searchParams.get("code")
@@ -35,7 +37,7 @@ function RedeemAccess() {
               />
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-brand-red/60">
-                  Sistema de Educação
+                  {t("educationSystem")}
                 </p>
                 <h1 className="text-xl font-bold text-brand-navy">EduHaiti Portal</h1>
               </div>
@@ -49,13 +51,13 @@ function RedeemAccess() {
             <div className="rounded-3xl border border-brand-navy/10 bg-white/90 p-8 shadow-xl shadow-brand-navy/10">
               <div className="mb-8 text-center">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
-                  Acesso à Escola
+                  {t("redeemSchoolAccess")}
                 </p>
                 <h1 className="mt-2 text-3xl font-bold text-brand-navy">
-                  Entre com seu Código
+                  {t("redeemEnterCode")}
                 </h1>
                 <p className="mt-2 text-sm text-brand-navy/70">
-                  O diretor compartilhou um código de acesso com você
+                  {t("redeemCodeShared")}
                 </p>
               </div>
 
@@ -68,7 +70,7 @@ function RedeemAccess() {
               >
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
-                    Código de Permissão
+                    {t("redeemPermissionCode")}
                   </label>
                   <input
                     className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 font-mono text-sm font-bold uppercase text-brand-navy placeholder-brand-navy/40 outline-none focus:border-brand-navy/30 focus:bg-sand/80 transition-all"
@@ -83,7 +85,7 @@ function RedeemAccess() {
                   type="submit"
                   className="w-full rounded-2xl bg-brand-navy py-3 font-semibold text-white hover:bg-brand-navy/90 transition-all flex items-center justify-center gap-2"
                 >
-                  Continuar
+                  {t("continue")}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </form>
@@ -120,7 +122,7 @@ function RedeemAccess() {
         }, 2000)
       }
     } catch (err) {
-      setError(err.message || "Código inválido ou expirado")
+      setError(err.message || t("redeemInvalidCode"))
     } finally {
       setLoading(false)
     }
@@ -141,7 +143,7 @@ function RedeemAccess() {
             />
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-brand-red/60">
-                Sistema de Educação
+                {t("educationSystem")}
               </p>
               <h1 className="text-xl font-bold text-brand-navy">EduHaiti Portal</h1>
             </div>
@@ -156,14 +158,14 @@ function RedeemAccess() {
             <div className="rounded-3xl border border-green-200 bg-green-50 p-8 shadow-xl shadow-green-100">
               <div className="text-center">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-                <h1 className="text-2xl font-bold text-green-900 mb-2">Bem-vindo!</h1>
+                <h1 className="text-2xl font-bold text-green-900 mb-2">{t("redeemWelcome")}</h1>
                 <p className="text-sm text-green-800 mb-4">
-                  Sua conta foi criada com sucesso em <strong>{success.schoolName}</strong>
+                  {t("redeemAccountCreatedAt")} <strong>{success.schoolName}</strong>
                 </p>
                 {success.tempPassword ? (
                   <div className="space-y-3 text-left">
                     <p className="text-sm text-green-900">
-                      Não foi possível enviar o e-mail. Anote sua senha temporária; ela só é mostrada agora:
+                      {t("redeemTempPasswordNotice")}
                     </p>
                     <p
                       className="rounded-xl border border-green-300 bg-white px-3 py-2 text-center font-mono text-lg tracking-wider text-brand-navy"
@@ -176,12 +178,12 @@ function RedeemAccess() {
                       className="primary-button w-full"
                       onClick={() => navigate("/login", { state: { email: form.email } })}
                     >
-                      Ir para o login
+                      {t("goToLogin")}
                     </button>
                   </div>
                 ) : (
                   <p className="text-xs text-green-700">
-                    Redirecionando para login...
+                    {t("redirectingToLogin")}
                   </p>
                 )}
               </div>
@@ -190,13 +192,13 @@ function RedeemAccess() {
             <div className="rounded-3xl border border-brand-navy/10 bg-white/90 p-8 shadow-xl shadow-brand-navy/10">
               <div className="mb-8 text-center">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">
-                  Novo Usuário
+                  {t("newUser")}
                 </p>
                 <h1 className="mt-2 text-3xl font-bold text-brand-navy">
-                  Criar Conta Escolar
+                  {t("createSchoolAccount")}
                 </h1>
                 <p className="mt-2 text-sm text-brand-navy/70">
-                  Complete seus dados para acessar <strong>{success?.schoolName}</strong>
+                  {t("completeDataToAccess")} <strong>{success?.schoolName}</strong>
                 </p>
               </div>
 
@@ -211,11 +213,11 @@ function RedeemAccess() {
                 {/* Name */}
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
-                    Nome Completo
+                    {t("fullName")}
                   </label>
                   <input
                     className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 text-sm text-brand-navy placeholder-brand-navy/40 outline-none focus:border-brand-navy/30 focus:bg-sand/80 transition-all"
-                    placeholder="Seu nome completo"
+                    placeholder={t("fullNamePlaceholder")}
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     required
@@ -225,7 +227,7 @@ function RedeemAccess() {
                 {/* Email */}
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
-                    Email
+                    {t("email")}
                   </label>
                   <input
                     className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 text-sm text-brand-navy placeholder-brand-navy/40 outline-none focus:border-brand-navy/30 focus:bg-sand/80 transition-all"
@@ -245,18 +247,18 @@ function RedeemAccess() {
                   disabled={loading}
                   className="w-full rounded-2xl bg-brand-navy py-3 font-semibold text-white hover:bg-brand-navy/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {loading ? "Criando Conta..." : "Criar Conta"}
+                  {loading ? t("creatingAccount") : t("createAccount")}
                   {!loading && <ArrowRight className="h-4 w-4" />}
                 </button>
               </form>
 
               <p className="mt-4 text-center text-xs text-brand-navy/50">
-                Já possui uma conta?{" "}
+                {t("alreadyHaveAccount")}{" "}
                 <button
                   onClick={() => navigate("/login")}
                   className="text-brand-navy font-semibold hover:underline"
                 >
-                  Faça login
+                  {t("loginHere")}
                 </button>
               </p>
             </div>

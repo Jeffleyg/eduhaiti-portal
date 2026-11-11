@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import React from "react"
 import { AlertCircle, Info, CheckCircle, AlertTriangle } from "lucide-react"
 
@@ -13,6 +14,7 @@ export default function Alert({
   className = "",
   ...props
 }) {
+  const { t } = useTranslation()
   const variants = {
     success: {
       class: "alert-success",
@@ -50,7 +52,7 @@ export default function Alert({
         <button
           onClick={onClose}
           className="flex-shrink-0 text-lg hover:opacity-70 transition-opacity"
-          aria-label="Close alert"
+          aria-label={t("closeAlert")}
           type="button"
         >
           ×

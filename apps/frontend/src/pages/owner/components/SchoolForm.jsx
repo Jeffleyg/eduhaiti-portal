@@ -94,7 +94,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
         onSuccess?.({ school: createdSchool, adminAccount: response?.adminAccount ?? null })
       }
     } catch (err) {
-      setError(err.message || 'Falha ao salvar escola.')
+      setError(err.message || t("schoolSaveError"))
     } finally {
       setLoading(false)
     }
@@ -112,8 +112,8 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
           </h3>
           <p className="text-xs text-brand-navy/60">
             {school
-              ? "Atualize as informações institucionais e permissões dos módulos."
-              : "Preencha os dados oficiais, provisione o administrador e defina os módulos ativos."}
+              ? t("schoolFormEditSubtitle")
+              : t("schoolFormCreateSubtitle")}
           </p>
         </div>
       </div>
@@ -129,12 +129,12 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-brand-navy mb-3 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-indigo-600" />
-            1. Dados da Instituição
+            {t("schoolFormSectionInstitution")}
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                Nome da Escola *
+                {t("schoolFormName")}
               </label>
               <input
                 type="text"
@@ -148,7 +148,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
 
             <div>
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                E-mail Institucional *
+                {t("schoolFormEmail")}
               </label>
               <input
                 type="email"
@@ -162,7 +162,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
 
             <div>
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                Telefone da Secretaria
+                {t("schoolFormPhone")}
               </label>
               <input
                 type="tel"
@@ -175,7 +175,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
 
             <div>
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                Nome do Diretor / Reitor *
+                {t("schoolFormPrincipal")}
               </label>
               <input
                 type="text"
@@ -189,7 +189,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
 
             <div>
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                Cidade / Comuna
+                {t("schoolFormCity")}
               </label>
               <input
                 type="text"
@@ -202,7 +202,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
 
             <div>
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                Endereço
+                {t("address")}
               </label>
               <input
                 type="text"
@@ -220,17 +220,17 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
           <div className="pt-4 border-t border-brand-navy/10">
             <h4 className="text-xs font-bold uppercase tracking-wider text-brand-navy mb-3 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              2. Administrador Responsável (Conta do Diretor)
+              {t("schoolFormSectionAdmin")}
             </h4>
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                  Nome Completo *
+                  {t("schoolFormAdminName")}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Nome do Administrador"
+                  placeholder={t("schoolFormAdminNamePlaceholder")}
                   value={form.adminName}
                   onChange={(e) => setForm({ ...form, adminName: e.target.value })}
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-brand-navy focus:outline-none"
@@ -239,7 +239,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
 
               <div>
                 <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                  E-mail de Login *
+                  {t("schoolFormAdminEmail")}
                 </label>
                 <input
                   type="email"
@@ -252,8 +252,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               </div>
 
               <p className="self-end text-xs text-brand-navy/70">
-                Uma senha provisória será gerada e enviada por e-mail. O administrador
-                deverá trocá-la no primeiro acesso.
+                {t("schoolFormTempPasswordHint")}
               </p>
             </div>
           </div>
@@ -263,10 +262,10 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
         <div className="pt-4 border-t border-brand-navy/10">
           <h4 className="text-xs font-bold uppercase tracking-wider text-brand-navy mb-1 flex items-center gap-2">
             <Lock className="w-4 h-4 text-amber-600" />
-            3. Acesso aos Módulos (Permissões da Escola)
+            {t("schoolFormSectionModules")}
           </h4>
           <p className="text-xs text-brand-navy/60 mb-4">
-            Defina quais ferramentas estarão visíveis e liberadas para os usuários desta instituição.
+            {t("schoolFormModulesHint")}
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -277,8 +276,8 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <div>
-                  <strong className="text-xs font-bold text-brand-navy block">Módulo Financeiro</strong>
-                  <span className="text-[11px] text-slate-500">Cobranças, mensalidades e relatórios.</span>
+                  <strong className="text-xs font-bold text-brand-navy block">{t("moduleFinance")}</strong>
+                  <span className="text-[11px] text-slate-500">{t("moduleFinanceShortDesc")}</span>
                 </div>
               </div>
               <input
@@ -296,8 +295,8 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
-                  <strong className="text-xs font-bold text-brand-navy block">Espaço Família (Pais)</strong>
-                  <span className="text-[11px] text-slate-500">Acesso aos boletins e recados da escola.</span>
+                  <strong className="text-xs font-bold text-brand-navy block">{t("moduleFamilyParents")}</strong>
+                  <span className="text-[11px] text-slate-500">{t("moduleFamilyShortDesc")}</span>
                 </div>
               </div>
               <input
@@ -315,8 +314,8 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                   <Globe className="w-4 h-4" />
                 </div>
                 <div>
-                  <strong className="text-xs font-bold text-brand-navy block">MonCash & Pagamentos</strong>
-                  <span className="text-[11px] text-slate-500">Baixa automática via Mobile Money.</span>
+                  <strong className="text-xs font-bold text-brand-navy block">{t("modulePaymentsMoncash")}</strong>
+                  <span className="text-[11px] text-slate-500">{t("modulePaymentsShortDesc")}</span>
                 </div>
               </div>
               <input
@@ -334,8 +333,8 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                   <Wifi className="w-4 h-4" />
                 </div>
                 <div>
-                  <strong className="text-xs font-bold text-brand-navy block">Sincronização Offline</strong>
-                  <span className="text-[11px] text-slate-500">Operação em Survival Mode nas salas.</span>
+                  <strong className="text-xs font-bold text-brand-navy block">{t("moduleSyncOffline")}</strong>
+                  <span className="text-[11px] text-slate-500">{t("moduleSyncShortDesc")}</span>
                 </div>
               </div>
               <input
@@ -362,7 +361,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
             disabled={loading}
             className="rounded-xl bg-brand-navy px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-navy/90 disabled:opacity-50 shadow-sm transition-colors"
           >
-            {loading ? t("saving", "Salvando...") : school ? t("save", "Salvar Alterações") : "Cadastrar Escola & Admin"}
+            {loading ? t("saving", "Salvando...") : school ? t("save", "Salvar Alterações") : t("createSchoolAndAdmin")}
           </button>
         </div>
       </form>
