@@ -11,14 +11,60 @@ import { Role } from '@prisma/client';
 export class ClassesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(payload: {
-    name: string;
-    level?: string;
-    academicYearId: string;
-    seriesId: string;
-    teacherId?: string;
-    maxStudents?: number;
-  }, schoolId?: string) {
+  /**
+   * Real numbers for the teacher dashboard, in one round trip:
+   * attendance rate of the last 30 days, published/draft grades and upcoming assignments.
+   */
+  async getTeacherSummary(teacherId: string) {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const classWhere = { class: { teacherId } };
+
+    const [
+      attended,
+      recorded,
+      publishedGrades,
+      draftGrades,
+      upcomingAssignments,
+    ] = await Promise.all([
+      this.prisma.attendance.count({
+        where: {
+          ...classWhere,
+          date: { gte: since },
+          status: { in: ['PRESENT', 'LATE'] },
+        },
+      }),
+      this.prisma.attendance.count({
+        where: { ...classWhere, date: { gte: since } },
+      }),
+      this.prisma.grade.count({
+        where: { ...classWhere, status: 'PUBLISHED' },
+      }),
+      this.prisma.grade.count({ where: { ...classWhere, status: 'DRAFT' } }),
+      this.prisma.assignment.count({
+        where: { ...classWhere, dueDate: { gte: new Date() } },
+      }),
+    ]);
+
+    return {
+      attendanceRate:
+        recorded > 0 ? Math.round((attended / recorded) * 100) : null,
+      publishedGrades,
+      draftGrades,
+      upcomingAssignments,
+    };
+  }
+
+  async create(
+    payload: {
+      name: string;
+      level?: string;
+      academicYearId: string;
+      seriesId: string;
+      teacherId?: string;
+      maxStudents?: number;
+    },
+    schoolId?: string,
+  ) {
     const academicYear = await this.prisma.academicYear.findUnique({
       where: { id: payload.academicYearId },
       select: { id: true, schoolId: true },
@@ -29,12 +75,19 @@ export class ClassesService {
     }
 
     if (schoolId && academicYear.schoolId !== schoolId) {
-      throw new ForbiddenException('Academic year does not belong to this school');
+      throw new ForbiddenException(
+        'Academic year does not belong to this school',
+      );
     }
 
     const series = await this.prisma.series.findUnique({
       where: { id: payload.seriesId },
-      select: { id: true, name: true, academicYearId: true, academicYear: { select: { schoolId: true } } },
+      select: {
+        id: true,
+        name: true,
+        academicYearId: true,
+        academicYear: { select: { schoolId: true } },
+      },
     });
 
     if (!series || series.academicYearId !== payload.academicYearId) {
@@ -146,7 +199,10 @@ export class ClassesService {
   async delete(classId: string, schoolId?: string) {
     const existing = await this.prisma.class.findUnique({
       where: { id: classId },
-      include: { students: { select: { id: true } }, academicYear: { select: { schoolId: true } } },
+      include: {
+        students: { select: { id: true } },
+        academicYear: { select: { schoolId: true } },
+      },
     });
 
     if (!existing) {
@@ -173,7 +229,10 @@ export class ClassesService {
   async enrollStudent(classId: string, studentId: string, schoolId?: string) {
     const classExists = await this.prisma.class.findUnique({
       where: { id: classId },
-      include: { students: { select: { id: true } }, academicYear: { select: { schoolId: true } } },
+      include: {
+        students: { select: { id: true } },
+        academicYear: { select: { schoolId: true } },
+      },
     });
 
     if (!classExists) {
@@ -298,7 +357,11 @@ export class ClassesService {
       throw new NotFoundException('Class not found');
     }
 
-    if (schoolId && classData.academicYear?.schoolId && classData.academicYear.schoolId !== schoolId) {
+    if (
+      schoolId &&
+      classData.academicYear?.schoolId &&
+      classData.academicYear.schoolId !== schoolId
+    ) {
       throw new NotFoundException('Class not found');
     }
 

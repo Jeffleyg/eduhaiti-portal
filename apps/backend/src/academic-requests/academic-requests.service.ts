@@ -14,6 +14,7 @@ import { ReviewAcademicRequestDto } from './dto/review-academic-request.dto';
 type Reviewer = {
   id: string;
   role: Role;
+  schoolId?: string | null;
 };
 
 @Injectable()
@@ -106,6 +107,9 @@ export class AcademicRequestsService {
         where: {
           classId: filters.classId,
           status: filters.status,
+          ...(reviewer.schoolId
+            ? { student: { schoolId: reviewer.schoolId } }
+            : {}),
         },
         include: {
           student: {
@@ -176,6 +180,9 @@ export class AcademicRequestsService {
         class: {
           select: { id: true, teacherId: true },
         },
+        student: {
+          select: { schoolId: true },
+        },
       },
     });
 
@@ -191,7 +198,15 @@ export class AcademicRequestsService {
       if (!request.class || request.class.teacherId !== reviewer.id) {
         throw new ForbiddenException('Teacher cannot review this request');
       }
-    } else if (reviewer.role !== Role.ADMIN) {
+    } else if (reviewer.role === Role.ADMIN) {
+      if (
+        reviewer.schoolId &&
+        request.student?.schoolId &&
+        request.student.schoolId !== reviewer.schoolId
+      ) {
+        throw new ForbiddenException('Request belongs to another school');
+      }
+    } else {
       throw new ForbiddenException(
         'Only teachers or admins can review requests',
       );

@@ -2,7 +2,7 @@ import DataTablePaginated from "../../../components/DataTablePaginated.jsx"
 import Button from "../../../components/Button.jsx"
 import { useTranslation } from "react-i18next"
 import { Calendar, DollarSign, FileCheck } from "lucide-react"
-import { sanitizeText, maskName } from "../../../lib/string.js"
+import { sanitizeText, displayName } from "../../../lib/string.js"
 
 function FinancePaymentHistory({ payments, loading, pagination, onPageChange }) {
   const { t } = useTranslation()
@@ -27,7 +27,7 @@ function FinancePaymentHistory({ payments, loading, pagination, onPageChange }) 
       id: payment.id,
       student: (
         <div>
-          <p className="font-medium text-brand-navy">{maskName(payment.student?.name, "student")}</p>
+          <p className="font-medium text-brand-navy">{displayName(payment.student?.name)}</p>
           <p className="text-xs text-brand-navy/60">{sanitizeText(payment.student?.email ?? "—")}</p>
         </div>
       ),

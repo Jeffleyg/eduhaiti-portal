@@ -8,6 +8,16 @@ import FormField from './form/FormField'
 import SelectField from './form/SelectField'
 import Button from './Button'
 
+const PHONE_PATTERN = /^\+?[\d\s().-]{8,20}$/
+
+/** Optional guardian phone: empty is fine, otherwise it must look like a phone number. */
+const optionalPhone = (message) =>
+  z
+    .string()
+    .trim()
+    .refine((value) => value === '' || PHONE_PATTERN.test(value), message)
+    .transform((value) => value || undefined)
+
 /**
  * Zod Schema para validação de Aluno
  * Fornece validação em tempo real com mensagens localizadas
@@ -39,7 +49,7 @@ const createStudentSchema = z.object({
 
   gender: z
     .enum(['MALE', 'FEMALE', 'OTHER'], {
-      errorMap: () => ({ message: 'Selecione um gênero válido' }),
+      error: 'Selecione um gênero válido',
     }),
 
   fatherName: z
@@ -55,6 +65,10 @@ const createStudentSchema = z.object({
     .optional()
     .nullable()
     .transform(v => v || null),
+
+  // Telefones dos responsáveis: SMS de faltas, gateway SMS/IVR e acesso da família.
+  fatherPhone: optionalPhone('Telefone do pai inválido'),
+  motherPhone: optionalPhone('Telefone da mãe inválido'),
 
   classId: z
     .string()
@@ -108,6 +122,8 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
       gender: '',
       fatherName: '',
       motherName: '',
+      fatherPhone: '',
+      motherPhone: '',
       classId: '',
     },
   })
@@ -228,6 +244,28 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
           error={errors.motherName?.message}
         />
 
+        {/* Father Phone */}
+        <FormField
+          control={control}
+          name="fatherPhone"
+          label={t('fatherPhone') || "Father's phone"}
+          type="tel"
+          placeholder="+509 3700 0000"
+          error={errors.fatherPhone?.message}
+          hint={t('guardianPhoneHint') || 'Used for absence SMS and family access'}
+        />
+
+        {/* Mother Phone */}
+        <FormField
+          control={control}
+          name="motherPhone"
+          label={t('motherPhone') || "Mother's phone"}
+          type="tel"
+          placeholder="+509 3700 0000"
+          error={errors.motherPhone?.message}
+          hint={t('guardianPhoneHint') || 'Used for absence SMS and family access'}
+        />
+
         {/* Class */}
         <SelectField
           control={control}
@@ -255,7 +293,7 @@ function CreateStudentModal({ onClose, onSubmit: onSubmitProp, loading, classes 
         <Button
           type="submit"
           variant="primary"
-          isLoading={loading || isSubmitting}
+          loading={loading || isSubmitting}
           disabled={loading || isSubmitting}
         >
           {t('createStudentAction') || 'Create Student'}

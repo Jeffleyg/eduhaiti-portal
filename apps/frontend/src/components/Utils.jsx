@@ -16,7 +16,8 @@ export function Tooltip({ children, content, position = "top", icon: Icon = Help
   }[position]
 
   return (
-    <div className="relative inline-block group">
+    <div className="relative inline-flex items-center gap-1 group">
+      {children}
       <button
         type="button"
         className="text-gray-400 hover:text-gray-600 transition-colors inline-flex"

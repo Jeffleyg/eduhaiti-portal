@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -118,6 +119,21 @@ export class AcademicPeriodsService {
         description: dto.description,
       },
     });
+  }
+
+  /** Ensures an admin linked to a school only touches periods of that school. */
+  async assertPeriodInSchool(periodId: string, schoolId?: string | null) {
+    if (!schoolId) return;
+    const period = await this.prisma.academicPeriod.findUnique({
+      where: { id: periodId },
+      select: { schoolId: true },
+    });
+    if (!period) {
+      throw new NotFoundException('Academic period not found');
+    }
+    if (period.schoolId !== schoolId) {
+      throw new ForbiddenException('Academic period belongs to another school');
+    }
   }
 
   async update(periodId: string, dto: UpdateAcademicPeriodDto) {

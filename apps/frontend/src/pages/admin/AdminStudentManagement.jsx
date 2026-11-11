@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+import GuardiansEditor from "../../components/admin/GuardiansEditor.jsx"
 
 function AdminStudentManagement() {
   const { t } = useTranslation()
@@ -21,6 +22,7 @@ function AdminStudentManagement() {
   const [searchName, setSearchName] = useState("")
   const [filterClassId, setFilterClassId] = useState("")
   const [filterEnrollmentStatus, setFilterEnrollmentStatus] = useState("")
+  const [guardiansStudentId, setGuardiansStudentId] = useState(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -189,7 +191,7 @@ function AdminStudentManagement() {
                 <div className="grid grid-cols-12 items-center gap-2">
                   <div className="col-span-7">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-brand-navy text-sm">{maskName(student.name, "student")}</p>
+                      <p className="font-semibold text-brand-navy text-sm">{displayName(student.name)}</p>
                       <span className={`badge ${
                         student.classesAttending?.length > 0
                           ? "bg-emerald-100 text-emerald-700"
@@ -201,7 +203,19 @@ function AdminStudentManagement() {
                     {student.classesAttending?.length > 0 ? (
                       <div className="mt-1 flex flex-wrap gap-2">
                         {student.classesAttending.map((cls) => (
-                          <span key={cls.id} className="text-xs text-brand-navy/70">{cls.name} ({cls.level})</span>
+                          <span key={cls.id} className="inline-flex items-center gap-1 text-xs text-brand-navy/70">
+                            {cls.name} ({cls.level})
+                            <button
+                              type="button"
+                              className="text-brand-red hover:underline"
+                              aria-label={`${t("adminRemoveFromClass")} ${cls.name}`}
+                              title={t("adminRemoveFromClass")}
+                              onClick={() => removeStudentFromClass(student.id, cls.id)}
+                              disabled={loading}
+                            >
+                              ×
+                            </button>
+                          </span>
                         ))}
                       </div>
                     ) : (
@@ -246,8 +260,18 @@ function AdminStudentManagement() {
                         {t("adminAddToClass")}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className="outline-button"
+                      onClick={() => setGuardiansStudentId(guardiansStudentId === student.id ? null : student.id)}
+                    >
+                      {t("guardiansTitle")}
+                    </button>
                   </div>
                 </div>
+                {guardiansStudentId === student.id ? (
+                  <GuardiansEditor studentId={student.id} token={token} onClose={() => setGuardiansStudentId(null)} />
+                ) : null}
               </div>
             )}
           />

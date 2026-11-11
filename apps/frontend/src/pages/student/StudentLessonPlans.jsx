@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext.jsx";
 import SectionCard from "../../components/SectionCard";
 import LoadingState from "../../components/LoadingState";
 import EmptyState from "../../components/EmptyState";
@@ -9,6 +10,7 @@ import Button from "../../components/Button";
 
 export default function StudentLessonPlans() {
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState(null);
@@ -21,9 +23,17 @@ export default function StudentLessonPlans() {
     try {
       setLoading(true);
       setFeedback(null);
-      const token = localStorage.getItem("token");
-      const data = await apiFetch("/lessons", { token });
-      setLessons(Array.isArray(data) ? data : data?.data || []);
+      // Lesson plans are listed per class: load the student's classes first
+      const myClasses = await apiFetch("/classes/my-classes", { token });
+      const classList = Array.isArray(myClasses) ? myClasses : [];
+      const perClass = await Promise.all(
+        classList.map((c) =>
+          apiFetch(`/lessons?classId=${encodeURIComponent(c.id)}`, { token }),
+        ),
+      );
+      const all = perClass.flatMap((data) => (Array.isArray(data) ? data : data?.data || []));
+      all.sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? "")));
+      setLessons(all);
     } catch (err) {
       console.error("Erro ao carregar planos de aula:", err);
       setFeedback({

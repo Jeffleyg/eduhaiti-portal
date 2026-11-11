@@ -2,6 +2,7 @@
 // This demonstrates best practices using the new component system
 
 import React, { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { sanitizeText, maskName } from "../lib/string.js"
 import { Plus, Edit, Trash2, Search, Filter } from "lucide-react"
 import {
@@ -17,7 +18,7 @@ import {
   Tabs,
   Progress,
   Divider
-} from "@/components"
+} from "../components/index.js"
 
 /**
  * StudentManagement - Modern page example
@@ -33,6 +34,7 @@ export default function StudentManagement() {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const { showToast } = useToast()
+  const navigate = useNavigate()
 
   // Effects
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function StudentManagement() {
       const response = await fetch("/api/admin/students")
       const data = await response.json()
       setStudents(data)
-    } catch (error) {
+    } catch {
       showToast({
         type: "error",
         title: "Erro ao carregar",
@@ -66,7 +68,7 @@ export default function StudentManagement() {
         title: "Aluno deletado",
         message: "O aluno foi removido do sistema"
       })
-    } catch (error) {
+    } catch {
       showToast({
         type: "error",
         title: "Erro",

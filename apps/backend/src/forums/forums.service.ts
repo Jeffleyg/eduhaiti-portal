@@ -11,6 +11,7 @@ import { buildAuditData, safeParseJson } from '../common/audit-compat';
 type Requester = {
   id: string;
   role: Role;
+  schoolId?: string | null;
 };
 
 type ThreadPayload = {
@@ -35,6 +36,18 @@ export class ForumsService {
 
   private async ensureClassAccess(classId: string, requester: Requester) {
     if (requester.role === Role.ADMIN) {
+      if (!requester.schoolId) {
+        return;
+      }
+      const adminClass = await this.prisma.class.findFirst({
+        where: { id: classId, academicYear: { schoolId: requester.schoolId } },
+        select: { id: true },
+      });
+      if (!adminClass) {
+        throw new ForbiddenException(
+          'You do not have access to this class forum',
+        );
+      }
       return;
     }
 

@@ -27,21 +27,21 @@ export class AttendanceService {
     attendanceId: string;
   }) {
     const statusTextByCode: Record<AttendanceStatus, string> = {
-      PRESENT: 'presente',
-      ABSENT: 'ausente',
-      LATE: 'atrasado',
-      EXCUSED: 'justificado',
+      PRESENT: 'présent(e)',
+      ABSENT: 'absent(e)',
+      LATE: 'en retard',
+      EXCUSED: 'absence justifiée',
     };
 
     const statusText = statusTextByCode[params.status];
-    const dateLabel = params.date.toLocaleDateString('pt-BR');
+    const dateLabel = params.date.toLocaleDateString('fr-FR');
     const remarksSuffix = params.remarks?.trim()
-      ? ` Observacao: ${params.remarks.trim()}.`
+      ? ` Observation : ${params.remarks.trim()}.`
       : '';
 
     return {
-      title: 'Atualizacao de chamada',
-      body: `A chamada de ${dateLabel} na turma ${params.className} foi registrada como ${statusText}.${remarksSuffix}`,
+      title: 'Mise à jour de la présence',
+      body: `Présence du ${dateLabel} en classe ${params.className} : ${statusText}.${remarksSuffix}`,
       severity: params.status === 'ABSENT' ? 'urgent' : 'normal',
       channel: 'IN_APP',
       attendanceStatus: params.status,
@@ -213,9 +213,9 @@ export class AttendanceService {
         return;
       }
 
-      const dateLabel = params.date.toLocaleDateString('pt-BR');
+      const dateLabel = params.date.toLocaleDateString('fr-FR');
       const message = this.to160Chars(
-        `EduHaiti: ${params.studentName} faltou a aula em ${dateLabel} na turma ${params.className}.${params.remarks ? ` Obs: ${params.remarks}.` : ''}`,
+        `EduHaiti: ${params.studentName} te absan nan klas ${params.className} jou ${dateLabel}.${params.remarks ? ` Nòt: ${params.remarks}.` : ''}`,
       );
 
       await Promise.all(

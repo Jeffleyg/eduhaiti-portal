@@ -1,9 +1,12 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { HybridSmsDto } from './dto/hybrid-sms.dto';
 import { HybridUssdDto } from './dto/hybrid-ussd.dto';
+import { HybridIvrDto } from './dto/hybrid-ivr.dto';
 import { HybridGatewayService } from './hybrid-gateway.service';
+import { GatewaySecretGuard } from './guards/gateway-secret.guard';
 
 @Controller('hybrid')
+@UseGuards(GatewaySecretGuard)
 export class HybridGatewayController {
   constructor(private readonly hybridGatewayService: HybridGatewayService) {}
 
@@ -19,24 +22,14 @@ export class HybridGatewayController {
 
   @Post('ivr/summary')
   async ivrSummary(
-    @Body()
-    payload: {
-      studentId: string;
-      senderPhone: string;
-      responsibleDocumentId?: string;
-    },
+    @Body() payload: HybridIvrDto,
   ) {
     return this.hybridGatewayService.buildIvrSummary(payload);
   }
 
   @Post('ivr/lesson-summary')
   async ivrLessonSummary(
-    @Body()
-    payload: {
-      studentId: string;
-      senderPhone: string;
-      responsibleDocumentId?: string;
-    },
+    @Body() payload: HybridIvrDto,
   ) {
     return this.hybridGatewayService.buildIvrLessonSummary(payload);
   }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
@@ -141,7 +141,7 @@ function StudentForum() {
       </section>
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-6 space-y-4">
-        <h3 className="font-semibold text-brand-navy">Abrir topico</h3>
+        <h3 className="font-semibold text-brand-navy">{t("createTopic")}</h3>
         <form className="space-y-3" onSubmit={createThread}>
             <input
             value={newThread.title}
@@ -180,8 +180,8 @@ function StudentForum() {
                     selectedThreadId === thread.id ? "border-brand-red bg-brand-red/5" : "border-brand-navy/10"
                   }`}
                 >
-                  <p className="font-semibold text-brand-navy">{thread.title}</p>
-                  <p className="text-xs text-brand-navy/60">{thread.postsCount} respostas</p>
+                  <p className="font-semibold text-brand-navy">{sanitizeText(thread.title)}</p>
+                  <p className="text-xs text-brand-navy/60">{thread.postsCount} {t("responses")}</p>
                 </button>
               )}
             />
@@ -195,8 +195,8 @@ function StudentForum() {
           {threadDetails ? (
             <>
               <div className="rounded-xl border border-brand-navy/10 bg-sand p-3">
-                <p className="font-semibold text-brand-navy">{threadDetails.thread.title}</p>
-                <p className="text-sm text-brand-navy/70 mt-1">{threadDetails.thread.body}</p>
+                <p className="font-semibold text-brand-navy">{sanitizeText(threadDetails.thread.title)}</p>
+                <p className="text-sm text-brand-navy/70 mt-1">{sanitizeText(threadDetails.thread.body)}</p>
               </div>
 
               <div className="space-y-2">
@@ -207,7 +207,7 @@ function StudentForum() {
                     step={5}
                     renderItem={(post) => (
                       <div key={post.id} className="rounded-xl border border-brand-navy/10 p-3">
-                        <p className="text-xs text-brand-navy/60">{maskName(post.createdBy?.name ?? "Usuario", "user")}</p>
+                        <p className="text-xs text-brand-navy/60">{displayName(post.createdBy?.name ?? "Usuario")}</p>
                         <p className="text-sm text-brand-navy">{sanitizeText(post.body)}</p>
                       </div>
                     )}
@@ -229,7 +229,7 @@ function StudentForum() {
               </form>
             </>
           ) : (
-            <p className="text-sm text-brand-navy/60">Selecione um topico para ver a discussao.</p>
+            <p className="text-sm text-brand-navy/60">{t("selectTopicToViewDiscussion")}</p>
           )}
         </div>
       </section>

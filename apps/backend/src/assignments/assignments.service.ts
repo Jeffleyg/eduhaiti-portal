@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -110,11 +110,29 @@ export class AssignmentsService {
     });
   }
 
+  /** Only students enrolled in the assignment's class can hand it in. */
   async submitAssignment(
     assignmentId: string,
     studentId: string,
     filePath: string,
   ) {
+    const assignment = await this.prisma.assignment.findFirst({
+      where: { id: assignmentId },
+      select: {
+        id: true,
+        dueDate: true,
+        class: { select: { students: { where: { id: studentId }, select: { id: true } } } },
+      },
+    });
+    if (!assignment) {
+      throw new NotFoundException('Assignment not found');
+    }
+    if (assignment.class.students.length === 0) {
+      throw new ForbiddenException('Student is not enrolled in this class');
+    }
+
+    const status = new Date() > assignment.dueDate ? 'LATE' : 'SUBMITTED';
+
     return this.prisma.assignmentSubmission.upsert({
       where: {
         assignmentId_studentId: {
@@ -125,11 +143,13 @@ export class AssignmentsService {
       update: {
         filePath,
         submittedAt: new Date(),
+        status,
       },
       create: {
         assignmentId,
         studentId,
         filePath,
+        status,
       },
       include: {
         student: {

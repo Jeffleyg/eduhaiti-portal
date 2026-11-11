@@ -46,20 +46,19 @@ export class EmailService {
     expiresAt: Date,
   ): Promise<boolean> {
     if (!this.transporter) {
-      this.logger.warn(
-        `SMTP não configurado. Senha temporária para ${to}: ${tempPassword}`,
-      );
+      // Never log the password: callers hand it to the admin once when this returns false.
+      this.logger.warn(`SMTP não configurado; e-mail de senha temporária não enviado para ${to}.`);
       return false;
     }
 
-    const expiresAtText = expiresAt.toLocaleString('pt-BR');
+    const expiresAtText = expiresAt.toLocaleString('fr-FR');
 
     try {
       await this.transporter.sendMail({
         from: this.fromAddress,
         to,
-        subject: 'Sua senha temporária - EduHaiti',
-        text: `Sua senha temporária é: ${tempPassword}\n\nEla expira em: ${expiresAtText}\n\nNo primeiro acesso, você deverá alterar a senha.`,
+        subject: 'Votre mot de passe temporaire / Modpas tanporè ou - EduHaiti',
+        text: `Votre mot de passe temporaire est : ${tempPassword}\nIl expire le : ${expiresAtText}\nLors de votre première connexion, vous devrez changer ce mot de passe.\n\n---\n\nModpas tanporè ou se: ${tempPassword}\nLi ekspire: ${expiresAtText}\nLè w konekte premye fwa a, w ap oblije chanje modpas la.`,
       });
 
       this.logger.log(`E-mail com senha temporária enviado com sucesso para: ${to}`);
@@ -69,7 +68,6 @@ export class EmailService {
       this.logger.error(
         `Falha ao enviar e-mail para ${to} (${error.message}). A operação continuará normalmente.`,
       );
-      this.logger.debug(`Senha gerada para contingência: ${tempPassword}`);
       return false;
     }
   }

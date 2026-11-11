@@ -59,9 +59,7 @@ export default function AdminAcademicConfig() {
   const loadYears = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await apiFetch("/admin/academic-years", { token }).catch(async () => {
-        return await apiFetch("/academic-admin/years", { token })
-      })
+      const res = await apiFetch("/admin/academic-years", { token })
       const list = Array.isArray(res) ? res : res?.data || res?.academicYears || []
       setYears(list)
     } catch (err) {
@@ -75,9 +73,7 @@ export default function AdminAcademicConfig() {
   const loadSeries = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await apiFetch("/admin/series", { token }).catch(async () => {
-        return await apiFetch("/series", { token })
-      })
+      const res = await apiFetch("/admin/series", { token })
       const list = Array.isArray(res) ? res : res?.data || []
       setSeriesList(list)
     } catch (err) {
@@ -91,9 +87,7 @@ export default function AdminAcademicConfig() {
   const loadPeriods = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await apiFetch("/admin/academic-periods", { token }).catch(async () => {
-        return await apiFetch("/academic-periods", { token })
-      })
+      const res = await apiFetch("/admin/academic-periods", { token })
       const list = Array.isArray(res) ? res : res?.data || []
       setPeriods(list)
     } catch (err) {
@@ -134,7 +128,7 @@ export default function AdminAcademicConfig() {
     clearFeedback()
     try {
       setLoading(true)
-      const created = await apiFetch("/admin/academic-years", {
+      await apiFetch("/admin/academic-years", {
         method: "POST",
         token,
         body: {
@@ -452,13 +446,23 @@ export default function AdminAcademicConfig() {
               t={t}
               periods={periods}
               togglePeriod={async (p) => {
-                await apiFetch(`/admin/academic-periods/${p.id}/${p.isOpen ? "close" : "open"}`, { method: "PATCH", token })
-                loadPeriods()
+                clearFeedback()
+                try {
+                  await apiFetch(`/admin/academic-periods/${p.id}/${p.isOpen ? "close" : "open"}`, { method: "PATCH", token })
+                  await loadPeriods()
+                } catch (err) {
+                  setError(err.message || "Impossible de modifier la période.")
+                }
               }}
               removePeriod={async (id) => {
                 if (!window.confirm("Supprimer la période ?")) return
-                await apiFetch(`/admin/academic-periods/${id}`, { method: "DELETE", token })
-                loadPeriods()
+                clearFeedback()
+                try {
+                  await apiFetch(`/admin/academic-periods/${id}`, { method: "DELETE", token })
+                  await loadPeriods()
+                } catch (err) {
+                  setError(err.message || "Impossible de supprimer la période.")
+                }
               }}
             />
           </SectionCard>
@@ -474,12 +478,17 @@ export default function AdminAcademicConfig() {
             setSettingsForm={setSettingsForm}
             saveSettings={async (e) => {
               e.preventDefault()
-              await apiFetch(`/admin/academic-settings/${encodeURIComponent(user?.schoolId)}`, {
-                method: "PUT",
-                token,
-                body: settingsForm,
-              })
-              setMessage("Paramètres enregistrés avec succès")
+              clearFeedback()
+              try {
+                await apiFetch(`/admin/academic-settings/${encodeURIComponent(user?.schoolId)}`, {
+                  method: "PUT",
+                  token,
+                  body: settingsForm,
+                })
+                setMessage("Paramètres enregistrés avec succès")
+              } catch (err) {
+                setError(err.message || "Impossible d'enregistrer les paramètres.")
+              }
             }}
             loading={loading}
           />

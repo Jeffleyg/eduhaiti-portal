@@ -11,7 +11,7 @@ import LoadMoreList from "../../components/LoadMoreList.jsx"
 import ListItemCard from "../../components/ListItemCard.jsx"
 import { GraduationCap, Users } from "lucide-react"
 import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 
 const emptyTeacher = {
   email: "",
@@ -36,6 +36,8 @@ function AdminUsers() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  // Returned only when the e-mail with the temporary password could not be sent.
+  const [unsentCredentials, setUnsentCredentials] = useState(null)
   const [showCreateStudent, setShowCreateStudent] = useState(false)
   const [showCreateTeacher, setShowCreateTeacher] = useState(false)
   const [activeSection, setActiveSection] = useState("students")
@@ -80,19 +82,25 @@ function AdminUsers() {
     setTeacherData((prev) => ({ ...prev, classIds: selected }))
   }
 
+  const rememberUnsentCredentials = (created) => {
+    setUnsentCredentials(created?.tempPassword ? { email: created.email, tempPassword: created.tempPassword } : null)
+  }
+
   const submitStudent = async (formData) => {
     setLoading(true)
     setError("")
     setMessage("")
+    setUnsentCredentials(null)
 
     try {
-      await apiFetch("/admin/users/students", {
+      const created = await apiFetch("/admin/users/students", {
         method: "POST",
         token,
         body: formData,
       })
       setShowCreateStudent(false)
       setMessage(t("studentCreated"))
+      rememberUnsentCredentials(created)
       await refreshUsers()
     } catch (err) {
       setError(err.message)
@@ -105,14 +113,16 @@ function AdminUsers() {
     setLoading(true)
     setError("")
     setMessage("")
+    setUnsentCredentials(null)
 
     try {
-      await apiFetch("/admin/users/teachers", {
+      const created = await apiFetch("/admin/users/teachers", {
         method: "POST",
         token,
         body: teacherPayload,
       })
       setMessage(t("teacherCreated"))
+      rememberUnsentCredentials(created)
       setTeacherData(emptyTeacher)
       setShowCreateTeacher(false)
       await refreshUsers()
@@ -134,6 +144,14 @@ function AdminUsers() {
       {message ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
           {message}
+        </div>
+      ) : null}
+      {unsentCredentials ? (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="alert">
+          <p>{t("tempPasswordNotEmailed", { email: unsentCredentials.email })}</p>
+          <p className="mt-2 font-mono text-base tracking-wider" data-testid="temp-password">
+            {unsentCredentials.tempPassword}
+          </p>
         </div>
       ) : null}
 
@@ -231,7 +249,7 @@ function AdminUsers() {
                 <ListItemCard
                 id={student.id}
                 icon={<Users className="h-5 w-5 text-brand-sky" />}
-                title={maskName(student.name, "student")}
+                title={displayName(student.name)}
                 subtitle={sanitizeText(student.email)}
                 status={student.classesAttending?.length > 0 ? t("enrolled") : t("notEnrolled")}
                 statusColor={student.classesAttending?.length > 0 ? "green" : "yellow"}
@@ -277,7 +295,7 @@ function AdminUsers() {
                 <ListItemCard
                 id={teacher.id}
                 icon={<GraduationCap className="h-5 w-5 text-brand-red" />}
-                title={maskName(teacher.name, "teacher")}
+                title={displayName(teacher.name)}
                 subtitle={sanitizeText(teacher.email)}
                 status={t("teacher")}
                 statusColor="blue"

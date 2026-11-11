@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { resolve } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -35,6 +36,12 @@ import { SeriesModule } from './series/series.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      // Resolve .env regardless of the directory the server is launched from
+      envFilePath: [
+        resolve(process.cwd(), '.env'),
+        resolve(__dirname, '..', '.env'), // src/ -> apps/backend/.env
+        resolve(__dirname, '..', '..', '.env'), // dist/src/ -> apps/backend/.env
+      ],
     }),
     PrismaModule,
     UsersModule,

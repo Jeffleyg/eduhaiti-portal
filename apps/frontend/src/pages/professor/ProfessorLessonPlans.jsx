@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 
 function ProfessorLessonPlans() {
   const { token } = useAuth()
@@ -45,7 +45,7 @@ function ProfessorLessonPlans() {
       try {
         const remote = await apiFetch(`/lessons?classId=${encodeURIComponent(selectedClass)}`, { token })
         setPlans(remote ?? [])
-      } catch (err) {
+      } catch {
         // fallback to localStorage
         const key = `lessonplans:${selectedClass}`
         const local = JSON.parse(localStorage.getItem(key) || "[]")
@@ -93,7 +93,7 @@ function ProfessorLessonPlans() {
       // try to refresh
       const refreshed = await apiFetch(`/lessons?classId=${encodeURIComponent(selectedClass)}`, { token })
       setPlans(refreshed ?? [])
-    } catch (err) {
+    } catch {
       // persist locally
       const key = `lessonplans:${selectedClass}`
       const existing = JSON.parse(localStorage.getItem(key) || "[]")
@@ -175,7 +175,7 @@ function ProfessorLessonPlans() {
             repository.slice(0, 12).map((plan) => (
               <div key={plan.id} className="rounded-xl border p-3">
                 <p className="font-semibold text-brand-navy">{plan.title}</p>
-                <p className="text-xs text-brand-navy/70">Turma: {sanitizeText(plan.class?.name ?? "-")} | Autor: {maskName(plan.createdBy?.name, "teacher")}</p>
+                <p className="text-xs text-brand-navy/70">Turma: {sanitizeText(plan.class?.name ?? "-")} | Autor: {displayName(plan.createdBy?.name)}</p>
                 {plan.methodology ? <p className="text-sm mt-1">{plan.methodology}</p> : null}
                 {Array.isArray(plan.tags) && plan.tags.length ? <p className="text-xs text-brand-navy/60">Tags: {plan.tags.join(", ")}</p> : null}
               </div>

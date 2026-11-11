@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
@@ -207,7 +207,7 @@ function ProfessorForum() {
                     step={5}
                     renderItem={(post) => (
                       <div key={post.id} className="rounded-xl border border-brand-navy/10 p-3">
-                        <p className="text-xs text-brand-navy/60">{maskName(post.createdBy?.name, "user") || t("user")}</p>
+                        <p className="text-xs text-brand-navy/60">{displayName(post.createdBy?.name) || t("user")}</p>
                         <p className="text-sm text-brand-navy">{sanitizeText(post.body)}</p>
                       </div>
                     )}

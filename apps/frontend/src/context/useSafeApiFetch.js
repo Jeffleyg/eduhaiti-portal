@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react"
-import { apiFetch } from "../lib/api.js"
 import { SurvivalModeNetworkError } from "../lib/network-interceptor.js"
 import { useSurvivalMode } from "./useSurvivalMode.js"
 

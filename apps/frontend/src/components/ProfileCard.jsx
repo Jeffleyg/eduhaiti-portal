@@ -1,7 +1,7 @@
 import { Camera, Mail, User, Settings, Edit3 } from "lucide-react"
 import { useState, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../lib/string.js"
+import { sanitizeText, displayName } from "../lib/string.js"
 import { apiAssetUrl } from "../lib/api.js"
 
 function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClick }) {
@@ -56,9 +56,9 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
           <div className="col-span-3">
             <div className="relative mx-auto h-16 w-16 overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-brand-navy to-brand-sky ring-1 ring-brand-navy/8">
               {previewPhoto ? (
-                <img src={previewPhoto} alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")} className="h-full w-full object-cover" />
+                <img src={previewPhoto} alt={displayName(user?.name)} className="h-full w-full object-cover" />
               ) : user?.profilePhoto ? (
-                <img src={apiAssetUrl(user.profilePhoto)} alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")} className="h-full w-full object-cover" />
+                <img src={apiAssetUrl(user.profilePhoto)} alt={displayName(user?.name)} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-brand-navy">
                   <User className="h-6 w-6 text-white/80" />
@@ -78,7 +78,7 @@ function ProfileCard({ user, onPhotoUpload, loading, onEditClick, onSettingsClic
           <div className="col-span-6">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold text-brand-navy">
-                {loading ? <span className="skeleton h-5 w-32 rounded" /> : maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
+                {loading ? <span className="skeleton h-5 w-32 rounded" /> : displayName(user?.name)}
               </h2>
               <span className={`badge ${getRoleBadgeColor()} text-xs py-0.5 px-2`}>{getRoleLabel()}</span>
             </div>

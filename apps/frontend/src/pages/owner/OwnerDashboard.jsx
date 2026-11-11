@@ -5,7 +5,6 @@ import { apiFetch } from '../../lib/api.js'
 import { SurvivalModeNetworkError } from '../../lib/network-interceptor.js'
 import { sanitizeText } from '../../lib/string.js'
 import SectionHeader from '../../components/SectionHeader.jsx'
-import Sidebar from '../../components/Sidebar.jsx'
 import SurvivalModeBlockedBanner from '../../components/SurvivalModeBlockedBanner.jsx'
 import SchoolsList from './components/SchoolsList.jsx'
 import SchoolForm from './components/SchoolForm.jsx'
@@ -21,7 +20,8 @@ function OwnerDashboard() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [accessLink, setAccessLink] = useState('')
+  // Set only when the new admin's temporary password could not be e-mailed.
+  const [unsentAdmin, setUnsentAdmin] = useState(null)
   const [analyticsBlocked, setAnalyticsBlocked] = useState(false)
   const [activeTab, setActiveTab] = useState('schools')
 
@@ -62,7 +62,7 @@ function OwnerDashboard() {
   const handleCreateSchool = (result) => {
     const schoolName = sanitizeText(result?.school?.name ?? t('newSchool'))
     setMessage(`${t('schoolCreatedSuccess')}: ${schoolName}`)
-    setAccessLink(result?.accessLink || '')
+    setUnsentAdmin(result?.adminAccount?.tempPassword ? result.adminAccount : null)
     setShowForm(false)
     loadSchools()
   }
@@ -70,7 +70,7 @@ function OwnerDashboard() {
   const handleUpdateSchool = (result) => {
     const schoolName = sanitizeText(result?.school?.name ?? t('school'))
     setMessage(`${t('schoolUpdatedSuccess')}: ${schoolName}`)
-    setAccessLink('')
+    setUnsentAdmin(null)
     setSelectedSchool(null)
     loadSchools()
   }
@@ -105,7 +105,7 @@ function OwnerDashboard() {
   const clearMessages = () => {
     setError('')
     setMessage('')
-    setAccessLink('')
+    setUnsentAdmin(null)
   }
 
   const totalSchools = schools.length
@@ -115,7 +115,7 @@ function OwnerDashboard() {
 
   return (
     <div className="flex gap-6">
-      <Sidebar role="owner" />
+      {/* Navigation is provided by AppShell */}
       <main className="flex-1 space-y-6">
         <section className="surface-panel overflow-hidden">
           <div className="bg-atlas bg-grid px-5 py-6 sm:px-6">
@@ -160,10 +160,13 @@ function OwnerDashboard() {
               ✕
             </button>
             <p>{message}</p>
-            {accessLink ? (
-              <p className="mt-2">
-                Link de acesso inicial: <a className="font-semibold underline" href={accessLink} target="_blank" rel="noreferrer">abrir acesso</a>
-              </p>
+            {unsentAdmin ? (
+              <div className="mt-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-amber-900" role="alert">
+                <p>{t('tempPasswordNotEmailed', { email: unsentAdmin.email })}</p>
+                <p className="mt-1 font-mono text-base tracking-wider" data-testid="temp-password">
+                  {unsentAdmin.tempPassword}
+                </p>
+              </div>
             ) : null}
           </div>
         )}
@@ -241,7 +244,7 @@ function OwnerDashboard() {
                 onDismiss={() => setAnalyticsBlocked(false)}
               />
             )}
-            {!analyticsBlocked && <SchoolAnalytics analytics={analytics} schools={schools} />}
+            {!analyticsBlocked && <SchoolAnalytics analytics={analytics} />}
           </div>
         )}
       </main>

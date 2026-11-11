@@ -14,7 +14,6 @@ const initialFormState = {
   // Administrador Inicial da Escola
   adminName: '',
   adminEmail: '',
-  adminPassword: 'Password@123',
   // Módulos
   enableFinance: true,
   enableFamilyAccess: true,
@@ -41,7 +40,6 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
         principal: school.principal ?? '',
         adminName: '',
         adminEmail: '',
-        adminPassword: '',
         enableFinance: school.enableFinance ?? true,
         enableFamilyAccess: school.enableFamilyAccess ?? true,
         enablePayment: school.enablePayment ?? true,
@@ -74,7 +72,6 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
       ...(school ? {} : {
         adminName: form.adminName.trim(),
         adminEmail: form.adminEmail.trim(),
-        adminPassword: form.adminPassword,
       }),
     }
 
@@ -94,7 +91,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
           body: payload,
         })
         const createdSchool = response?.school ?? response
-        onSuccess?.({ school: createdSchool })
+        onSuccess?.({ school: createdSchool, adminAccount: response?.adminAccount ?? null })
       }
     } catch (err) {
       setError(err.message || 'Falha ao salvar escola.')
@@ -254,18 +251,10 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
-                  Senha Provisória *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={form.adminPassword}
-                  onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-brand-navy focus:outline-none font-mono"
-                />
-              </div>
+              <p className="self-end text-xs text-brand-navy/70">
+                Uma senha provisória será gerada e enviada por e-mail. O administrador
+                deverá trocá-la no primeiro acesso.
+              </p>
             </div>
           </div>
         )}

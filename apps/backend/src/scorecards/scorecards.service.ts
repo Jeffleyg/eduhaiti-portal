@@ -12,7 +12,6 @@ export class ScorecardsService {
       include: {
         student: {
           select: {
-            id: true,
             name: true,
             enrollmentNumber: true,
           },
@@ -60,7 +59,6 @@ export class ScorecardsService {
         ranking: scorecard.ranking,
         observations: scorecard.observations,
         generatedAt: scorecard.generatedAt,
-        pdfPath: scorecard.pdfPath,
       },
       student: scorecard.student,
       academicYear: scorecard.academicYear,

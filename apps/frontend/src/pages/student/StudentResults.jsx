@@ -6,7 +6,7 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
 function StudentResults() {
@@ -76,12 +76,8 @@ function StudentResults() {
     }
   }
 
+  // The download button is disabled until an academic year is selected
   const generateTranscriptPdf = async () => {
-    if (!selectedAcademicYearId) {
-      setError(t("transcriptSelectYear"))
-      return
-    }
-
     try {
       const report = await apiFetch(`/grades/report/${selectedAcademicYearId}`, { token })
       const selectedYear = academicYears.find((item) => item.id === selectedAcademicYearId)
@@ -90,7 +86,7 @@ function StudentResults() {
       doc.setFontSize(16)
       doc.text(t("transcriptTitle"), 14, 16)
       doc.setFontSize(11)
-      doc.text(`${t("student")}: ${maskName(user?.name ?? user?.email, "student")}`, 14, 25)
+      doc.text(`${t("student")}: ${displayName(user?.name ?? user?.email)}`, 14, 25)
       doc.text(`${t("academicYear")}: ${selectedYear?.year ?? "-"}`, 14, 31)
 
       const tableRows = (report.grades ?? []).map((item) => [

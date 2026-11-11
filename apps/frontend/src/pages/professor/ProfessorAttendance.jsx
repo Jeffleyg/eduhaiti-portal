@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import DataTablePaginated from "../../components/DataTablePaginated.jsx"
@@ -9,9 +9,23 @@ import Button from "../../components/Button.jsx"
 import Select from "../../components/Select.jsx"
 import Feedback from "../../components/Feedback.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText } from "../../lib/string.js"
 
 const OFFLINE_ATTENDANCE_QUEUE_KEY = "eduhaiti_offline_attendance_queue"
+
+// The API stores one record per student (POST /admin/attendance).
+// Older queue entries saved a whole roll call ({ classId, date, records }).
+function toSingleRecords(item) {
+  if (Array.isArray(item?.records)) {
+    return item.records.map((record) => ({
+      studentId: record.studentId,
+      classId: item.classId,
+      date: item.date,
+      status: record.status,
+    }))
+  }
+  return [item]
+}
 
 function ProfessorAttendance() {
   const { t } = useTranslation()
@@ -52,9 +66,7 @@ function ProfessorAttendance() {
     const fetchClasses = async () => {
       try {
         setLoading(true)
-        const response = await apiFetch("/classes/my-classes", { token }).catch(async () => {
-          return await apiFetch("/classes", { token })
-        })
+        const response = await apiFetch("/classes/my-classes", { token })
         const data = Array.isArray(response) ? response : response?.data || []
         setClasses(data)
         if (data.length > 0) {
@@ -83,7 +95,18 @@ function ProfessorAttendance() {
         setLoading(true)
         setFeedback(null)
         const res = await apiFetch(`/attendance/class/${selectedClassId}?date=${selectedDate}`, { token })
-        const records = Array.isArray(res) ? res : res?.data || []
+        const existing = Array.isArray(res) ? res : res?.data || []
+        // Build the roll call from the class roster so a new day still lists every
+        // student; already recorded statuses for the date are kept.
+        const roster = classes.find((c) => c.id === selectedClassId)?.students ?? []
+        const statusByStudent = new Map(existing.map((record) => [record.studentId, record.status]))
+        const records = roster.length
+          ? roster.map((student) => ({
+              studentId: student.id,
+              student,
+              status: statusByStudent.get(student.id) ?? "PRESENT",
+            }))
+          : existing
         setAttendanceRecords(records)
       } catch (err) {
         console.error("Erro ao carregar presença:", err)
@@ -93,7 +116,7 @@ function ProfessorAttendance() {
     }
 
     fetchAttendance()
-  }, [selectedClassId, selectedDate, token])
+  }, [selectedClassId, selectedDate, token, classes])
 
   const handleStatusChange = (studentId, status) => {
     setAttendanceRecords((prev) =>
@@ -105,54 +128,54 @@ function ProfessorAttendance() {
   const submitAttendance = async () => {
     if (!selectedClassId) return
 
-    const payload = {
+    const payloads = attendanceRecords.map((r) => ({
+      studentId: r.studentId || r.id,
       classId: selectedClassId,
       date: selectedDate,
-      records: attendanceRecords.map((r) => ({
-        studentId: r.studentId || r.id,
-        status: r.status || "PRESENT",
-      })),
-      timestamp: new Date().toISOString(),
+      status: r.status || "PRESENT",
+    }))
+
+    setSubmitting(true)
+    setFeedback(null)
+
+    const failed = []
+    for (const body of payloads) {
+      try {
+        await apiFetch("/admin/attendance", { method: "POST", token, body })
+      } catch (err) {
+        console.warn("Falha ao submeter presença. A guardar na fila local:", err.message)
+        failed.push(body)
+      }
     }
 
-    try {
-      setSubmitting(true)
-      setFeedback(null)
-
-      // Chamada real ao endpoint oficial de presença
-      await apiFetch("/attendance", {
-        method: "POST",
-        token,
-        body: payload,
-      })
-
+    if (failed.length === 0) {
       setFeedback({
         type: "success",
         message: t("attendanceSaved", "Prezans anrejistre avèk siksè!"),
       })
-    } catch (err) {
-      console.warn("Falha de rede ao submeter presença. A guardar na fila local:", err.message)
+      setSubmitting(false)
+      return
+    }
 
-      // Contingência Offline (Survival Mode)
-      try {
-        const queue = JSON.parse(localStorage.getItem(OFFLINE_ATTENDANCE_QUEUE_KEY) || "[]")
-        queue.push({ ...payload, offlineId: `att_${Date.now()}` })
-        localStorage.setItem(OFFLINE_ATTENDANCE_QUEUE_KEY, JSON.stringify(queue))
-        updateOfflineCount()
+    // Contingência Offline (Survival Mode)
+    try {
+      const queue = JSON.parse(localStorage.getItem(OFFLINE_ATTENDANCE_QUEUE_KEY) || "[]")
+      failed.forEach((item, index) => queue.push({ ...item, offlineId: `att_${Date.now()}_${index}` }))
+      localStorage.setItem(OFFLINE_ATTENDANCE_QUEUE_KEY, JSON.stringify(queue))
+      updateOfflineCount()
 
-        setFeedback({
-          type: "info",
-          message: t(
-            "attendanceOfflineSaved",
-            "Ou pa gen rezo. Prezans lan sove lokalman epi l ap senkronize le w konekte."
-          ),
-        })
-      } catch (storageErr) {
-        setFeedback({
-          type: "error",
-          message: t("offlineError", "Erè pandan anrejistreman dekonekte a."),
-        })
-      }
+      setFeedback({
+        type: "info",
+        message: t(
+          "attendanceOfflineSaved",
+          "Ou pa gen rezo. Prezans lan sove lokalman epi l ap senkronize le w konekte."
+        ),
+      })
+    } catch {
+      setFeedback({
+        type: "error",
+        message: t("offlineError", "Erè pandan anrejistreman dekonekte a."),
+      })
     } finally {
       setSubmitting(false)
     }
@@ -167,12 +190,13 @@ function ProfessorAttendance() {
       setSubmitting(true)
       const remaining = []
 
-      for (const item of queue) {
+      for (const item of queue.flatMap(toSingleRecords)) {
+        const { offlineId: _offlineId, ...body } = item
         try {
-          await apiFetch("/attendance", {
+          await apiFetch("/admin/attendance", {
             method: "POST",
             token,
-            body: item,
+            body,
           })
         } catch {
           remaining.push(item)
@@ -194,11 +218,6 @@ function ProfessorAttendance() {
       setSubmitting(false)
     }
   }
-
-  const selectedClass = useMemo(
-    () => classes.find((c) => c.id === selectedClassId),
-    [classes, selectedClassId]
-  )
 
   if (loading && classes.length === 0) {
     return <LoadingState message={t("common.loading", "Chaje...")} />

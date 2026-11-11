@@ -7,6 +7,9 @@ import { FileDown, RotateCcw } from "lucide-react"
 
 function FinanceFiltersAndSummary({ filters, summary, onFilterChange, onLoadDashboard, onExportCsv, loading }) {
   const { t } = useTranslation()
+  // The API returns totals per status; older payloads exposed paidAmountHtg directly
+  const paidAmount = Number(summary?.paidAmountHtg ?? summary?.byStatus?.PAID?.amountHtg ?? 0)
+  const totalAmount = Number(summary?.totalAmountHtg ?? 0)
   const statusOptions = useMemo(
     () => [
       { value: "ALL", label: t("allStatuses") },
@@ -93,21 +96,21 @@ function FinanceFiltersAndSummary({ filters, summary, onFilterChange, onLoadDash
           <div className="rounded-2xl border border-brand-navy/10 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-navy/60">{t("totalValue")}</p>
             <p className="mt-2 text-2xl font-bold text-brand-navy">
-              {Number(summary.totalAmountHtg ?? 0).toFixed(2)}
+              {totalAmount.toFixed(2)}
               <span className="text-xs font-normal"> HTG</span>
             </p>
           </div>
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">{t("paidAmount")}</p>
             <p className="mt-2 text-2xl font-bold text-blue-900">
-              {Number(summary.paidAmountHtg ?? 0).toFixed(2)}
+              {paidAmount.toFixed(2)}
               <span className="text-xs font-normal"> HTG</span>
             </p>
           </div>
           <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-600">{t("pendingAmount")}</p>
             <p className="mt-2 text-2xl font-bold text-orange-900">
-              {Number((summary.totalAmountHtg ?? 0) - (summary.paidAmountHtg ?? 0)).toFixed(2)}
+              {(totalAmount - paidAmount).toFixed(2)}
               <span className="text-xs font-normal"> HTG</span>
             </p>
           </div>

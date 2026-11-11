@@ -63,7 +63,7 @@ export class OwnerController {
 
     // Log audit
     await this.auditService.log({
-      userId: req.user.id,
+      userId: req.user?.sub,
       action: 'TENANT_CREATED',
       resource: 'Tenant',
       resourceId: result.id,
@@ -111,7 +111,7 @@ export class OwnerController {
     const result = await this.tenantService.updateTenantLimits(tenantId, dto)
 
     await this.auditService.log({
-      userId: req.user.id,
+      userId: req.user?.sub,
       action: 'TENANT_LIMITS_UPDATED',
       resource: 'Tenant',
       resourceId: tenantId,
@@ -136,7 +136,7 @@ export class OwnerController {
     const result = await this.tenantService.configureWhiteLabel(tenantId, dto)
 
     await this.auditService.log({
-      userId: req.user.id,
+      userId: req.user?.sub,
       action: 'WHITE_LABEL_UPDATED',
       resource: 'Tenant',
       resourceId: tenantId,
@@ -167,7 +167,7 @@ export class OwnerController {
     const result = await this.tenantService.softDeleteTenant(tenantId)
 
     await this.auditService.log({
-      userId: req.user.id,
+      userId: req.user?.sub,
       action: 'TENANT_DELETED',
       resource: 'Tenant',
       resourceId: tenantId,
@@ -183,15 +183,32 @@ export class OwnerController {
   // ============================================
 
   /**
+   * Permissions belong to a school. The owner has no school of their own, so the target
+   * school comes from ?schoolId= (falling back to the caller's school) and must exist.
+   */
+  private async rbacSchool(req: any, requested?: string): Promise<string> {
+    const schoolId = requested?.trim() || req.user?.schoolId
+    if (!schoolId) {
+      throw new BadRequestException('schoolId query parameter is required')
+    }
+    await this.tenantService.getTenant(schoolId)
+    return schoolId
+  }
+
+  /**
    * Assign or update role permission
    * POST /owner/rbac/permissions
    */
   @Post('rbac/permissions')
-  async setRolePermission(@Body() dto: CreateRolePermissionDto, @Request() req: any) {
+  async setRolePermission(
+    @Body() dto: CreateRolePermissionDto,
+    @Request() req: any,
+    @Query('schoolId') schoolId?: string
+  ) {
     const result = await this.permissionService.setRolePermission(
-      req.user.schoolId || 'global',
+      await this.rbacSchool(req, schoolId),
       dto,
-      req.user.id
+      req.user?.sub
     )
 
     return {
@@ -206,9 +223,13 @@ export class OwnerController {
    * GET /owner/rbac/roles/:role
    */
   @Get('rbac/roles/:role')
-  async getRolePermissions(@Param('role') role: string, @Request() req: any) {
+  async getRolePermissions(
+    @Param('role') role: string,
+    @Request() req: any,
+    @Query('schoolId') schoolId?: string
+  ) {
     const permissions = await this.permissionService.getRolePermissions(
-      req.user.schoolId || 'global',
+      await this.rbacSchool(req, schoolId),
       role
     )
 
@@ -224,8 +245,13 @@ export class OwnerController {
    * GET /owner/rbac/permissions?skip=0&take=50
    */
   @Get('rbac/permissions')
-  async listPermissions(@Query('skip') skip: number = 0, @Query('take') take: number = 50, @Request() req: any) {
-    return this.permissionService.listRolePermissions(req.user.schoolId || 'global', skip, take)
+  async listPermissions(
+    @Query('skip') skip: number = 0,
+    @Query('take') take: number = 50,
+    @Request() req: any,
+    @Query('schoolId') schoolId?: string
+  ) {
+    return this.permissionService.listRolePermissions(await this.rbacSchool(req, schoolId), skip, take)
   }
 
   /**
@@ -233,9 +259,9 @@ export class OwnerController {
    * GET /owner/rbac/matrix
    */
   @Get('rbac/matrix')
-  async getPermissionMatrix(@Request() req: any) {
+  async getPermissionMatrix(@Request() req: any, @Query('schoolId') schoolId?: string) {
     const matrix = await this.permissionService.getPermissionMatrix(
-      req.user.schoolId || 'global'
+      await this.rbacSchool(req, schoolId)
     )
 
     return {
@@ -251,10 +277,11 @@ export class OwnerController {
   @Post('rbac/check')
   async checkPermission(
     @Body() body: { resource: string; action: 'READ' | 'WRITE' | 'DELETE' },
-    @Request() req: any
+    @Request() req: any,
+    @Query('schoolId') schoolId?: string
   ) {
     const allowed = await this.permissionService.checkPermission(
-      req.user.schoolId || 'global',
+      await this.rbacSchool(req, schoolId),
       req.user.role,
       body.resource,
       body.action
@@ -263,7 +290,7 @@ export class OwnerController {
     return {
       allowed,
       user: {
-        id: req.user.id,
+        id: req.user?.sub,
         role: req.user.role,
       },
       resource: body.resource,
@@ -280,13 +307,14 @@ export class OwnerController {
   async revokePermission(
     @Param('role') role: string,
     @Param('resource') resource: string,
-    @Request() req: any
+    @Request() req: any,
+    @Query('schoolId') schoolId?: string
   ) {
     return this.permissionService.revokePermission(
-      req.user.schoolId || 'global',
+      await this.rbacSchool(req, schoolId),
       role,
       resource,
-      req.user.id
+      req.user?.sub
     )
   }
 
@@ -295,14 +323,13 @@ export class OwnerController {
    * POST /owner/rbac/init-defaults
    */
   @Post('rbac/init-defaults')
-  async initializeDefaultPermissions(@Request() req: any) {
-    const permissions = await this.permissionService.createDefaultPermissions(
-      req.user.schoolId || 'global'
-    )
+  async initializeDefaultPermissions(@Request() req: any, @Query('schoolId') schoolId?: string) {
+    const targetSchoolId = await this.rbacSchool(req, schoolId)
+    const permissions = await this.permissionService.createDefaultPermissions(targetSchoolId)
 
     await this.auditService.log({
-      userId: req.user.id,
-      schoolId: req.user.schoolId,
+      userId: req.user?.sub,
+      schoolId: targetSchoolId,
       action: 'PERMISSIONS_INITIALIZED',
       resource: 'RolePermission',
       description: 'Initialized default permissions',
@@ -331,7 +358,7 @@ export class OwnerController {
       dto.settingKey,
       dto.settingValue,
       dto.isEncrypted || false,
-      req.user.id,
+      req.user?.sub,
       dto.description
     )
 
@@ -391,7 +418,7 @@ export class OwnerController {
       body.provider,
       body.apiKey,
       body.apiSecret,
-      req.user.id
+      req.user?.sub
     )
 
     return result
@@ -417,7 +444,7 @@ export class OwnerController {
     const result = await this.globalSettingsService.initializeDefaults()
 
     await this.auditService.log({
-      userId: req.user.id,
+      userId: req.user?.sub,
       action: 'SETTINGS_INITIALIZED',
       resource: 'GlobalSettings',
       description: 'Initialized default system settings',
@@ -678,24 +705,25 @@ export class OwnerController {
     },
     @Request() req: any
   ) {
-    const result = await this.ownerService.createSchool(data)
+    const { school, adminAccount } = await this.ownerService.createSchool(data)
 
-    // Log audit
+    // Log audit (never with the temporary password)
     await this.auditService.log({
-      userId: req.user?.id,
-      schoolId: result.id,
+      userId: req.user?.sub,
+      schoolId: school.id,
       action: 'CREATE',
       resource: 'School',
-      resourceId: result.id,
+      resourceId: school.id,
       description: `Created new school: ${data.name}`,
-      newValues: result,
+      newValues: { ...school, adminEmail: adminAccount?.email ?? null },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
     })
 
     return {
       success: true,
-      school: result,
+      school,
+      adminAccount,
       message: 'School created successfully',
     }
   }
@@ -775,12 +803,52 @@ export class OwnerController {
    * Delete a school
    * DELETE /owner/schools/:id
    */
+  /**
+   * Update school details
+   * PATCH /owner/schools/:id
+   */
+  @Patch('schools/:id')
+  async updateSchool(
+    @Param('id') schoolId: string,
+    @Body()
+    data: {
+      name?: string
+      email?: string
+      phone?: string
+      address?: string
+      city?: string
+      country?: string
+      principal?: string
+    },
+    @Request() req: any,
+  ) {
+    const school = await this.ownerService.updateSchool(schoolId, data)
+
+    await this.auditService.log({
+      userId: req.user?.sub,
+      schoolId,
+      action: 'UPDATE',
+      resource: 'School',
+      resourceId: schoolId,
+      description: `Updated school: ${school.name}`,
+      newValues: school,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    })
+
+    return {
+      success: true,
+      school,
+      message: 'School updated successfully',
+    }
+  }
+
   @Delete('schools/:id')
   @HttpCode(HttpStatus.OK)
   async deleteSchool(@Param('id') schoolId: string, @Request() req: any) {
     // Log the delete attempt before removing the school to avoid foreign key issues
     await this.auditService.log({
-      userId: req.user?.id,
+      userId: req.user?.sub,
       schoolId,
       action: 'DELETE',
       resource: 'School',

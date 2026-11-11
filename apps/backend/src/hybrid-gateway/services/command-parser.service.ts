@@ -19,7 +19,21 @@ export class CommandParserService {
     }
 
     const parts = sanitized.split(' ');
-    const command = parts[0];
+    // Kreyol/French aliases are accepted alongside the original command words
+    const aliases: Record<string, SmsCommandType> = {
+      NOT: 'NOTA',
+      NOTE: 'NOTA',
+      NOTES: 'NOTA',
+      PREZANS: 'FREQ',
+      ABSANS: 'FREQ',
+      PRESENCE: 'FREQ',
+      AVI: 'AVISO',
+      AVIS: 'AVISO',
+      ED: 'AJUDA',
+      EDE: 'AJUDA',
+      AIDE: 'AJUDA',
+    };
+    const command = aliases[parts[0]] ?? parts[0];
 
     if (command === 'NOTA' || command === 'FREQ') {
       return {

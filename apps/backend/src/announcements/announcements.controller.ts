@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { AnnouncementsService } from './announcements.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -24,7 +25,7 @@ export class AnnouncementsController {
   @Roles(Role.ADMIN)
   @Post()
   async create(
-    @Req() req: { user?: { sub?: string } },
+    @Req() req: { user?: { sub?: string; schoolId?: string | null } },
     @Body()
     payload: {
       title: string;
@@ -36,6 +37,7 @@ export class AnnouncementsController {
   ) {
     return this.announcementsService.create({
       ...payload,
+      schoolId: req.user?.schoolId ?? payload.schoolId,
       createdById: req.user?.sub ?? '',
     });
   }
@@ -43,27 +45,36 @@ export class AnnouncementsController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(
+    @Req() req: { user?: { schoolId?: string | null } },
     @Query('schoolId') schoolId: string,
     @Query('type') type?: AnnouncementType,
   ) {
-    return this.announcementsService.findAll(schoolId, type);
+    return this.announcementsService.findAll(
+      req.user?.schoolId ?? schoolId,
+      type,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('latest')
   async getLatest(
+    @Req() req: { user?: { schoolId?: string | null } },
     @Query('schoolId') schoolId: string,
     @Query('limit') limit?: string,
   ) {
     return this.announcementsService.getLatest(
-      schoolId,
+      req.user?.schoolId ?? schoolId,
       limit ? parseInt(limit) : 10,
     );
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findById(@Param('id') announcementId: string) {
+  async findById(
+    @Req() req: { user?: { schoolId?: string | null } },
+    @Param('id') announcementId: string,
+  ) {
+    await this.assertSameSchool(announcementId, req.user?.schoolId);
     return this.announcementsService.findById(announcementId);
   }
 
@@ -71,6 +82,7 @@ export class AnnouncementsController {
   @Roles(Role.ADMIN)
   @Put(':id')
   async update(
+    @Req() req: { user?: { schoolId?: string | null } },
     @Param('id') announcementId: string,
     @Body()
     payload: {
@@ -80,13 +92,26 @@ export class AnnouncementsController {
       expiresAt?: Date;
     },
   ) {
+    await this.assertSameSchool(announcementId, req.user?.schoolId);
     return this.announcementsService.update(announcementId, payload);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
-  async delete(@Param('id') announcementId: string) {
+  async delete(
+    @Req() req: { user?: { schoolId?: string | null } },
+    @Param('id') announcementId: string,
+  ) {
+    await this.assertSameSchool(announcementId, req.user?.schoolId);
     return this.announcementsService.delete(announcementId);
+  }
+
+  private async assertSameSchool(announcementId: string, schoolId?: string | null) {
+    if (!schoolId) return;
+    const announcement = await this.announcementsService.findById(announcementId);
+    if ((announcement as { schoolId?: string } | null)?.schoolId !== schoolId) {
+      throw new NotFoundException('Announcement not found');
+    }
   }
 }

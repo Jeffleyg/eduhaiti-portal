@@ -21,7 +21,13 @@ export function buildAuditData(input: LegacyAudit) {
     action,
   };
 
-  if (resourceId) out.resourceId = resourceId;
+  // Several features (forums, lessons, inventory, OTP, manifests) query the
+  // log by entityType/entityId, so mirror the legacy fields into the row too.
+  out.entityType = input.entityType ?? resource;
+  if (resourceId) {
+    out.resourceId = resourceId;
+    out.entityId = resourceId;
+  }
   if (input.userId) out.userId = input.userId;
   if (input.description) out.description = input.description;
 

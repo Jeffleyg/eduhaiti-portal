@@ -1,11 +1,9 @@
 import { ArrowRight, CheckCircle, AlertCircle } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
-import { useTranslation } from "react-i18next"
 import { apiFetch } from "../../lib/api.js"
 
 function RedeemAccess() {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const code = searchParams.get("code")
@@ -20,7 +18,8 @@ function RedeemAccess() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(null)
 
-  if (!code) {
+  // Without a code in the URL the user types it first, then fills the account data
+  if (step === "code") {
     return (
       <div className="min-h-screen bg-sand">
         <div className="pointer-events-none absolute inset-0 bg-atlas bg-grid opacity-60" />
@@ -111,11 +110,15 @@ function RedeemAccess() {
       })
 
       setSuccess(response)
-      setTimeout(() => {
-        navigate("/login", {
-          state: { email: form.email },
-        })
-      }, 2000)
+      // When the e-mail could not be sent the password is shown here once,
+      // so stay on the page until the user has copied it.
+      if (!response?.tempPassword) {
+        setTimeout(() => {
+          navigate("/login", {
+            state: { email: form.email },
+          })
+        }, 2000)
+      }
     } catch (err) {
       setError(err.message || "Código inválido ou expirado")
     } finally {
@@ -157,9 +160,30 @@ function RedeemAccess() {
                 <p className="text-sm text-green-800 mb-4">
                   Sua conta foi criada com sucesso em <strong>{success.schoolName}</strong>
                 </p>
-                <p className="text-xs text-green-700">
-                  Redirecionando para login...
-                </p>
+                {success.tempPassword ? (
+                  <div className="space-y-3 text-left">
+                    <p className="text-sm text-green-900">
+                      Não foi possível enviar o e-mail. Anote sua senha temporária; ela só é mostrada agora:
+                    </p>
+                    <p
+                      className="rounded-xl border border-green-300 bg-white px-3 py-2 text-center font-mono text-lg tracking-wider text-brand-navy"
+                      data-testid="temp-password"
+                    >
+                      {success.tempPassword}
+                    </p>
+                    <button
+                      type="button"
+                      className="primary-button w-full"
+                      onClick={() => navigate("/login", { state: { email: form.email } })}
+                    >
+                      Ir para o login
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-green-700">
+                    Redirecionando para login...
+                  </p>
+                )}
               </div>
             </div>
           ) : (

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -45,6 +46,17 @@ export class SeriesService {
       );
     }
 
+    // Garantir que o ano acadêmico informado pertence à escola do admin
+    if (schoolId) {
+      const year = await this.prisma.academicYear.findFirst({
+        where: { id: academicYearId, schoolId },
+        select: { id: true },
+      });
+      if (!year) {
+        throw new ForbiddenException('Academic year belongs to another school');
+      }
+    }
+
     // 2. Verificar se já existe a mesma série para este ano acadêmico
     const existing = await this.prisma.series.findFirst({
       where: {
@@ -66,13 +78,18 @@ export class SeriesService {
     });
   }
 
-  async remove(seriesId: string) {
+  async remove(seriesId: string, schoolId?: string | null) {
     const existing = await this.prisma.series.findUnique({
       where: { id: seriesId },
+      include: { academicYear: { select: { schoolId: true } } },
     });
 
     if (!existing) {
       throw new NotFoundException('Série não encontrada');
+    }
+
+    if (schoolId && existing.academicYear?.schoolId !== schoolId) {
+      throw new ForbiddenException('Series belongs to another school');
     }
 
     return this.prisma.series.delete({

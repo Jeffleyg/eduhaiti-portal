@@ -6,11 +6,12 @@ export function sanitizeText(input, options = {}) {
   // Normalize and trim
   try {
     s = s.normalize("NFC")
-  } catch (e) {
+  } catch {
     // ignore if normalize not supported
   }
   s = s.trim()
   // Remove C0/C1 control characters
+  // eslint-disable-next-line no-control-regex -- stripping control characters is the point
   s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
   // Strip any HTML tags to be extra-safe (React normally escapes, but some code uses innerHTML)
   s = s.replace(/<[^>]*>/g, "")
@@ -19,6 +20,14 @@ export function sanitizeText(input, options = {}) {
   const max = typeof options.max === "number" ? options.max : 200
   if (s.length > max) s = s.slice(0, max - 1) + "…"
   return s
+}
+
+/**
+ * Real, sanitized name for authenticated screens (staff, students): "-" when empty.
+ * Public pages (family portal, tuition payment) keep using maskName().
+ */
+export function displayName(value) {
+  return sanitizeText(value) || "-"
 }
 
 export default sanitizeText

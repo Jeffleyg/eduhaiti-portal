@@ -5,7 +5,8 @@ import { promises as fs } from 'fs';
 
 interface BuildManifestInput {
   since?: string;
-  classId?: string;
+  /** Classes the caller may see; undefined means every class (platform owner). */
+  classIds?: string[];
 }
 
 @Injectable()
@@ -52,7 +53,7 @@ export class ManifestService {
         className: null,
         resource: null,
         speechText:
-          'Nao encontramos turma ativa para este aluno. Solicite atualizacao junto a escola.',
+          'Nou pa jwenn okenn klas aktif pou elèv sa a. Tanpri kontakte lekòl la.',
         lowBandwidthHints: {
           hasAudioFile: false,
           supportsIvr: true,
@@ -82,7 +83,7 @@ export class ManifestService {
         classId: currentClass.id,
         className: currentClass.name,
         resource: null,
-        speechText: `Nao ha material recente para a turma ${currentClass.name}.`,
+        speechText: `Pa gen nouvo materyèl pou klas ${currentClass.name}.`,
         lowBandwidthHints: {
           hasAudioFile: false,
           supportsIvr: true,
@@ -94,7 +95,7 @@ export class ManifestService {
     const sizeBytes = await this.safeStat(latestResource.filePath);
     const hasAudioFile = latestResource.fileType.toLowerCase() === 'mp3';
     const summary =
-      latestResource.description?.trim() || 'Sem resumo textual disponivel.';
+      latestResource.description?.trim() || 'Pa gen rezime disponib.';
 
     return {
       studentId,
@@ -109,7 +110,7 @@ export class ManifestService {
         updatedAt: latestResource.updatedAt.toISOString(),
         sizeBytes,
       },
-      speechText: `Turma ${currentClass.name}. Aula: ${latestResource.title}. Resumo: ${summary}`,
+      speechText: `Klas ${currentClass.name}. Leson: ${latestResource.title}. Rezime: ${summary}`,
       lowBandwidthHints: {
         hasAudioFile,
         supportsIvr: true,
@@ -135,9 +136,11 @@ export class ManifestService {
   }> {
     const since = this.parseSince(input.since);
 
+    const visibleClasses = input.classIds ? new Set(input.classIds) : null;
+
     const changedResources = await this.prisma.resource.findMany({
       where: {
-        classId: input.classId,
+        ...(input.classIds ? { classId: { in: input.classIds } } : {}),
         ...(since ? { updatedAt: { gt: since } } : {}),
       },
       orderBy: { updatedAt: 'asc' },
@@ -175,10 +178,11 @@ export class ManifestService {
           return null;
         }
 
-        if (input.classId) {
+        if (visibleClasses) {
           const classIdFromPayload =
             typeof parsed?.classId === 'string' ? parsed.classId : null;
-          if (classIdFromPayload && classIdFromPayload !== input.classId) {
+          // Unknown class: do not reveal it to a scoped caller.
+          if (!classIdFromPayload || !visibleClasses.has(classIdFromPayload)) {
             return null;
           }
         }
@@ -211,14 +215,6 @@ export class ManifestService {
     }
 
     return parsed;
-  }
-
-  private safeParseJson(value: string): Record<string, unknown> | null {
-    try {
-      return JSON.parse(value) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
   }
 
   private async safeStat(filePath: string): Promise<number | null> {

@@ -15,10 +15,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { ClassAccessService } from '../prisma/class-access.service';
 
 @Controller('admin/classes')
 export class ClassesController {
-  constructor(private readonly classesService: ClassesService) {}
+  constructor(
+    private readonly classesService: ClassesService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -131,12 +135,14 @@ export class ClassesController {
     return [];
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.TEACHER, Role.ADMIN)
   @Get(':id')
   async getClass(
-    @Req() req: { user?: { schoolId?: string } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string } },
     @Param('id') classId: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.classesService.findById(classId, req.user?.schoolId);
   }
 }

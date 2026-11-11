@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
@@ -54,7 +54,7 @@ function AdminFamilyCommunication() {
     setMessage("")
 
     try {
-      await apiFetch("/family/admin/notices", {
+      const result = await apiFetch("/family/admin/notices", {
         method: "POST",
         token,
         body: {
@@ -66,9 +66,13 @@ function AdminFamilyCommunication() {
           guardianPhone: form.guardianPhone || undefined,
         },
       })
-      setMessage("Comunicado enviado para a familia com sucesso.")
       setForm((prev) => ({ ...prev, title: "", body: "", guardianPhone: "" }))
       await loadRequests()
+      setMessage(
+        result?.smsWithoutRecipient
+          ? `Comunicado registrado. ${t("familySmsNoRecipient")}`
+          : "Comunicado enviado para a familia com sucesso.",
+      )
     } catch (err) {
       setError(err.message)
     } finally {
@@ -209,10 +213,10 @@ function AdminFamilyCommunication() {
                   <div>
                     <p className="font-semibold text-brand-navy">{request.subject || t("noSubject")}</p>
                     <p className="text-xs text-brand-navy/70">
-                      {t("studentLabel")} {maskName(request.student?.name, "student")} ({request.enrollmentNumber || "-"})
+                      {t("studentLabel")} {displayName(request.student?.name)} ({request.enrollmentNumber || "-"})
                     </p>
                     <p className="text-xs text-brand-navy/70">
-                      {t("guardianLabel")} {maskName(request.guardianName, "guardian")}
+                      {t("guardianLabel")} {displayName(request.guardianName)}
                       {request.guardianPhone ? ` | ${t("phoneLabel")} ${request.guardianPhone}` : ""}
                     </p>
                     <p className="text-xs text-brand-navy/60">

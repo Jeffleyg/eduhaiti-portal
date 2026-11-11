@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
@@ -257,7 +257,9 @@ function AdminClassManagement() {
             <option value="">{t("adminNoTeacher")}</option>
                 {teachers.map((teacher) => (
               <option key={teacher.id} value={teacher.id}>
-                {maskName(teacher.name, "teacher") || sanitizeText(teacher.email)}
+                {teacher.email
+                  ? `${displayName(teacher.name)} — ${sanitizeText(teacher.email)}`
+                  : displayName(teacher.name)}
               </option>
             ))}
           </select>
@@ -307,7 +309,7 @@ function AdminClassManagement() {
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                       <div>
                         <p className="text-xs text-brand-navy/60">{t("teacher")}</p>
-                        <p className="font-semibold text-brand-navy">{maskName(classItem.teacher?.name, "teacher") || t("adminNoTeacher")}</p>
+                        <p className="font-semibold text-brand-navy">{classItem.teacher ? displayName(classItem.teacher.name) : t("adminNoTeacher")}</p>
                       </div>
                       <div>
                         <p className="text-xs text-brand-navy/60">{t("students")}</p>

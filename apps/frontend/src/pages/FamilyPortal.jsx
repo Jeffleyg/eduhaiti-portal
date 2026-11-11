@@ -8,7 +8,11 @@ import LoadMoreList from "../components/LoadMoreList.jsx"
 function FamilyPortal() {
   const { t } = useTranslation()
   const [enrollmentNumber, setEnrollmentNumber] = useState("")
-  const [guardianName, setGuardianName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [code, setCode] = useState("")
+  // "identify" -> "code" -> signed in (session token kept in memory only).
+  const [step, setStep] = useState("identify")
+  const [sessionToken, setSessionToken] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
@@ -17,55 +21,73 @@ function FamilyPortal() {
   const [contactForm, setContactForm] = useState({
     subject: "",
     body: "",
-    guardianPhone: "",
     urgent: false,
   })
 
-  const loadOverview = async (event) => {
-    event.preventDefault()
+  const run = async (action) => {
     setLoading(true)
     setError("")
     setMessage("")
-
     try {
-      const data = await apiFetch(
-        `/family/overview/${encodeURIComponent(enrollmentNumber.trim())}?guardianName=${encodeURIComponent(guardianName.trim())}`,
-      )
-      setOverview(data)
-      setMessage(t("familyOverviewLoaded"))
+      await action()
     } catch (err) {
-      setOverview(null)
       setError(err.message)
     } finally {
       setLoading(false)
     }
   }
 
-  const sendContactRequest = async (event) => {
+  const requestCode = (event) => {
     event.preventDefault()
-    setLoading(true)
-    setError("")
-    setMessage("")
+    return run(async () => {
+      await apiFetch("/family/access/request-code", {
+        method: "POST",
+        body: { enrollmentNumber: enrollmentNumber.trim(), phone: phone.trim() },
+      })
+      setStep("code")
+      setMessage(t("familyCodeSent"))
+    })
+  }
 
-    try {
+  const verifyCode = (event) => {
+    event.preventDefault()
+    return run(async () => {
+      const session = await apiFetch("/family/access/verify", {
+        method: "POST",
+        body: { enrollmentNumber: enrollmentNumber.trim(), phone: phone.trim(), code: code.trim() },
+      })
+      const data = await apiFetch("/family/overview", { token: session.token })
+      setSessionToken(session.token)
+      setOverview(data)
+      setCode("")
+      setStep("signedIn")
+      setMessage(t("familyOverviewLoaded"))
+    })
+  }
+
+  const signOut = () => {
+    setSessionToken("")
+    setOverview(null)
+    setStep("identify")
+    setMessage("")
+    setError("")
+  }
+
+  const sendContactRequest = (event) => {
+    event.preventDefault()
+    return run(async () => {
       await apiFetch("/family/contact-request", {
         method: "POST",
+        token: sessionToken,
         body: {
-          enrollmentNumber: enrollmentNumber.trim(),
-          guardianName: guardianName.trim(),
-          guardianPhone: contactForm.guardianPhone || undefined,
           subject: contactForm.subject,
           body: contactForm.body,
           urgent: contactForm.urgent,
         },
       })
       setMessage(t("familyMessageSent"))
-      setContactForm({ subject: "", body: "", guardianPhone: "", urgent: false })
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+      setContactForm({ subject: "", body: "", urgent: false })
+    })
   }
 
   return (
@@ -89,30 +111,59 @@ function FamilyPortal() {
         {error ? <p className="text-sm text-brand-red">{error}</p> : null}
         {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
 
-        <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
-          <h2 className="text-base font-semibold text-brand-navy">{t("familyAccessTitle")}</h2>
-          <form className="mt-3 grid gap-3 md:grid-cols-3" onSubmit={loadOverview}>
-            <input
-              value={enrollmentNumber}
-              onChange={(event) => setEnrollmentNumber(event.target.value)}
-              placeholder={t("familyEnrollmentPlaceholder")}
-              className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              autoComplete="off"
-              required
-            />
-            <input
-              value={guardianName}
-              onChange={(event) => setGuardianName(event.target.value)}
-              placeholder={t("guardianNamePlaceholderFamily")}
-              className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-              autoComplete="name"
-              required
-            />
-            <button className="primary-button" type="submit" disabled={loading}>
-              {loading ? t("loading") : t("consultFamilyData")}
+        {step !== "signedIn" ? (
+          <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
+            <h2 className="text-base font-semibold text-brand-navy">{t("familyAccessTitle")}</h2>
+            {step === "identify" ? (
+              <form className="mt-3 grid gap-3 md:grid-cols-3" onSubmit={requestCode}>
+                <input
+                  value={enrollmentNumber}
+                  onChange={(event) => setEnrollmentNumber(event.target.value)}
+                  placeholder={t("familyEnrollmentPlaceholder")}
+                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+                  autoComplete="off"
+                  required
+                />
+                <input
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder={t("familyPhonePlaceholder")}
+                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  required
+                />
+                <button className="primary-button" type="submit" disabled={loading}>
+                  {loading ? t("loading") : t("familySendCode")}
+                </button>
+              </form>
+            ) : (
+              <form className="mt-3 grid gap-3 md:grid-cols-3" onSubmit={verifyCode}>
+                <input
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder={t("familyCodePlaceholder")}
+                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-center font-mono text-lg tracking-widest"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  required
+                />
+                <button className="primary-button" type="submit" disabled={loading || code.length !== 6}>
+                  {loading ? t("loading") : t("consultFamilyData")}
+                </button>
+                <button className="outline-button" type="button" onClick={() => setStep("identify")}>
+                  {t("familyChangeNumber")}
+                </button>
+              </form>
+            )}
+          </section>
+        ) : (
+          <div className="flex justify-end">
+            <button className="outline-button" type="button" onClick={signOut}>
+              {t("familySignOut")}
             </button>
-          </form>
-        </section>
+          </div>
+        )}
 
         {overview ? (
           <>
@@ -253,13 +304,6 @@ function FamilyPortal() {
                   rows={4}
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm md:col-span-2"
                   required
-                />
-                <input
-                  value={contactForm.guardianPhone}
-                  onChange={(event) => setContactForm((prev) => ({ ...prev, guardianPhone: event.target.value }))}
-                  placeholder={t("guardianPhonePlaceholderFamily")}
-                  className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-                  autoComplete="tel"
                 />
                 <label className="flex items-center gap-2 text-sm text-brand-navy">
                   <input

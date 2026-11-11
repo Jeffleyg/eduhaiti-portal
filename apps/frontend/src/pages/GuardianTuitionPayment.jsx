@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../lib/string.js"
+import { maskName } from "../lib/string.js"
 import { apiFetch } from "../lib/api.js"
 import LoadMoreList from "../components/LoadMoreList.jsx"
 
 const escapeHtml = (value) =>
-  String(value ?? "").replace(/[&<>\"']/g, (character) => {
+  String(value ?? "").replace(/[&<>"']/g, (character) => {
     const replacements = {
       "&": "&amp;",
       "<": "&lt;",
@@ -331,11 +331,13 @@ function GuardianTuitionPayment() {
                   date: new Date().toLocaleString(),
                 }
 
-                const windowRef = window.open("", "_blank", "noopener,noreferrer")
+                // "noopener" makes window.open return null, so detach the opener manually instead.
+                const windowRef = window.open("", "_blank")
                 if (!windowRef) {
                   setError(t("popupBlocked"))
                   return
                 }
+                windowRef.opener = null
 
                 const html = `
                   <html>

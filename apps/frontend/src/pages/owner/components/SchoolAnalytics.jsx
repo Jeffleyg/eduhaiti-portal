@@ -2,7 +2,7 @@ import DataTablePaginated from "../../../components/DataTablePaginated.jsx"
 import SkeletonLoader from "../../../components/SkeletonLoader.jsx"
 import { sanitizeText } from "../../../lib/string.js"
 
-function SchoolAnalytics({ analytics, schools }) {
+function SchoolAnalytics({ analytics }) {
   if (!analytics) {
     return (
       <div className="space-y-6">

@@ -41,9 +41,12 @@ export class DisciplinesService {
     });
   }
 
-  async findBySeries(seriesId?: string) {
+  async findBySeries(seriesId?: string, schoolId?: string | null) {
     return this.prisma.discipline.findMany({
-      where: seriesId ? { seriesId } : undefined,
+      where: {
+        ...(seriesId ? { seriesId } : {}),
+        ...(schoolId ? { series: { academicYear: { schoolId } } } : {}),
+      },
       include: {
         series: {
           select: {

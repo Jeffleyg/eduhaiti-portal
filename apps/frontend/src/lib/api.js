@@ -3,6 +3,13 @@ import { survivalModeStateManager } from "./survival-mode-state.js"
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000"
 
+// Same key used by AuthContext; "token" is kept for older sessions.
+const TOKEN_KEY = "eduhaiti_token"
+
+function storedToken() {
+  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem("token")
+}
+
 export function apiAssetUrl(filePath) {
   if (!filePath) return ""
   const normalized = filePath.startsWith("/") ? filePath.slice(1) : filePath
@@ -11,6 +18,7 @@ export function apiAssetUrl(filePath) {
 
 function handleAuthError(status) {
   if (status === 401) {
+    localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem("token")
     localStorage.removeItem("user")
     if (window.location.pathname !== "/login" && window.location.pathname !== "/") {
@@ -27,7 +35,7 @@ export async function apiFetch(path, options = {}) {
   }
 
   const { method = "GET", body, token, headers } = options
-  const authToken = token || localStorage.getItem("token")
+  const authToken = token || storedToken()
 
   try {
     const response = await fetch(`${API_URL}/api${path}`, {
@@ -73,7 +81,7 @@ export async function apiFetchRaw(path, options = {}) {
   }
 
   const { method = "GET", body, token, headers } = options
-  const authToken = token || localStorage.getItem("token")
+  const authToken = token || storedToken()
 
   try {
     const response = await fetch(`${API_URL}/api${path}`, {
@@ -112,7 +120,7 @@ export async function apiUpload(path, options = {}) {
   }
 
   const { method = "POST", token, formData, headers } = options
-  const authToken = token || localStorage.getItem("token")
+  const authToken = token || storedToken()
 
   try {
     const response = await fetch(`${API_URL}/api${path}`, {

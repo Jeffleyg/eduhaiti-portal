@@ -123,7 +123,7 @@ export function SyncControlProvider({ children }) {
         setIsSyncing(false)
       }
     },
-    [token, isSyncing],
+    [token, isSyncing, conflictStrategy],
   )
 
   const value = useMemo(

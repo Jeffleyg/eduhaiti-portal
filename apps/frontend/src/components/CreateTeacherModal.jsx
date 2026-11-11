@@ -34,7 +34,7 @@ const createTeacherSchema = z.object({
     .max(255, "Endereço não pode ter mais de 255 caracteres"),
   gender: z
     .enum(["MALE", "FEMALE", "OTHER"], {
-      errorMap: () => ({ message: "Selecione um gênero válido" }),
+      error: "Selecione um gênero válido",
     }),
   fatherName: z
     .string()
@@ -253,6 +253,23 @@ function CreateTeacherModal({
         />
       </div>
 
+      {/* Turmas já cadastradas */}
+      {classOptions.length > 0 && (
+        <fieldset className="pt-2 border-t border-slate-100">
+          <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            {t("existingClasses")}
+          </legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {classOptions.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 text-sm text-brand-navy">
+                <input type="checkbox" value={option.value} {...register("classIds")} />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       {/* Novas Turmas Adicionais Dinâmicas */}
       <div className="pt-2 border-t border-slate-100">
         <div className="flex justify-between items-center mb-2">
@@ -311,7 +328,7 @@ function CreateTeacherModal({
         <Button
           type="submit"
           variant="primary"
-          isLoading={loading || isSubmitting}
+          loading={loading || isSubmitting}
           disabled={loading || isSubmitting}
         >
           {t("createTeacherAction") || "Enregistrer"}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import PaginationControls from "./PaginationControls.jsx"
 
@@ -17,16 +17,12 @@ function LoadMoreList({
   const prevLabel = previousLabel ?? t("previous") ?? "Previous"
   const totalPages = Math.max(1, Math.ceil((Array.isArray(items) ? items.length : 0) / pageSize))
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
 
   if (!Array.isArray(items) || items.length === 0) {
     return <div className="text-sm text-brand-navy/60">Nenhum item.</div>
   }
 
+  // Clamp during render: when items shrink the current page may no longer exist.
   const safePage = Math.min(page, totalPages)
   const start = (safePage - 1) * pageSize
   const visible = items.slice(start, start + pageSize)
@@ -44,8 +40,8 @@ function LoadMoreList({
         totalPages={totalPages}
         previousLabel={prevLabel}
         continueLabel={nextLabel}
-        onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
-        onContinue={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+        onPrevious={() => setPage(Math.max(1, safePage - 1))}
+        onContinue={() => setPage(Math.min(totalPages, safePage + 1))}
       />
     </div>
   )

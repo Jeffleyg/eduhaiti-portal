@@ -76,7 +76,7 @@ export class FinanceIntegrationService {
       throw new NotFoundException('Provider not supported');
     }
 
-    const schoolId = await this.resolveSchoolId(db);
+    const schoolId = await this.resolveSchoolId(db, student.id);
     const externalReference = crypto.randomUUID();
 
     const charge = await provider.processCharge({
@@ -180,7 +180,7 @@ export class FinanceIntegrationService {
       throw new NotFoundException('Provider not supported');
     }
 
-    const schoolId = await this.resolveSchoolId(db);
+    const schoolId = await this.resolveSchoolId(db, student.id);
     const externalReference = crypto.randomUUID();
 
     const charge = await provider.processCharge({
@@ -386,9 +386,9 @@ export class FinanceIntegrationService {
     }
 
     const statusLabel =
-      params.paymentStatus === PaymentStatus.PAID ? 'PAGO' : 'PARCIAL';
+      params.paymentStatus === PaymentStatus.PAID ? 'PEYE' : 'PASYÈL';
     const text = this.to160Chars(
-      `EduHaiti: MonCash confirmou o pagamento de ${params.netAmountHtg.toFixed(2)} HTG para ${params.studentName ?? params.studentEnrollmentNumber}. Status: ${statusLabel}. Recibo: ${params.receiptNumber}.`,
+      `EduHaiti: MonCash konfime peman ${params.netAmountHtg.toFixed(2)} HTG pou ${params.studentName ?? params.studentEnrollmentNumber}. Estati: ${statusLabel}. Resi: ${params.receiptNumber}.`,
     );
 
     try {
@@ -489,11 +489,16 @@ export class FinanceIntegrationService {
     };
   }
 
-  async createTuitionCharge(dto: CreateTuitionChargeDto, adminUserId: string) {
+  async createTuitionCharge(
+    dto: CreateTuitionChargeDto,
+    adminUserId: string,
+    adminSchoolId?: string | null,
+  ) {
     const student = await this.prisma.user.findFirst({
       where: {
         enrollmentNumber: dto.studentEnrollmentNumber,
         role: Role.STUDENT,
+        ...this.studentSchoolScope(adminSchoolId),
       },
       select: {
         id: true,
@@ -519,7 +524,7 @@ export class FinanceIntegrationService {
       applyPunctualityDiscount: dto.applyPunctualityDiscount,
     });
 
-    const schoolId = await this.resolveSchoolId(this.prisma);
+    const schoolId = await this.resolveSchoolId(this.prisma, student.id);
     const finalAmount = this.roundCurrency(
       Math.max(0.01, dto.amountHtg - discount.totalDiscountHtg),
     );
@@ -589,6 +594,7 @@ export class FinanceIntegrationService {
   async createInstallmentPlan(
     dto: CreateInstallmentPlanDto,
     adminUserId: string,
+    adminSchoolId?: string | null,
   ) {
     const enrollment = dto.studentEnrollmentNumber.trim();
     if (!enrollment) {
@@ -604,6 +610,7 @@ export class FinanceIntegrationService {
       where: {
         enrollmentNumber: enrollment,
         role: Role.STUDENT,
+        ...this.studentSchoolScope(adminSchoolId),
       },
       select: {
         id: true,
@@ -616,7 +623,7 @@ export class FinanceIntegrationService {
       throw new NotFoundException('Student enrollment not found');
     }
 
-    const schoolId = await this.resolveSchoolId(this.prisma);
+    const schoolId = await this.resolveSchoolId(this.prisma, student.id);
     const sourcePaymentIds =
       dto.sourcePaymentIds
         ?.map((item) => item.trim())
@@ -821,6 +828,7 @@ export class FinanceIntegrationService {
 
   private buildAdminPaymentsWhere(
     filters: AdminPaymentsQueryDto,
+    schoolId?: string | null,
   ): Prisma.PaymentWhereInput {
     const enrollment = filters.studentEnrollmentNumber?.trim();
     const startDate = filters.startDate ? new Date(filters.startDate) : null;
@@ -835,6 +843,7 @@ export class FinanceIntegrationService {
     }
 
     return {
+      ...(schoolId ? { schoolId } : {}),
       status: filters.status,
       ...(startDate || endDate
         ? {
@@ -860,12 +869,15 @@ export class FinanceIntegrationService {
     return `"${escaped}"`;
   }
 
-  async listPaymentsForAdmin(filters: AdminPaymentsQueryDto) {
+  async listPaymentsForAdmin(
+    filters: AdminPaymentsQueryDto,
+    schoolId?: string | null,
+  ) {
     const page = filters.page ?? 1;
     const pageSize = filters.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
 
-    const where = this.buildAdminPaymentsWhere(filters);
+    const where = this.buildAdminPaymentsWhere(filters, schoolId);
 
     const [total, rows] = await Promise.all([
       this.prisma.payment.count({ where }),
@@ -903,8 +915,11 @@ export class FinanceIntegrationService {
     };
   }
 
-  async exportPaymentsCsvForAdmin(filters: AdminPaymentsQueryDto) {
-    const where = this.buildAdminPaymentsWhere(filters);
+  async exportPaymentsCsvForAdmin(
+    filters: AdminPaymentsQueryDto,
+    schoolId?: string | null,
+  ) {
+    const where = this.buildAdminPaymentsWhere(filters, schoolId);
 
     const rows = await this.prisma.payment.findMany({
       where,
@@ -961,7 +976,10 @@ export class FinanceIntegrationService {
     return [header.join(','), ...lines].join('\n');
   }
 
-  async getAdminFinanceSummary(filters: AdminFinanceSummaryQueryDto) {
+  async getAdminFinanceSummary(
+    filters: AdminFinanceSummaryQueryDto,
+    schoolId?: string | null,
+  ) {
     const startDate = filters.startDate ? new Date(filters.startDate) : null;
     const endDate = filters.endDate ? new Date(filters.endDate) : null;
 
@@ -974,6 +992,7 @@ export class FinanceIntegrationService {
     }
 
     const where: Prisma.PaymentWhereInput = {
+      ...(schoolId ? { schoolId } : {}),
       ...(startDate || endDate
         ? {
             dueDate: {
@@ -1037,7 +1056,7 @@ export class FinanceIntegrationService {
       throw new NotFoundException('Student enrollment not found');
     }
 
-    const schoolId = await this.resolveSchoolId(db);
+    const schoolId = await this.resolveSchoolId(db, student.id);
     const fx = await this.exchangeRateService.convertToHtg(
       dto.amount,
       dto.currency,
@@ -1266,14 +1285,51 @@ export class FinanceIntegrationService {
     return Number(value.toFixed(2));
   }
 
+  /**
+   * Resolves the school that owns a payment from the student itself
+   * (direct link first, then the latest class). Only when that is not
+   * possible and the installation has a single school is it used as a
+   * fallback, so payments are never attributed to another tenant.
+   */
   private async resolveSchoolId(
     db: Prisma.TransactionClient | PrismaService,
+    studentId: string,
   ): Promise<string> {
-    const school = await db.school.findFirst({ select: { id: true } });
-    if (!school) {
-      throw new NotFoundException('School record not found');
+    const student = await db.user.findUnique({
+      where: { id: studentId },
+      select: { schoolId: true },
+    });
+    if (student?.schoolId) {
+      return student.schoolId;
     }
 
-    return school.id;
+    const latestClass = await db.class.findFirst({
+      where: { students: { some: { id: studentId } } },
+      select: { academicYear: { select: { schoolId: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (latestClass?.academicYear?.schoolId) {
+      return latestClass.academicYear.schoolId;
+    }
+
+    const schools = await db.school.findMany({ select: { id: true }, take: 2 });
+    if (schools.length === 1) {
+      return schools[0].id;
+    }
+
+    throw new NotFoundException('Could not determine the school for this student');
+  }
+
+  /** Student lookup restricted to an admin's school (when provided). */
+  private studentSchoolScope(schoolId?: string | null): Prisma.UserWhereInput {
+    if (!schoolId) {
+      return {};
+    }
+    return {
+      OR: [
+        { schoolId },
+        { classesAttending: { some: { academicYear: { schoolId } } } },
+      ],
+    };
   }
 }

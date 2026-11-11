@@ -19,11 +19,12 @@ export class ForumsController {
   @Get('class/:classId/threads')
   listThreads(
     @Param('classId') classId: string,
-    @Req() req: { user?: { sub?: string; role?: Role } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
   ) {
     return this.forumsService.listThreads(classId, {
       id: req.user?.sub ?? '',
       role: (req.user?.role as Role) ?? Role.STUDENT,
+      schoolId: req.user?.schoolId,
     });
   }
 
@@ -31,22 +32,24 @@ export class ForumsController {
   createThread(
     @Param('classId') classId: string,
     @Body() body: { title: string; body: string },
-    @Req() req: { user?: { sub?: string; role?: Role } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
   ) {
     return this.forumsService.createThread(classId, body, {
       id: req.user?.sub ?? '',
       role: (req.user?.role as Role) ?? Role.STUDENT,
+      schoolId: req.user?.schoolId,
     });
   }
 
   @Get('threads/:threadId/posts')
   listPosts(
     @Param('threadId') threadId: string,
-    @Req() req: { user?: { sub?: string; role?: Role } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
   ) {
     return this.forumsService.listPosts(threadId, {
       id: req.user?.sub ?? '',
       role: (req.user?.role as Role) ?? Role.STUDENT,
+      schoolId: req.user?.schoolId,
     });
   }
 
@@ -54,11 +57,12 @@ export class ForumsController {
   createPost(
     @Param('threadId') threadId: string,
     @Body() body: { body: string },
-    @Req() req: { user?: { sub?: string; role?: Role } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
   ) {
     return this.forumsService.createPost(threadId, body, {
       id: req.user?.sub ?? '',
       role: (req.user?.role as Role) ?? Role.STUDENT,
+      schoolId: req.user?.schoolId,
     });
   }
 }

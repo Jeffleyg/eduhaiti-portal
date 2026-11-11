@@ -15,16 +15,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role, GradeStatus } from '@prisma/client';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ClassAccessService } from '../prisma/class-access.service';
 
 @Controller('admin/grades')
 export class GradesController {
-  constructor(private readonly gradesService: GradesService) {}
+  constructor(
+    private readonly gradesService: GradesService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   @Post()
   async createGrade(
-    @Req() req: { user?: { sub?: string; role?: Role } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Body()
     payload: {
       studentId: string;
@@ -36,6 +40,8 @@ export class GradesController {
       weight?: number;
     },
   ) {
+    // Admins only inside their own school; teachers only in their classes.
+    await this.classAccess.assertCanManageClass(payload.classId, req.user);
     return this.gradesService.create(payload, {
       id: req.user?.sub ?? '',
       role: (req.user?.role as Role) ?? Role.TEACHER,
@@ -46,6 +52,7 @@ export class GradesController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Put(':id')
   async updateGrade(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('id') gradeId: string,
     @Body()
     payload: {
@@ -53,13 +60,21 @@ export class GradesController {
       status?: GradeStatus;
     },
   ) {
-    return this.gradesService.update(gradeId, payload);
+    await this.classAccess.assertCanManageGrade(gradeId, req.user);
+    return this.gradesService.update(gradeId, {
+      score: payload?.score,
+      status: payload?.status,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
-  async deleteGrade(@Param('id') gradeId: string) {
+  async deleteGrade(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
+    @Param('id') gradeId: string,
+  ) {
+    await this.classAccess.assertCanManageGrade(gradeId, req.user);
     return this.gradesService.delete(gradeId);
   }
 
@@ -67,9 +82,11 @@ export class GradesController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Post(':classId/publish')
   async publishGrades(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
     @Query('disciplineId') disciplineId: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.gradesService.publishGrades(classId, disciplineId);
   }
 
@@ -97,9 +114,11 @@ export class GradesController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId')
   async getClassGrades(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
     @Query('disciplineId') disciplineId?: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.gradesService.findByClass(classId, disciplineId);
   }
 
@@ -107,9 +126,11 @@ export class GradesController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId/average')
   async getClassAverage(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
     @Query('disciplineId') disciplineId: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.gradesService.calculateClassAverage(classId, disciplineId);
   }
 }

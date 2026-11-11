@@ -12,7 +12,6 @@ import React from 'react'
 import * as Select from '@radix-ui/react-select'
 import { ChevronDown, AlertCircle } from 'lucide-react'
 import { Controller } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
 
 /**
  * SelectField - Componente controlado com react-hook-form
@@ -40,7 +39,6 @@ export const SelectField = ({
   disabled = false,
   className = '',
 }) => {
-  const { t } = useTranslation()
   const fieldId = `field-${name}`
   const errorId = `error-${name}`
   const hintId = `hint-${name}`

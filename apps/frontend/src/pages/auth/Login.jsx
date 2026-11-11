@@ -41,7 +41,13 @@ function Login() {
         navigate("/student", { replace: true })
       }
     } catch (err) {
-      if (err.message.includes("Unauthorized") || err.message.includes("401")) {
+      if (err.message.includes("Temporary password expired")) {
+        setError(t("temporaryPasswordExpired"))
+      } else if (
+        err.message.includes("Invalid credentials") ||
+        err.message.includes("Unauthorized") ||
+        err.message.includes("401")
+      ) {
         setError(t("invalidCredentials"))
       } else if (err.message.includes("Request failed") || !err.message) {
         setError(t("serverError"))

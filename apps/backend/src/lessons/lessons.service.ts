@@ -1,6 +1,6 @@
-import { ForbiddenException, Injectable, BadRequestException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ClassAccessService, ClassRequester } from '../prisma/class-access.service';
 import { buildAuditData, safeParseJson } from '../common/audit-compat';
 
 type LessonPlanPayload = {
@@ -16,50 +16,29 @@ type LessonPlanPayload = {
 
 @Injectable()
 export class LessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
-  async createPlan(
-    payload: LessonPlanPayload,
-    requester: { id: string; role: Role },
-  ) {
-    const classRow = await this.prisma.class.findUnique({
-      where: { id: payload.classId },
-      select: {
-        id: true,
-        teacherId: true,
-        academicYear: {
-          select: {
-            schoolId: true,
-          },
-        },
-      },
-    });
-
-    if (!classRow) {
-      throw new ForbiddenException('Class not found');
+  async createPlan(payload: LessonPlanPayload, requester: ClassRequester) {
+    if (!payload.title?.trim() || !payload.date?.trim()) {
+      throw new BadRequestException('title and date are required');
     }
-
-    if (
-      requester.role === Role.TEACHER &&
-      classRow.teacherId &&
-      classRow.teacherId !== requester.id
-    ) {
-      throw new ForbiddenException(
-        'Teacher can only create lesson plans for own classes',
-      );
-    }
+    // Same rule as every other class write: own class for teachers, own school for admins.
+    const classRow = await this.classAccess.assertCanManageClass(payload.classId, requester);
 
     const plan = await this.prisma.auditLog.create({
       data: buildAuditData({
         entityType: 'LESSON_PLAN',
         entityId: payload.classId,
         action: 'PUBLISH',
-        userId: requester.id,
+        userId: requester.sub,
         changes: {
           classId: payload.classId,
           schoolId: classRow.academicYear.schoolId,
-          date: payload.date,
-          title: payload.title,
+          date: payload.date.trim(),
+          title: payload.title.trim(),
           objectives: payload.objectives ?? null,
           content: payload.content ?? null,
           methodology: payload.methodology ?? null,
@@ -108,11 +87,17 @@ export class LessonsService {
     }));
   }
 
+  /**
+   * Shared lesson bank. Callers pass the school they belong to (undefined only for the
+   * owner). Plans marked CLASS stay private to their class unless the viewer wrote them
+   * or is browsing that very class.
+   */
   async listRepository(params: {
     teacherId?: string;
     schoolId?: string;
     classId?: string;
     query?: string;
+    viewerId?: string;
   }) {
     const rows = await this.prisma.auditLog.findMany({
       where: {
@@ -134,6 +119,14 @@ export class LessonsService {
       }))
       .filter((row) => {
         if (params.schoolId && row.schoolId !== params.schoolId) {
+          return false;
+        }
+
+        const privateToOtherClass =
+          row.visibility === 'CLASS' &&
+          row.createdById !== params.viewerId &&
+          row.classId !== params.classId;
+        if (privateToOtherClass) {
           return false;
         }
 

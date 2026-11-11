@@ -158,6 +158,7 @@ export class AnalyticsService {
         enrollmentNumber: true,
         fatherName: true,
         motherName: true,
+        schoolId: true,
       },
       take: 5000,
     });
@@ -269,6 +270,7 @@ export class AnalyticsService {
 
       return {
         studentId: student.id,
+        schoolId: student.schoolId ?? null,
         studentName: student.name,
         enrollmentNumber: student.enrollmentNumber,
         guardianFallbackName: student.fatherName ?? student.motherName ?? null,
@@ -285,22 +287,47 @@ export class AnalyticsService {
     });
   }
 
-  async triggerEarlyWarningAlerts(schoolId?: string) {
-    const rows = await this.getEarlyWarningReport(schoolId);
+  /**
+   * Messages the admins of each at-risk student's own school. `senderId` is the
+   * user who triggered the alert; `report` lets callers reuse a report they already built.
+   */
+  async triggerEarlyWarningAlerts(
+    schoolId?: string,
+    senderId?: string,
+    report?: Awaited<ReturnType<AnalyticsService['getEarlyWarningReport']>>,
+  ) {
+    const rows = report ?? (await this.getEarlyWarningReport(schoolId));
     const atRiskRows = rows.filter((item) => item.atRisk);
 
     if (atRiskRows.length === 0) {
       return { triggered: 0, recipients: 0 };
     }
 
-    const admins = await this.prisma.user.findMany({
-      where: {
-        role: Role.ADMIN,
-        isActive: true,
-      },
-      select: { id: true },
-      take: 50,
-    });
+    const schoolIds = Array.from(
+      new Set(
+        atRiskRows
+          .map((row) => row.schoolId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+
+    const admins = schoolIds.length
+      ? await this.prisma.user.findMany({
+          where: {
+            role: Role.ADMIN,
+            isActive: true,
+            schoolId: { in: schoolIds },
+          },
+          select: { id: true, schoolId: true },
+        })
+      : [];
+
+    const adminsBySchool = new Map<string, string[]>();
+    for (const admin of admins) {
+      const list = adminsBySchool.get(admin.schoolId as string) ?? [];
+      list.push(admin.id);
+      adminsBySchool.set(admin.schoolId as string, list);
+    }
 
     const messages = [] as Array<{
       fromId: string;
@@ -308,6 +335,7 @@ export class AnalyticsService {
       subject: string;
       body: string;
     }>;
+    const recipients = new Set<string>();
     for (const row of atRiskRows) {
       const body = [
         `Aluno: ${row.studentName ?? row.enrollmentNumber ?? row.studentId}`,
@@ -321,6 +349,7 @@ export class AnalyticsService {
 
       await this.prisma.auditLog.create({
         data: buildAuditData({
+          userId: senderId,
           entityType: 'EARLY_WARNING_ALERT',
           entityId: row.studentId,
           action: 'TRIGGER',
@@ -328,10 +357,12 @@ export class AnalyticsService {
         }),
       });
 
-      for (const admin of admins) {
+      for (const adminId of adminsBySchool.get(row.schoolId ?? '') ?? []) {
+        recipients.add(adminId);
         messages.push({
-          fromId: row.studentId,
-          toId: admin.id,
+          // Sent on behalf of whoever triggered it; falls back to the admin itself.
+          fromId: senderId ?? adminId,
+          toId: adminId,
           subject: '[ALERTA PRECOCE] Possivel evasao escolar',
           body,
         });
@@ -344,7 +375,7 @@ export class AnalyticsService {
 
     return {
       triggered: atRiskRows.length,
-      recipients: admins.length,
+      recipients: recipients.size,
     };
   }
 

@@ -32,7 +32,7 @@ export class SeriesController {
   }
 
   @Delete(':seriesId')
-  remove(@Param('seriesId') seriesId: string) {
-    return this.seriesService.remove(seriesId);
+  remove(@Request() req: any, @Param('seriesId') seriesId: string) {
+    return this.seriesService.remove(seriesId, req.user?.schoolId);
   }
 }

@@ -3,8 +3,12 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+
+// Translation keys use "roleprofessor" for teachers
+const roleLabelKey = (role) =>
+  role === "TEACHER" ? "roleprofessor" : `role${String(role ?? "user").toLowerCase()}`
 
 function ProfessorMessages() {
   const { t } = useTranslation()
@@ -99,7 +103,7 @@ function ProfessorMessages() {
               <option value="">{t("selectRecipient")}</option>
               {recipients.map((recipient) => (
                 <option key={recipient.id} value={recipient.id}>
-                  {maskName(recipient.name ?? recipient.email, recipient.role ? recipient.role.toLowerCase() : "user") + " (" + t("role" + recipient.role.toLowerCase()) + ")"}
+                  {displayName(recipient.name ?? recipient.email) + " (" + t(roleLabelKey(recipient.role)) + ")"}
                 </option>
               ))}
             </select>
@@ -161,8 +165,8 @@ function ProfessorMessages() {
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-brand-navy">
                     {tab === "inbox"
-                      ? maskName(message.from?.name ?? message.from?.email, message.from?.role ? message.from.role.toLowerCase() : "user")
-                      : maskName(message.to?.name ?? message.to?.email, message.to?.role ? message.to.role.toLowerCase() : "user")}
+                      ? displayName(message.from?.name ?? message.from?.email)
+                      : displayName(message.to?.name ?? message.to?.email)}
                   </p>
                 </div>
                 <p className="mt-2 text-sm text-brand-navy/70">{sanitizeText(message.subject)}</p>

@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Mail,
   MessageSquare,
+  NotebookPen,
   HandCoins,
   Settings,
   UploadCloud,
@@ -28,7 +29,8 @@ const professorNav = [
   { to: "/teacher/attendance", icon: ClipboardCheck, labelKey: "navAttendance" },
   { to: "/teacher/resources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/teacher/assignments", icon: BookOpen, labelKey: "navHomework" },
-  { to: "/teacher/forum", icon: MessageSquare, labelKey: "Forum" },
+  { to: "/teacher/lesson-plans", icon: NotebookPen, labelKey: "lessonPlansTitle" },
+  { to: "/teacher/forum", icon: MessageSquare, labelKey: "navForum" },
   { to: "/teacher/messages", icon: Mail, labelKey: "navMessages" },
   { to: "/teacher/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
 ]
@@ -41,7 +43,8 @@ const studentNav = [
   { to: "/student/schedule", icon: CalendarDays, labelKey: "navSchedule" },
   { to: "/student/resources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/student/assignments", icon: ClipboardCheck, labelKey: "navHomework" },
-  { to: "/student/forum", icon: MessageSquare, labelKey: "Forum" },
+  { to: "/student/lesson-plans", icon: NotebookPen, labelKey: "lessonPlansTitle" },
+  { to: "/student/forum", icon: MessageSquare, labelKey: "navForum" },
   { to: "/student/messages", icon: Mail, labelKey: "navMessages" },
   { to: "/student/academic-requests", icon: FileCheck2, labelKey: "navAcademicRequests" },
 ]
@@ -78,7 +81,7 @@ function Sidebar({ role }) {
 
   return (
     <aside
-      className={`glass-panel sticky top-6 hidden h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 lg:flex ${
+      className={`glass-panel sticky top-6 flex h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 ${
         collapsed ? "w-16" : "w-64 xl:w-72"
       }`}
     >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react"
 
 /**
@@ -11,7 +11,7 @@ export function ToastContainer() {
 /**
  * Toast component - individual notification
  */
-export function Toast({ id, type = "info", title, message, duration = 4000, onClose }) {
+export function Toast({ type = "info", title, message, duration = 4000, onClose }) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -63,65 +63,4 @@ export function Toast({ id, type = "info", title, message, duration = 4000, onCl
       </button>
     </div>
   )
-}
-
-/**
- * Toast service - call from anywhere
- */
-export const toast = {
-  show: (options) => {
-    const container = document.getElementById("toast-container")
-    if (!container) return
-
-    const id = Date.now()
-    const div = document.createElement("div")
-    div.key = id
-
-    const { onClose, ...props } = options
-
-    const handleClose = () => {
-      div.remove()
-      onClose?.()
-    }
-
-    const root = ReactDOM.createRoot(div)
-    root.render(
-      <Toast {...props} id={id} onClose={handleClose} />
-    )
-
-    container.appendChild(div)
-    return id
-  },
-
-  success: (message, title = "Sucesso") => {
-    toast.show({ type: "success", title, message })
-  },
-
-  error: (message, title = "Erro") => {
-    toast.show({ type: "error", title, message })
-  },
-
-  warning: (message, title = "Aviso") => {
-    toast.show({ type: "warning", title, message })
-  },
-
-  info: (message, title = "Informação") => {
-    toast.show({ type: "info", title, message })
-  },
-}
-
-// Simple alternative: use with React state
-export function useToast() {
-  const [toasts, setToasts] = useState([])
-
-  const showToast = (options) => {
-    const id = Date.now()
-    setToasts((prev) => [...prev, { id, ...options }])
-  }
-
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
-  }
-
-  return { toasts, showToast, removeToast }
 }

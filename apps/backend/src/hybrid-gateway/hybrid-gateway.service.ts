@@ -6,6 +6,17 @@ import { OperatorAdapterRegistryService } from './services/operator-adapter-regi
 import { SqlServerReadService } from './services/sql-server-read.service';
 import { UssdMenuService } from './services/ussd-menu.service';
 
+/**
+ * Echoing the OTP back defeats it, so it needs an explicit opt-in and is never
+ * allowed in production (a missing NODE_ENV must not leak codes).
+ */
+function echoOtpForDebug() {
+  return (
+    process.env.HYBRID_DEBUG_OTP === 'true' &&
+    process.env.NODE_ENV !== 'production'
+  );
+}
+
 @Injectable()
 export class HybridGatewayService {
   constructor(
@@ -35,13 +46,13 @@ export class HybridGatewayService {
       });
 
       return adapter.formatSmsResponse(
-        'Formato: NOTA ID [TOKEN] [OTP] ou FREQ ID [TOKEN] [OTP]',
+        'Fòma: NOT ID [TOKEN] [OTP] oswa PREZANS ID [TOKEN] [OTP]',
       );
     }
 
     if (command.type === 'AJUDA') {
       return adapter.formatSmsResponse(
-        'Comandos: NOTA ID TOKEN OTP | FREQ ID TOKEN OTP | AVISO ID TOKEN OTP',
+        'Kòmand: NOT ID TOKEN OTP | PREZANS ID TOKEN OTP | AVI ID TOKEN OTP',
       );
     }
 
@@ -62,7 +73,7 @@ export class HybridGatewayService {
       });
 
       return adapter.formatSmsResponse(
-        'Nao autorizado. Verifique ID/TOKEN e telefone cadastrado.',
+        'Pa otorize. Verifye ID/TOKEN ak telefòn ki anrejistre a.',
       );
     }
 
@@ -78,12 +89,10 @@ export class HybridGatewayService {
         phone: request.senderPhone,
         studentId: command.studentId ?? '',
         tokenHint: command.responsibleDocumentId,
+        operatorHint,
       });
 
-      const debugSuffix =
-        process.env.NODE_ENV === 'production'
-          ? ''
-          : ` [DEV OTP:${issued.otpCode}]`;
+      const debugSuffix = echoOtpForDebug() ? ` [DEV OTP:${issued.otpCode}]` : '';
       const challenge = `OTP enviado. Reenvie: ${command.type} ${command.studentId ?? ''} ${command.responsibleDocumentId ?? ''} CODIGO_OTP. Valido por 5 minutos.${debugSuffix}`;
 
       return adapter.formatSmsResponse(this.with160Chars(challenge));
@@ -118,7 +127,7 @@ export class HybridGatewayService {
     if (path[0] === '1') {
       if (path.length < 2) {
         return adapter.formatUssdResponse(
-          'Digite: 1*ID_ALUNO*TOKEN*OTP',
+          'Tape: 1*ID_ELEV*TOKEN*OTP',
           false,
         );
       }
@@ -144,7 +153,7 @@ export class HybridGatewayService {
         });
 
         return adapter.formatUssdResponse(
-          'Nao autorizado. Verifique ID/TOKEN e telefone cadastrado.',
+          'Pa otorize. Verifye ID/TOKEN ak telefòn ki anrejistre a.',
           true,
         );
       }
@@ -161,14 +170,14 @@ export class HybridGatewayService {
           phone: request.senderPhone,
           studentId,
           tokenHint: responsibleDocumentId,
+          operatorHint,
         });
 
-        const devOtpHint =
-          process.env.NODE_ENV === 'production' ? '' : ` [DEV:${issued.otpCode}]`;
+        const devOtpHint = echoOtpForDebug() ? ` [DEV:${issued.otpCode}]` : '';
 
         return adapter.formatUssdResponse(
           this.with160Chars(
-            `OTP enviado. Digite: 1*${studentId}*${responsibleDocumentId ?? 'TOKEN'}*OTP${devOtpHint}`,
+            `Nou voye OTP a. Tape: 1*${studentId}*${responsibleDocumentId ?? 'TOKEN'}*OTP${devOtpHint}`,
           ),
           false,
         );
@@ -185,7 +194,7 @@ export class HybridGatewayService {
 
       return adapter.formatUssdResponse(
         this.with160Chars(
-          `Media:${summary.globalAverage.toFixed(1)} | Status:${summary.approvalStatus} | Corte:${summary.passAverage.toFixed(1)}`,
+          `Mwayen:${summary.globalAverage.toFixed(1)} | Estati:${this.approvalLabel(summary.approvalStatus)} | Pou pase:${summary.passAverage.toFixed(1)}`,
         ),
         true,
       );
@@ -219,24 +228,24 @@ export class HybridGatewayService {
       return {
         authorized: false,
         speechText:
-          'Nao autorizado. Verifique o identificador do aluno, token e telefone cadastrado.',
+          'Pa otorize. Verifye idantifyan elèv la, token an ak telefòn ki anrejistre a.',
       };
     }
 
     const speechText = [
-      'Resumo escolar atualizado.',
-      `Media geral: ${summary.globalAverage.toFixed(1)}.`,
-      `Total de faltas registradas: ${summary.absences}.`,
+      'Rezime lekòl la mete ajou.',
+      `Mwayèn jeneral: ${summary.globalAverage.toFixed(1)}.`,
+      `Kantite absans: ${summary.absences}.`,
       summary.latestAnnouncement
-        ? `Ultimo aviso da escola: ${summary.latestAnnouncement}.`
-        : 'Sem novos avisos no momento.',
+        ? `Dènye avi lekòl la: ${summary.latestAnnouncement}.`
+        : 'Pa gen nouvo avi kounye a.',
     ].join(' ');
 
     return {
       authorized: true,
       speechText,
       ttsHints: {
-        language: 'pt-HT',
+        language: 'ht',
         voiceStyle: 'calm',
       },
     };
@@ -257,7 +266,7 @@ export class HybridGatewayService {
       return {
         authorized: false,
         speechText:
-          'Nao autorizado. Verifique o identificador do aluno, token e telefone cadastrado.',
+          'Pa otorize. Verifye idantifyan elèv la, token an ak telefòn ki anrejistre a.',
       };
     }
 
@@ -269,18 +278,18 @@ export class HybridGatewayService {
       return {
         authorized: true,
         speechText:
-          'Nao encontramos resumo de aula disponivel neste momento. Tente novamente mais tarde.',
+          'Pa gen rezime leson disponib kounye a. Eseye ankò pita.',
       };
     }
 
     const lessonDescription = lesson.description?.trim()
       ? lesson.description.trim()
-      : 'Sem descricao resumida.';
+      : 'Pa gen deskripsyon.';
 
     const speechText = [
-      `Resumo da aula de ${lesson.className ?? 'turma'}.`,
-      `Titulo: ${lesson.title}.`,
-      `Resumo: ${lessonDescription}`,
+      `Rezime leson klas ${lesson.className ?? ''}.`,
+      `Tit: ${lesson.title}.`,
+      `Rezime: ${lessonDescription}`,
     ].join(' ');
 
     return {
@@ -298,7 +307,7 @@ export class HybridGatewayService {
         fileType: lesson.fileType,
       },
       ttsHints: {
-        language: 'pt-HT',
+        language: 'ht',
         voiceStyle: 'clear',
         pace: 'slow',
       },
@@ -317,19 +326,23 @@ export class HybridGatewayService {
   ): string {
     if (command === 'AVISO') {
       return this.with160Chars(
-        `Aviso: ${summary.latestAnnouncement ?? 'Sem novos avisos.'}`,
+        `Avi: ${summary.latestAnnouncement ?? 'Pa gen nouvo avi.'}`,
       );
     }
 
     if (command === 'NOTA') {
       return this.with160Chars(
-        `Media:${summary.globalAverage.toFixed(1)} | Status:${summary.approvalStatus} | Corte:${summary.passAverage.toFixed(1)}`,
+        `Mwayen:${summary.globalAverage.toFixed(1)} | Estati:${this.approvalLabel(summary.approvalStatus)} | Pou pase:${summary.passAverage.toFixed(1)}`,
       );
     }
 
-    const base = `Faltas:${summary.absences} | Media:${summary.globalAverage.toFixed(1)} | Status:${summary.approvalStatus}`;
+    const base = `Absans:${summary.absences} | Mwayen:${summary.globalAverage.toFixed(1)} | Estati:${this.approvalLabel(summary.approvalStatus)}`;
 
     return this.with160Chars(base);
+  }
+
+  private approvalLabel(status: 'APROVADO' | 'REPROVADO'): string {
+    return status === 'APROVADO' ? 'PASE' : 'PA PASE';
   }
 
   private with160Chars(text: string): string {

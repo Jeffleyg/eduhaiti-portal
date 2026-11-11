@@ -27,6 +27,6 @@ import { UssdMenuService } from './services/ussd-menu.service';
     DigicelAdapter,
     NatcomAdapter,
   ],
-  exports: [HybridOutboundSmsService],
+  exports: [HybridOutboundSmsService, HybridOtpService],
 })
 export class HybridGatewayModule {}

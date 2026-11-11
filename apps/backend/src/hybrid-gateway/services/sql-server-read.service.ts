@@ -21,6 +21,26 @@ export interface StudentLessonAudioSummary {
   hasAudio: boolean;
 }
 
+/** Minimum digits for a phone number to be considered (Haitian local numbers have 8). */
+const MIN_PHONE_DIGITS = 8;
+
+function digitsOnly(value?: string | null) {
+  return (value ?? '').replace(/\D/g, '');
+}
+
+/**
+ * Compares two phone numbers ignoring formatting and an optional country code,
+ * e.g. "+509 3712-3456" matches "37123456".
+ */
+export function phonesMatch(a?: string | null, b?: string | null) {
+  const left = digitsOnly(a);
+  const right = digitsOnly(b);
+  if (left.length < MIN_PHONE_DIGITS || right.length < MIN_PHONE_DIGITS) {
+    return false;
+  }
+  return left === right || left.endsWith(right) || right.endsWith(left);
+}
+
 @Injectable()
 export class SqlServerReadService {
   constructor(private readonly prisma: PrismaService) {}
@@ -56,14 +76,17 @@ GROUP BY s.id;`;
       return null;
     }
 
-    // Current implementation uses Prisma for immediate compatibility.
-    // Infra can swap to real SQL Server executor preserving method contract.
+    // Mirrors buildOptimizedSqlServerQuery(): the caller's phone must belong to a
+    // guardian linked to this student, and the document id (when sent) must match.
     const student = await this.prisma.user.findUnique({
       where: { id: studentId },
       select: {
         id: true,
-        fatherName: true,
-        motherName: true,
+        guardianLinks: {
+          select: {
+            guardian: { select: { phoneNumber: true, documentId: true } },
+          },
+        },
       },
     });
 
@@ -71,20 +94,16 @@ GROUP BY s.id;`;
       return null;
     }
 
-    const normalizedPhone = senderPhone.replace(/\D/g, '');
-    const normalizedToken = (responsibleDocumentId ?? '').replace(/\D/g, '');
-
-    // Security binding fallback for current schema:
-    // guardian token can be validated against known student-linked identifiers.
-    const linkedToken = (
-      student.fatherName ??
-      student.motherName ??
-      ''
-    ).replace(/\D/g, '');
-    const isAuthorized =
-      normalizedPhone.length >= 8 &&
-      (!normalizedToken ||
-        (linkedToken.length > 0 && normalizedToken === linkedToken));
+    const normalizedToken = digitsOnly(responsibleDocumentId);
+    const isAuthorized = student.guardianLinks.some(({ guardian }) => {
+      if (!phonesMatch(senderPhone, guardian.phoneNumber)) {
+        return false;
+      }
+      if (!normalizedToken) {
+        return true;
+      }
+      return digitsOnly(guardian.documentId) === normalizedToken;
+    });
 
     if (!isAuthorized) {
       return null;

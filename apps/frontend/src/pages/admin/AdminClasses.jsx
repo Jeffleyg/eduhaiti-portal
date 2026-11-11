@@ -24,7 +24,6 @@ export default function AdminClasses() {
   const { user, token } = useAuth()
 
   const [classes, setClasses] = useState([])
-  const [showForm, setShowForm] = useState(false)
   const [activeSection, setActiveSection] = useState("list")
   const [editingId, setEditingId] = useState(null)
 
@@ -205,7 +204,6 @@ export default function AdminClasses() {
       maxStudents: cls.maxStudents || 30,
     })
     setActiveSection("create")
-    setShowForm(true)
   }
 
   // Cancelar edição
@@ -219,7 +217,6 @@ export default function AdminClasses() {
       maxStudents: 30,
     })
     setActiveSection("list")
-    setShowForm(false)
   }
 
   const handleSubmit = async (e) => {
@@ -309,7 +306,6 @@ export default function AdminClasses() {
           active={activeSection}
           onChange={(k) => {
             setActiveSection(k)
-            setShowForm(k === "create")
             if (k !== "create") {
               setEditingId(null)
             }

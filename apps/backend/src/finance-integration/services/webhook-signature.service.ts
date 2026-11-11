@@ -29,22 +29,23 @@ export class WebhookSignatureService {
     const digest = createHmac('sha256', secret).update(message).digest();
     const expectedHex = digest.toString('hex');
     const expectedBase64 = digest.toString('base64');
-    const normalizedProvided = this.normalizeSignature(providedSignature);
-
-    return (
-      this.secureCompare(normalizedProvided.toLowerCase(), expectedHex) ||
-      this.secureCompare(normalizedProvided, expectedBase64)
+    return this.signatureCandidates(providedSignature).some(
+      (candidate) =>
+        this.secureCompare(candidate.toLowerCase(), expectedHex) ||
+        this.secureCompare(candidate, expectedBase64),
     );
   }
 
-  private normalizeSignature(signature: string): string {
+  /**
+   * Accepts raw signatures and "scheme=signature" forms (e.g. "sha256=<hex>").
+   * The raw value is always tried too, because base64 digests end with "="
+   * padding and must not be split.
+   */
+  private signatureCandidates(signature: string): string[] {
     const value = signature.trim();
-    if (!value.includes('=')) {
-      return value;
-    }
-
-    const [, normalized] = value.split('=', 2);
-    return normalized ?? value;
+    const separator = value.indexOf('=');
+    const withoutScheme = separator >= 0 ? value.slice(separator + 1) : '';
+    return withoutScheme ? [value, withoutScheme] : [value];
   }
 
   private isTimestampWithinSkew(

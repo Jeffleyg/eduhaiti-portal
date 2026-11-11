@@ -39,11 +39,10 @@ export {
   Divider, 
   Spinner, 
   SkeletonBox,
-  ToastContainer,
-  Toast,
-  useToast,
-  toast
 } from "./Utils"
+
+export { ToastContainer, Toast } from "./Toast"
+export { useToast, toast } from "./toastService.jsx"
 
 // Dialogs
 export { default as Modal } from "./Modal"

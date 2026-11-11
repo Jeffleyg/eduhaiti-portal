@@ -12,7 +12,7 @@ export class UssdMenuService {
 
     if (path.length === 0) {
       return {
-        text: 'Menu EduHaiti\n1.Notas\n2.Calendario\n3.Avisos\n4.Resumo em audio',
+        text: 'Meni EduHaiti\n1.Nòt\n2.Kalandriye\n3.Avi\n4.Rezime odyo',
         endSession: false,
       };
     }
@@ -20,27 +20,27 @@ export class UssdMenuService {
     if (path[0] === '1') {
       if (path.length === 1) {
         return {
-          text: 'Digite: 1*ID_ALUNO*TOKEN*OTP',
+          text: 'Tape: 1*ID_ELEV*TOKEN*OTP',
           endSession: false,
         };
       }
 
       return {
-        text: `Consulta de notas enviada para ${path[1]}.`,
+        text: `Demann nòt pou ${path[1]} voye.`,
         endSession: true,
       };
     }
 
     if (path[0] === '2') {
       return {
-        text: 'Calendario: Prova 12/04. Reuniao 18/04.',
+        text: 'Kalandriye a disponib sou portal EduHaiti a oswa nan lekòl la.',
         endSession: true,
       };
     }
 
     if (path[0] === '3') {
       return {
-        text: 'Avisos: Aula normal amanha. Traga caderno.',
+        text: 'Pou wè dènye avi yo, voye SMS: AVI ID_ELEV TOKEN OTP',
         endSession: true,
       };
     }
@@ -48,19 +48,19 @@ export class UssdMenuService {
     if (path[0] === '4') {
       if (path.length === 1) {
         return {
-          text: 'Digite: 4*ID_ALUNO para receber resumo em audio (IVR).',
+          text: 'Tape: 4*ID_ELEV pou resevwa rezime odyo (IVR).',
           endSession: false,
         };
       }
 
       return {
-        text: `Resumo em audio solicitado para ${path[1]}. Aguarde ligacao automatica.`,
+        text: `Rezime odyo mande pou ${path[1]}. N ap rele w otomatikman.`,
         endSession: true,
       };
     }
 
     return {
-      text: 'Opcao invalida. Digite 1, 2, 3 ou 4.',
+      text: 'Opsyon pa valid. Tape 1, 2, 3 oswa 4.',
       endSession: true,
     };
   }

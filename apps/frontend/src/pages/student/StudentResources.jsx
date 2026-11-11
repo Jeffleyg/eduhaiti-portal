@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiAssetUrl, apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { displayName } from "../../lib/string.js"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 import {
@@ -96,7 +96,7 @@ function StudentResources() {
         <div className="col-span-8">
           <p className="font-semibold text-sm text-brand-navy">{resource.title}</p>
           {disableImages ? null : <p className="text-xs text-brand-navy/70">{resource.description}</p>}
-          <p className="text-xs text-brand-navy/60 mt-1">Por: {maskName(resource.uploadedBy?.name, "user")}</p>
+          <p className="text-xs text-brand-navy/60 mt-1">Por: {displayName(resource.uploadedBy?.name)}</p>
         </div>
         <div className="col-span-4 flex items-center justify-end gap-2">
           <a href={apiAssetUrl(resource.filePath)} download className="text-brand-red text-sm font-semibold hover:underline whitespace-nowrap">

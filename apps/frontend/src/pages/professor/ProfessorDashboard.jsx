@@ -4,7 +4,7 @@ import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import StatCard from "../../components/StatCard.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/sqliteCache"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import { useSyncControl } from "../../context/useSyncControl.js"
@@ -31,9 +31,10 @@ function ProfessorDashboard() {
 
     const fetchData = async () => {
       try {
-        const [classesRes, messagesRes] = await Promise.all([
+        const [classesRes, messagesRes, summary] = await Promise.all([
           apiFetch("/classes/my-classes", { token }),
           apiFetch("/messages/inbox", { token }),
+          apiFetch("/classes/my-summary", { token }),
         ])
 
         let leaderboardSnapshot = []
@@ -46,11 +47,13 @@ function ProfessorDashboard() {
         setClasses(classesRes ?? [])
         setRecentMessages((messagesRes ?? []).slice(0, 3))
         setLeaderboard(leaderboardSnapshot)
+        // Real figures from the server (last 30 days of attendance, published grades,
+        // assignments still open); "-" when there is nothing to measure yet.
         const computedStats = {
-          attendance: "96%",
-          grades: classesRes && classesRes[0] ? "~24" : "0",
+          attendance: summary?.attendanceRate == null ? "-" : `${summary.attendanceRate}%`,
+          grades: summary?.publishedGrades ?? 0,
           messages: (messagesRes ?? []).length,
-          tasks: "18",
+          tasks: summary?.upcomingAssignments ?? 0,
         }
 
         setStats(computedStats)
@@ -119,7 +122,7 @@ function ProfessorDashboard() {
               recentMessages.map((message) => (
                 <div key={message.id} className="module-card compact flex items-center justify-between bg-sand px-4 py-3 text-sm">
                   <div>
-                    <p className="font-semibold text-brand-navy">{maskName(message.from?.name, message.from?.role ? message.from.role.toLowerCase() : "user") || sanitizeText(message.from?.email)}</p>
+                    <p className="font-semibold text-brand-navy">{displayName(message.from?.name ?? message.from?.email)}</p>
                     <p className="text-brand-navy/70">{sanitizeText(message.subject)}</p>
                   </div>
                 </div>
@@ -138,7 +141,7 @@ function ProfessorDashboard() {
             leaderboard.map((entry, index) => (
               <div key={entry.student?.id ?? index} className="flex items-center justify-between rounded-xl border px-3 py-2">
                 <div>
-                  <p className="font-semibold text-brand-navy">{index + 1}. {maskName(entry.student?.name ?? entry.student?.email, "student")}</p>
+                  <p className="font-semibold text-brand-navy">{index + 1}. {displayName(entry.student?.name ?? entry.student?.email)}</p>
                   <p className="text-xs text-brand-navy/60">Presenca: {entry.attendanceRate ?? 0}% | Entregas antecipadas: {entry.earlySubmissions ?? 0}</p>
                 </div>
                 <span className="text-sm font-bold text-brand-red">{entry.points ?? 0} pts</span>

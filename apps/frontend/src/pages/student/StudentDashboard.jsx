@@ -7,7 +7,7 @@ import StatCard from "../../components/StatCard.jsx"
 import SkeletonLoader from "../../components/SkeletonLoader.jsx"
 import LoadingState from "../../components/LoadingState.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/sqliteCache"
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import { useSyncControl } from "../../context/useSyncControl.js"
@@ -57,7 +57,7 @@ function StudentDashboard() {
           : "0"
 
         const attendanceRate = attendanceRes && attendanceRes.length
-          ? Math.round((attendanceRes.filter(a => a.status === "present").length / attendanceRes.length) * 100)
+          ? Math.round((attendanceRes.filter(a => String(a.status).toUpperCase() === "PRESENT").length / attendanceRes.length) * 100)
           : "0"
 
         const computedStats = {
@@ -163,7 +163,7 @@ function StudentDashboard() {
               classes.map((cls) => (
                 <div key={cls.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
                   <span className="font-semibold text-brand-navy">{sanitizeText(cls.name)}</span>
-                  <span className="text-brand-navy/70">{maskName(cls.teacher?.name, "teacher") || sanitizeText(cls.teacher?.email)}</span>
+                  <span className="text-brand-navy/70">{displayName(cls.teacher?.name ?? cls.teacher?.email)}</span>
                 </div>
               ))
             ) : (
@@ -179,7 +179,7 @@ function StudentDashboard() {
               recentMessages.map((message) => (
                 <div key={message.id} className="flex items-center justify-between rounded-2xl bg-sand px-4 py-3 text-sm">
                   <div>
-                    <p className="font-semibold text-brand-navy">{maskName(message.from?.name, message.from?.role ? message.from.role.toLowerCase() : "user") || sanitizeText(message.from?.email)}</p>
+                    <p className="font-semibold text-brand-navy">{displayName(message.from?.name ?? message.from?.email)}</p>
                     <p className="text-brand-navy/70">{sanitizeText(message.subject)}</p>
                   </div>
                 </div>

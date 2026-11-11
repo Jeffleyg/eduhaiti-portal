@@ -79,7 +79,10 @@ export class AssetOptimizationService {
       // Dynamic import to avoid top-level require issues on some Node/npm setups
       let PDFDocument: any
       try {
-        const mod = await import('pdf-lib')
+        // Lazy CommonJS require keeps the module optional at startup and
+        // works both in Node and in the Jest VM (native dynamic import does not).
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const mod = require('pdf-lib')
         PDFDocument = mod.PDFDocument ?? mod.default?.PDFDocument ?? mod.default
       } catch (e) {
         // If dynamic import fails, fallback to returning original file (no-op)

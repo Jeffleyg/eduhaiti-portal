@@ -18,6 +18,13 @@ const emptyForm = {
   motherName: "",
 }
 
+const settingsPathByRole = {
+  STUDENT: "/student/settings",
+  TEACHER: "/teacher/settings",
+  ADMIN: "/admin/settings",
+  OWNER: "/owner/settings",
+}
+
 function formatDateInput(value) {
   if (!value) return ""
   return String(value).slice(0, 10)
@@ -109,9 +116,12 @@ function UserProfile() {
         formData,
       })
 
-      if (response?.user) {
-        setProfile(response.user)
+      // The API returns the updated profile itself (older versions wrapped it in { user })
+      const updated = response?.user ?? response
+      if (updated) {
+        setProfile(updated)
         setMessage(t("photoUpdatedSuccess"))
+        await refreshProfile()
       }
     } catch (err) {
       setError(err.message || t("errorUploadingPhoto"))
@@ -179,7 +189,7 @@ function UserProfile() {
               onPhotoUpload={handlePhotoUpload} 
               loading={saving}
               onEditClick={() => setEditMode(!editMode)}
-              onSettingsClick={() => navigate('/student/settings')}
+              onSettingsClick={() => navigate(settingsPathByRole[profile?.role] ?? '/student/settings')}
             />
 
             {/* Quick Links */}

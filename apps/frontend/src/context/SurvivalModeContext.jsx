@@ -31,7 +31,7 @@ export function SurvivalModeProvider({ children }) {
 
   useEffect(() => {
     let mounted = true
-    let batteryRef = null
+    let detachBattery = null
 
     const syncBattery = (battery) => {
       if (!mounted) {
@@ -50,19 +50,21 @@ export function SurvivalModeProvider({ children }) {
             return
           }
 
-          batteryRef = battery
           syncBattery(battery)
 
           const handleBatteryChange = () => syncBattery(battery)
           battery.addEventListener("levelchange", handleBatteryChange)
           battery.addEventListener("chargingchange", handleBatteryChange)
 
-          return () => {
+          detachBattery = () => {
             battery.removeEventListener("levelchange", handleBatteryChange)
             battery.removeEventListener("chargingchange", handleBatteryChange)
           }
         })
         .catch(() => {
+          if (!mounted) {
+            return
+          }
           setBatteryLevel(1)
           setIsCharging(false)
         })
@@ -70,10 +72,7 @@ export function SurvivalModeProvider({ children }) {
 
     return () => {
       mounted = false
-      if (batteryRef) {
-        batteryRef.onlevelchange = null
-        batteryRef.onchargingchange = null
-      }
+      detachBattery?.()
     }
   }, [])
 

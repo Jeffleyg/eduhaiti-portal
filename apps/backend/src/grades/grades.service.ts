@@ -7,6 +7,9 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { GradeStatus, Role, Prisma } from '@prisma/client';
 
+/** Scorecard.semester value used for the whole-year transcript (1 and 2 are semesters). */
+const ANNUAL_TRANSCRIPT = 0;
+
 @Injectable()
 export class GradesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -194,8 +197,9 @@ export class GradesService {
     });
   }
 
+  // Students only ever see published grades (drafts are teacher-only)
   async findByStudent(studentId: string, academicYearId?: string) {
-    const where: Prisma.GradeWhereInput = { studentId };
+    const where: Prisma.GradeWhereInput = { studentId, status: 'PUBLISHED' };
 
     if (academicYearId) {
       where.academicYearId = academicYearId;
@@ -287,6 +291,72 @@ export class GradesService {
       grades,
       summary,
     };
+  }
+
+  /**
+   * Records the student's annual transcript as a Scorecard so the QR code printed on it
+   * can be checked at /verify-transcript/:id. Average of published grades on the /20 scale;
+   * pass/fail against the school's pass mark. Re-issuing refreshes the same record.
+   */
+  async issueTranscript(studentId: string, academicYearId: string) {
+    const grades = await this.prisma.grade.findMany({
+      where: { studentId, academicYearId, status: 'PUBLISHED' },
+      select: {
+        score: true,
+        maxScore: true,
+        class: { select: { seriesId: true } },
+      },
+    });
+    if (grades.length === 0) {
+      throw new BadRequestException(
+        'No published grades for this academic year',
+      );
+    }
+
+    const year = await this.prisma.academicYear.findUnique({
+      where: { id: academicYearId },
+      select: { schoolId: true },
+    });
+    const setting = year
+      ? await this.prisma.academicSetting.findUnique({
+          where: { schoolId: year.schoolId },
+          select: { passAverage: true },
+        })
+      : null;
+
+    const average =
+      grades.reduce(
+        (sum, grade) =>
+          sum + (grade.maxScore > 0 ? (grade.score / grade.maxScore) * 20 : 0),
+        0,
+      ) / grades.length;
+    const averageScore = Math.round(average * 100) / 100;
+    const passStatus = averageScore >= (setting?.passAverage ?? 10);
+    const data = {
+      averageScore,
+      passStatus,
+      seriesId: grades[0].class.seriesId,
+      generatedAt: new Date(),
+    };
+
+    const scorecard = await this.prisma.scorecard.upsert({
+      where: {
+        studentId_academicYearId_semester: {
+          studentId,
+          academicYearId,
+          semester: ANNUAL_TRANSCRIPT,
+        },
+      },
+      update: data,
+      create: {
+        ...data,
+        studentId,
+        academicYearId,
+        semester: ANNUAL_TRANSCRIPT,
+      },
+    });
+
+    return { scorecardId: scorecard.id, averageScore, passStatus };
   }
 
   async listAcademicYearsForStudent(studentId: string) {

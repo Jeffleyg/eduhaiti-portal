@@ -17,23 +17,59 @@ import { diskStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { ClassAccessService } from '../prisma/class-access.service';
 import { AssignmentsService } from './assignments.service';
 import { Role } from '@prisma/client';
 import * as path from 'path';
 import * as fs from 'fs';
 
 const uploadDir = 'uploads';
+/** Largest file a student may hand in (keeps disks and slow links safe). */
+export const MAX_SUBMISSION_BYTES = 20 * 1024 * 1024;
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+type FilenameCallback = (error: Error | null, filename: string) => void;
+
+const uniqueSuffix = () => Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+export function assignmentFilename(
+  _req: unknown,
+  file: { originalname: string },
+  cb: FilenameCallback,
+) {
+  cb(null, `${uniqueSuffix()}-${file.originalname}`);
+}
+
+export function submissionFilename(
+  _req: unknown,
+  file: { originalname: string },
+  cb: FilenameCallback,
+) {
+  cb(null, `submission-${uniqueSuffix()}-${file.originalname}`);
+}
+
+/** The attachment is optional: every file (or none) is accepted. */
+export function acceptAnyFile(
+  _req: unknown,
+  _file: unknown,
+  cb: (error: Error | null, accept: boolean) => void,
+) {
+  cb(null, true);
+}
+
 @Controller('assignments')
 export class AssignmentsController {
-  constructor(private readonly assignmentsService: AssignmentsService) {}
+  constructor(
+    private readonly assignmentsService: AssignmentsService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
   @Get('class/:classId')
   @UseGuards(JwtAuthGuard)
-  async getByClass(@Param('classId') classId: string) {
+  async getByClass(@Req() req: any, @Param('classId') classId: string) {
+    await this.classAccess.assertCanViewClass(classId, req.user);
     return this.assignmentsService.findByClass(classId);
   }
 
@@ -50,19 +86,9 @@ export class AssignmentsController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: uploadDir,
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}-${file.originalname}`);
-        },
+        filename: assignmentFilename,
       }),
-      fileFilter: (req, file, cb) => {
-        if (file) {
-          cb(null, true);
-        } else {
-          cb(null, true);
-        }
-      },
+      fileFilter: acceptAnyFile,
     }),
   )
   async createAssignment(
@@ -71,6 +97,7 @@ export class AssignmentsController {
     @Body() body: { title: string; description?: string; dueDate: string },
     @Req() req: any,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     const filePath = file ? `uploads/${file.filename}` : undefined;
     const dueDate = new Date(body.dueDate);
 
@@ -89,17 +116,15 @@ export class AssignmentsController {
   }
 
   @Post(':assignmentId/submit')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STUDENT)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
         destination: uploadDir,
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `submission-${uniqueSuffix}-${file.originalname}`);
-        },
+        filename: submissionFilename,
       }),
+      limits: { fileSize: MAX_SUBMISSION_BYTES },
     }),
   )
   async submitAssignment(
@@ -123,9 +148,16 @@ export class AssignmentsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   async gradeSubmission(
+    @Req() req: any,
+    @Param('assignmentId') assignmentId: string,
     @Param('submissionId') submissionId: string,
     @Body() body: { grade: number; feedback?: string },
   ) {
+    await this.classAccess.assertCanManageSubmission(
+      assignmentId,
+      submissionId,
+      req.user,
+    );
     return this.assignmentsService.gradeSubmission(
       submissionId,
       body.grade,
@@ -136,7 +168,11 @@ export class AssignmentsController {
   @Delete(':assignmentId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
-  async deleteAssignment(@Param('assignmentId') assignmentId: string) {
+  async deleteAssignment(
+    @Req() req: any,
+    @Param('assignmentId') assignmentId: string,
+  ) {
+    await this.classAccess.assertCanManageAssignment(assignmentId, req.user);
     return this.assignmentsService.delete(assignmentId);
   }
 }

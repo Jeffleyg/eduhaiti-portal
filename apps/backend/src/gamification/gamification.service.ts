@@ -166,26 +166,26 @@ export class GamificationService {
     if (params.perfectAttendanceClasses > 0) {
       badges.push({
         code: 'PERFECT_ATTENDANCE',
-        name: 'Presenca Exemplar',
+        name: 'Présence exemplaire',
         description:
-          'Sem faltas em pelo menos uma turma no periodo avaliado.',
+          'Aucune absence dans au moins une classe sur la période évaluée.',
       });
     }
 
     if (params.earlySubmissions >= 3) {
       badges.push({
         code: 'EARLY_SUBMITTER',
-        name: 'Entrega Antecipada',
+        name: 'Remise anticipée',
         description:
-          'Pelo menos 3 tarefas enviadas antes do prazo final.',
+          'Au moins 3 devoirs remis avant la date limite.',
       });
     }
 
     if (params.attendanceRate >= 95) {
       badges.push({
         code: 'CONSISTENT',
-        name: 'Constancia Academica',
-        description: 'Taxa de presenca igual ou superior a 95%.',
+        name: 'Assiduité constante',
+        description: 'Taux de présence égal ou supérieur à 95 %.',
       });
     }
 

@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
+import { ClassAccessService, ClassRequester } from '../prisma/class-access.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -7,7 +8,10 @@ import { Role } from '@prisma/client';
 
 @Controller('attendance')
 export class AttendancePublicController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(
+    private readonly attendanceService: AttendanceService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('my-attendance')
@@ -41,9 +45,11 @@ export class AttendancePublicController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId')
   async getClassAttendance(
+    @Req() req: { user?: ClassRequester },
     @Param('classId') classId: string,
     @Query('date') date?: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.attendanceService.findByClass(
       classId,
       date ? new Date(date) : undefined,
@@ -53,7 +59,11 @@ export class AttendancePublicController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId/report')
-  async getClassReport(@Param('classId') classId: string) {
+  async getClassReport(
+    @Req() req: { user?: ClassRequester },
+    @Param('classId') classId: string,
+  ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.attendanceService.getClassAttendanceReport(classId);
   }
 }

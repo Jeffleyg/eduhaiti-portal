@@ -5,8 +5,6 @@
  * erro e atributos ARIA automáticos.
  */
 
-import { useCallback } from 'react'
-
 /**
  * useFormField - Hook para field integration com react-hook-form
  * 
@@ -16,7 +14,7 @@ import { useCallback } from 'react'
  * @param {Object} props.formState - FormState do useForm
  * @returns {Object} Props para passar ao campo
  */
-export const useFormField = ({ control, name, formState = {} }) => {
+export const useFormField = ({ name, formState = {} }) => {
   const error = formState?.errors?.[name]?.message
   const isInvalid = !!error
   const fieldId = `field-${name}`

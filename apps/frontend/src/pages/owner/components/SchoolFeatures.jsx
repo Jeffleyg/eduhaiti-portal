@@ -53,42 +53,36 @@ function SchoolFeatures({ schoolId, token }) {
       name: 'Módulo Financeiro',
       desc: 'Cobranças, controle de mensalidades e extratos.',
       icon: CreditCard,
-      color: 'emerald',
     },
     {
       key: 'enableFamilyAccess',
       name: 'Espaço Família',
       desc: 'Visualização de boletins e canal com responsáveis.',
       icon: Users,
-      color: 'sky',
     },
     {
       key: 'enablePayment',
       name: 'Pagamentos Online',
       desc: 'Integração direta com MonCash e Natcash.',
       icon: Globe,
-      color: 'indigo',
     },
     {
       key: 'enableSync',
       name: 'Modo Offline (Survival)',
       desc: 'Permite lançar presenças e notas sem internet.',
       icon: Wifi,
-      color: 'amber',
     },
     {
       key: 'enableLessons',
       name: 'Planos de Aulas',
       desc: 'Publicação de ementas e materiais pedagógicos.',
       icon: BookOpen,
-      color: 'blue',
     },
     {
       key: 'enableForums',
       name: 'Fóruns da Escola',
       desc: 'Espaço de debates e dúvidas entre turmas.',
       icon: MessageSquare,
-      color: 'purple',
     },
   ]
 
@@ -106,7 +100,7 @@ function SchoolFeatures({ schoolId, token }) {
       {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {modules.map(({ key, name, desc, icon: Icon, color }) => {
+        {modules.map(({ key, name, desc, icon: Icon }) => {
           const isActive = !!features[key]
           const isSaving = savingKey === key
 

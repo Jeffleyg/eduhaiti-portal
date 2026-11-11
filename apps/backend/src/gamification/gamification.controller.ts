@@ -4,11 +4,15 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { GamificationService } from './gamification.service';
+import { ClassAccessService } from '../prisma/class-access.service';
 
 @Controller('gamification')
 @UseGuards(JwtAuthGuard)
 export class GamificationController {
-  constructor(private readonly gamificationService: GamificationService) {}
+  constructor(
+    private readonly gamificationService: GamificationService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
   @Get('me')
   @UseGuards(RolesGuard)
@@ -21,9 +25,10 @@ export class GamificationController {
   @UseGuards(RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   async classLeaderboard(
-    @Req() req: { user?: { sub?: string; role?: Role } },
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.gamificationService.getClassLeaderboard(classId, {
       id: req.user?.sub ?? '',
       role: req.user?.role ?? Role.TEACHER,

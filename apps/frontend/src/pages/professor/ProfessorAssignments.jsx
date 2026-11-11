@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, apiUpload } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext.jsx";
 import SectionCard from "../../components/SectionCard";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
@@ -10,6 +11,7 @@ import Feedback from "../../components/Feedback";
 
 export default function ProfessorAssignments() {
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [assignments, setAssignments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,15 +34,18 @@ export default function ProfessorAssignments() {
     try {
       setLoading(true);
       setFeedback(null);
-      const token = localStorage.getItem("token");
+      // Only the teacher's own classes; assignments are listed per class
+      const classesRes = await apiFetch("/classes/my-classes", { token });
+      const myClasses = Array.isArray(classesRes) ? classesRes : [];
+      const perClass = await Promise.all(
+        myClasses.map(async (cls) => {
+          const rows = await apiFetch(`/assignments/class/${cls.id}`, { token });
+          return (Array.isArray(rows) ? rows : []).map((row) => ({ ...row, class: row.class ?? cls }));
+        }),
+      );
 
-      const [assignmentsRes, classesRes] = await Promise.all([
-        apiFetch("/assignments", { token }).catch(() => []),
-        apiFetch("/classes", { token }).catch(() => []),
-      ]);
-
-      setAssignments(Array.isArray(assignmentsRes) ? assignmentsRes : assignmentsRes?.data || []);
-      setClasses(Array.isArray(classesRes) ? classesRes : classesRes?.data || []);
+      setClasses(myClasses);
+      setAssignments(perClass.flat());
     } catch (err) {
       console.error("Erro ao carregar dados do professor:", err);
       setFeedback({
@@ -54,7 +59,7 @@ export default function ProfessorAssignments() {
 
   const handleCreateAssignment = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.classId) {
+    if (!formData.title || !formData.classId || !formData.dueDate) {
       setFeedback({
         type: "error",
         message: t("assignments.validationError", "Tanpri ranpli tout chan obligatwa yo"),
@@ -64,27 +69,26 @@ export default function ProfessorAssignments() {
 
     try {
       setSubmitting(true);
-      const token = localStorage.getItem("token");
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
-        classId: formData.classId,
-      };
+      // The backend endpoint is multipart (it accepts an optional attachment)
+      const payload = new FormData();
+      payload.append("title", formData.title);
+      payload.append("description", formData.description);
+      payload.append("dueDate", new Date(formData.dueDate).toISOString());
 
-      await apiFetch("/assignments", {
+      await apiUpload(`/assignments/create/${formData.classId}`, {
         method: "POST",
         token,
-        body: payload,
+        formData: payload,
       });
 
+      setShowModal(false);
+      setFormData({ title: "", description: "", dueDate: "", classId: "" });
+      // reload first: loadData clears the feedback banner
+      await loadData();
       setFeedback({
         type: "success",
         message: t("assignments.createSuccess", "Devwa pibliye avèk siksè!"),
       });
-      setShowModal(false);
-      setFormData({ title: "", description: "", dueDate: "", classId: "" });
-      loadData();
     } catch (err) {
       console.error("Erro ao criar tarefa:", err);
       setFeedback({
@@ -153,7 +157,7 @@ export default function ProfessorAssignments() {
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span>ID: {item.id.slice(0, 8)}...</span>
-                <span>{item.class?.gradeLevel || ""}</span>
+                <span>{item.class?.level || ""}</span>
               </div>
             </SectionCard>
           ))}
@@ -182,7 +186,7 @@ export default function ProfessorAssignments() {
                   <option value="">-- {t("common.select", "Chwazi yon klas")} --</option>
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.academicYear || ""})
+                      {c.name} ({c.academicYear?.year || c.level || ""})
                     </option>
                   ))}
                 </select>
@@ -204,13 +208,14 @@ export default function ProfessorAssignments() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  {t("assignments.formDueDate", "Dat limit pou remèt")}
+                  {t("assignments.formDueDate", "Dat limit pou remèt")} *
                 </label>
                 <input
                   type="date"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  required
                 />
               </div>
 

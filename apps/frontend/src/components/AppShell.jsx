@@ -7,13 +7,12 @@ import { useSurvivalMode } from "../context/useSurvivalMode.js"
 
 function AppShell({ role }) {
   const { disableImages, disableAnimations } = useSurvivalMode()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
-
-  // Fecha o menu lateral automaticamente sempre que a rota mudar
-  useEffect(() => {
-    setMobileMenuOpen(false)
-  }, [location.pathname])
+  // The drawer remembers the route it was opened on, so navigating closes it
+  // without an effect (no extra render).
+  const [menuOpenedOn, setMenuOpenedOn] = useState(null)
+  const mobileMenuOpen = menuOpenedOn === location.pathname
+  const setMobileMenuOpen = (open) => setMenuOpenedOn(open ? location.pathname : null)
 
   // Acessibilidade: trava a rolagem de fundo e fecha a gaveta ao pressionar Escape
   useEffect(() => {
@@ -125,7 +124,7 @@ function AppShell({ role }) {
           </div>
 
           {/* TopBar corporativa original */}
-          <TopBar role={role} onMenuToggle={() => setMobileMenuOpen(true)} />
+          <TopBar role={role} />
 
           {/* Painel de Conteúdo das Páginas (Outlet) */}
           <main className="surface-panel flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-x-auto">

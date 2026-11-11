@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import PaginationControls from "./PaginationControls.jsx"
 import SkeletonLoader from "./SkeletonLoader.jsx"
@@ -29,26 +29,19 @@ function DataTablePaginated({
 }) {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
-  const [displayRows, setDisplayRows] = useState([])
   const pageLimit = pageSize ?? itemsPerPage
 
   // Calcular paginação
   const actualTotal = totalCount ?? rows.length
   const totalPages = Math.max(1, Math.ceil(rows.length / pageLimit))
-  const start = (page - 1) * pageLimit
+  // Clamp during render: when rows shrink the current page may no longer exist.
+  const safePage = Math.min(page, totalPages)
+  const start = (safePage - 1) * pageLimit
   const end = start + pageLimit
 
-  // Ajustar página se necessário
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
-
-  // Atualizar linhas exibidas
-  useEffect(() => {
-    setDisplayRows(rows.slice(start, end))
-  }, [rows, page, pageLimit, start, end])
+  // Linhas exibidas derivadas da página atual (sem estado intermediário:
+  // um array default novo a cada render causava loop de re-render)
+  const displayRows = useMemo(() => rows.slice(start, end), [rows, start, end])
 
   // Estado vazio
   if (!loading && rows.length === 0) {
@@ -65,7 +58,6 @@ function DataTablePaginated({
     return <SkeletonLoader type="table" count={pageLimit} />
   }
 
-  const safePage = Math.min(page, totalPages)
 
   return (
     <div>
@@ -118,8 +110,8 @@ function DataTablePaginated({
           totalPages={totalPages}
           previousLabel={t("previous") ?? "Previous"}
           continueLabel={t("continue") ?? "Next"}
-          onPrevious={() => setPage((prev) => Math.max(1, prev - 1))}
-          onContinue={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+          onPrevious={() => setPage(Math.max(1, safePage - 1))}
+          onContinue={() => setPage(Math.min(totalPages, safePage + 1))}
         />
       )}
     </div>

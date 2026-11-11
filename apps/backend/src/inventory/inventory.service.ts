@@ -1,231 +1,183 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InventoryItemType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { buildAuditData, safeParseJson } from '../common/audit-compat';
 
-type InventoryItem = {
-  id: string;
-  schoolId: string;
-  name: string;
-  itemType: 'TEXTBOOK' | 'UNIFORM' | 'MEAL_KIT' | 'DEVICE' | 'OTHER';
-  quantity: number;
-  minThreshold: number;
-  unit?: string;
-  notes?: string;
-  deleted?: boolean;
-  updatedAt: string;
-};
+type ItemType = 'TEXTBOOK' | 'UNIFORM' | 'MEAL_KIT' | 'DEVICE' | 'OTHER';
 
+/**
+ * School inventory stored in SchoolInventoryItem / SchoolInventoryMovement.
+ * Every operation is limited to the caller's school.
+ */
 @Injectable()
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private parseItem = (changes: unknown): InventoryItem | null =>
-    safeParseJson<InventoryItem>(changes);
-
-  private async buildCurrentMap(schoolId?: string) {
-    const logs = await this.prisma.auditLog.findMany({
-      where: {
-        entityType: 'SCHOOL_INVENTORY',
-      },
-      orderBy: { createdAt: 'asc' },
-      take: 10000,
-    });
-
-    const map = new Map<string, InventoryItem>();
-
-    for (const log of logs) {
-      const item = this.parseItem(log.changes);
-      if (!item) {
-        continue;
-      }
-
-      if (schoolId && item.schoolId !== schoolId) {
-        continue;
-      }
-
-      if (!log.entityId) continue;
-
-      map.set(log.entityId, { ...item, id: log.entityId });
+  private requireSchool(schoolId?: string | null): string {
+    if (!schoolId) {
+      throw new ForbiddenException('User is not linked to a school');
     }
-
-    return map;
+    return schoolId;
   }
 
-  async listItems(schoolId?: string) {
-    const map = await this.buildCurrentMap(schoolId);
-    return [...map.values()].filter((item) => !item.deleted);
+  /** Loads an item of the caller's school; other schools' items look missing. */
+  private async findOwnItem(itemId: string, schoolId: string) {
+    const item = await this.prisma.schoolInventoryItem.findFirst({
+      where: { id: itemId, schoolId },
+    });
+    if (!item) {
+      throw new NotFoundException('Inventory item not found');
+    }
+    return item;
+  }
+
+  private assertCount(value: number | undefined, field: string) {
+    if (value !== undefined && (!Number.isInteger(value) || value < 0)) {
+      throw new BadRequestException(`${field} must be a non-negative integer`);
+    }
+  }
+
+  async listItems(schoolId?: string | null) {
+    return this.prisma.schoolInventoryItem.findMany({
+      where: { schoolId: this.requireSchool(schoolId) },
+      orderBy: [{ itemType: 'asc' }, { name: 'asc' }],
+    });
   }
 
   async createItem(payload: {
-    schoolId: string;
+    schoolId?: string | null;
     name: string;
-    itemType?: 'TEXTBOOK' | 'UNIFORM' | 'MEAL_KIT' | 'DEVICE' | 'OTHER';
+    itemType?: ItemType;
     quantity?: number;
     minThreshold?: number;
     unit?: string;
     notes?: string;
     actorUserId?: string;
   }) {
-    if (!payload.schoolId?.trim() || !payload.name?.trim()) {
-      throw new BadRequestException('schoolId and name are required');
+    const schoolId = this.requireSchool(payload.schoolId);
+    const name = payload.name?.trim();
+    if (!name) {
+      throw new BadRequestException('name is required');
     }
+    this.assertCount(payload.quantity, 'quantity');
+    this.assertCount(payload.minThreshold, 'minThreshold');
 
-    const itemId = crypto.randomUUID();
-    const item: InventoryItem = {
-      id: itemId,
-      schoolId: payload.schoolId.trim(),
-      name: payload.name.trim(),
-      itemType: payload.itemType ?? 'OTHER',
-      quantity: payload.quantity ?? 0,
-      minThreshold: payload.minThreshold ?? 0,
-      unit: payload.unit?.trim() || undefined,
-      notes: payload.notes?.trim() || undefined,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await this.prisma.auditLog.create({
-      data: buildAuditData({
-        entityType: 'SCHOOL_INVENTORY',
-        entityId: itemId,
-        action: 'CREATE',
-        userId: payload.actorUserId,
-        changes: item,
-      }),
+    const quantity = payload.quantity ?? 0;
+    return this.prisma.$transaction(async (tx) => {
+      const item = await tx.schoolInventoryItem.create({
+        data: {
+          schoolId,
+          name,
+          itemType: (payload.itemType ?? 'OTHER') as InventoryItemType,
+          quantity,
+          minThreshold: payload.minThreshold ?? 0,
+          unit: payload.unit?.trim() || null,
+          notes: payload.notes?.trim() || null,
+        },
+      });
+      if (quantity > 0) {
+        await tx.schoolInventoryMovement.create({
+          data: { itemId: item.id, delta: quantity, reason: 'INITIAL_STOCK', actorUserId: payload.actorUserId },
+        });
+      }
+      return item;
     });
-
-    return item;
   }
 
+  /** Edits the description of an item. Quantity changes go through adjustItemStock. */
   async updateItem(
     itemId: string,
     payload: {
+      schoolId?: string | null;
       name?: string;
-      itemType?: 'TEXTBOOK' | 'UNIFORM' | 'MEAL_KIT' | 'DEVICE' | 'OTHER';
-      quantity?: number;
+      itemType?: ItemType;
       minThreshold?: number;
       unit?: string;
       notes?: string;
-      actorUserId?: string;
     },
   ) {
-    const map = await this.buildCurrentMap();
-    const current = map.get(itemId);
+    const schoolId = this.requireSchool(payload.schoolId);
+    await this.findOwnItem(itemId, schoolId);
+    this.assertCount(payload.minThreshold, 'minThreshold');
 
-    if (!current || current.deleted) {
-      throw new NotFoundException('Inventory item not found');
-    }
-
-    const next: InventoryItem = {
-      ...current,
-      name: payload.name?.trim() || current.name,
-      itemType: payload.itemType || current.itemType,
-      quantity: payload.quantity ?? current.quantity,
-      minThreshold: payload.minThreshold ?? current.minThreshold,
-      unit:
-        payload.unit !== undefined
-          ? payload.unit?.trim() || undefined
-          : current.unit,
-      notes:
-        payload.notes !== undefined
-          ? payload.notes?.trim() || undefined
-          : current.notes,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await this.prisma.auditLog.create({
-      data: buildAuditData({
-        entityType: 'SCHOOL_INVENTORY',
-        entityId: itemId,
-        action: 'UPDATE',
-        userId: payload.actorUserId,
-        changes: next,
-      }),
+    return this.prisma.schoolInventoryItem.update({
+      where: { id: itemId },
+      data: {
+        ...(payload.name?.trim() ? { name: payload.name.trim() } : {}),
+        ...(payload.itemType ? { itemType: payload.itemType as InventoryItemType } : {}),
+        ...(payload.minThreshold !== undefined ? { minThreshold: payload.minThreshold } : {}),
+        ...(payload.unit !== undefined ? { unit: payload.unit?.trim() || null } : {}),
+        ...(payload.notes !== undefined ? { notes: payload.notes?.trim() || null } : {}),
+      },
     });
-
-    return next;
   }
 
+  /**
+   * Moves stock up or down and records why. The decrement only applies when enough
+   * stock is left, checked in the same UPDATE, so concurrent requests cannot go negative.
+   */
   async adjustItemStock(
     itemId: string,
     payload: {
+      schoolId?: string | null;
       delta: number;
       reason: string;
       actorUserId?: string;
     },
   ) {
-    if (!Number.isFinite(payload.delta) || payload.delta === 0) {
-      throw new BadRequestException('delta must be a non-zero number');
+    const schoolId = this.requireSchool(payload.schoolId);
+    if (!Number.isInteger(payload.delta) || payload.delta === 0) {
+      throw new BadRequestException('delta must be a non-zero integer');
     }
-
-    if (!payload.reason?.trim()) {
+    const reason = payload.reason?.trim();
+    if (!reason) {
       throw new BadRequestException('reason is required');
     }
 
-    const map = await this.buildCurrentMap();
-    const current = map.get(itemId);
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.schoolInventoryItem.updateMany({
+        where: {
+          id: itemId,
+          schoolId,
+          ...(payload.delta < 0 ? { quantity: { gte: -payload.delta } } : {}),
+        },
+        data: { quantity: { increment: payload.delta } },
+      });
 
-    if (!current || current.deleted) {
-      throw new NotFoundException('Inventory item not found');
-    }
+      if (updated.count === 0) {
+        const exists = await tx.schoolInventoryItem.findFirst({
+          where: { id: itemId, schoolId },
+          select: { id: true },
+        });
+        throw exists
+          ? new BadRequestException('stock cannot be negative')
+          : new NotFoundException('Inventory item not found');
+      }
 
-    const nextQuantity = current.quantity + payload.delta;
-    if (nextQuantity < 0) {
-      throw new BadRequestException('stock cannot be negative');
-    }
+      await tx.schoolInventoryMovement.create({
+        data: { itemId, delta: payload.delta, reason, actorUserId: payload.actorUserId },
+      });
 
-    const next: InventoryItem = {
-      ...current,
-      quantity: nextQuantity,
-      notes: [
-        current.notes,
-        `MOV:${payload.reason.trim()} (${payload.delta > 0 ? '+' : ''}${payload.delta})`,
-      ]
-        .filter(Boolean)
-        .join(' | '),
-      updatedAt: new Date().toISOString(),
-    };
-
-    await this.prisma.auditLog.create({
-      data: buildAuditData({
-        entityType: 'SCHOOL_INVENTORY',
-        entityId: itemId,
-        action: 'ADJUST',
-        userId: payload.actorUserId,
-        changes: next,
-      }),
+      return tx.schoolInventoryItem.findUniqueOrThrow({ where: { id: itemId } });
     });
-
-    return next;
   }
 
-  async deleteItem(itemId: string, actorUserId?: string) {
-    const map = await this.buildCurrentMap();
-    const current = map.get(itemId);
-
-    if (!current || current.deleted) {
-      throw new NotFoundException('Inventory item not found');
-    }
-
-    const next: InventoryItem = {
-      ...current,
-      deleted: true,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await this.prisma.auditLog.create({
-      data: buildAuditData({
-        entityType: 'SCHOOL_INVENTORY',
-        entityId: itemId,
-        action: 'DELETE',
-        userId: actorUserId,
-        changes: next,
-      }),
+  async listMovements(itemId: string, schoolId?: string | null) {
+    await this.findOwnItem(itemId, this.requireSchool(schoolId));
+    return this.prisma.schoolInventoryMovement.findMany({
+      where: { itemId },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
     });
+  }
 
+  async deleteItem(itemId: string, schoolId?: string | null) {
+    await this.findOwnItem(itemId, this.requireSchool(schoolId));
+    await this.prisma.schoolInventoryItem.delete({ where: { id: itemId } });
     return { success: true };
   }
 }

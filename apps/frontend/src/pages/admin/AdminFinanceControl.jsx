@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
@@ -30,34 +30,35 @@ function AdminFinanceControl() {
   const [message, setMessage] = useState("")
   const [activeSection, setActiveSection] = useState("charge")
 
-  const buildFilterQuery = (includePagination = true) => {
+  const buildFilterQuery = (includePagination = true, activeFilters = filters) => {
     const params = new URLSearchParams()
-    if (filters.studentEnrollmentNumber.trim()) {
-      params.set("studentEnrollmentNumber", filters.studentEnrollmentNumber.trim())
+    if (activeFilters.studentEnrollmentNumber.trim()) {
+      params.set("studentEnrollmentNumber", activeFilters.studentEnrollmentNumber.trim())
     }
-    if (filters.status && filters.status !== "ALL") {
-      params.set("status", filters.status)
+    if (activeFilters.status && activeFilters.status !== "ALL") {
+      params.set("status", activeFilters.status)
     }
-    if (filters.startDate) {
-      params.set("startDate", filters.startDate)
+    if (activeFilters.startDate) {
+      params.set("startDate", activeFilters.startDate)
     }
-    if (filters.endDate) {
-      params.set("endDate", filters.endDate)
+    if (activeFilters.endDate) {
+      params.set("endDate", activeFilters.endDate)
     }
     if (includePagination) {
-      params.set("page", String(filters.page))
-      params.set("pageSize", String(filters.pageSize))
+      params.set("page", String(activeFilters.page))
+      params.set("pageSize", String(activeFilters.pageSize))
     }
     return params.toString()
   }
 
-  const loadDashboard = async () => {
+  // `overrides` lets callers load a page before the filters state has re-rendered
+  const loadDashboard = async (overrides = {}) => {
     setLoading(true)
     setError("")
     setMessage("")
 
     try {
-      const query = buildFilterQuery()
+      const query = buildFilterQuery(true, { ...filters, ...overrides })
       const [summaryData, paymentsData] = await Promise.all([
         apiFetch(`/finance/admin/summary?${query}`, { token }),
         apiFetch(`/finance/admin/payments?${query}`, { token }),
@@ -163,7 +164,7 @@ function AdminFinanceControl() {
               <p className="text-xs text-brand-navy/60">{t("createTuitionChargeDesc")}</p>
             </div>
           </div>
-          <FinanceChargeForm onSuccess={loadDashboard} loading={loading} />
+          <FinanceChargeForm onSuccess={() => loadDashboard()} loading={loading} />
         </div>
       )}
 
@@ -178,7 +179,7 @@ function AdminFinanceControl() {
               <p className="text-xs text-brand-navy/60">{t("renegotiationInstallmentDesc")}</p>
             </div>
           </div>
-          <FinanceInstallmentForm onSuccess={loadDashboard} loading={loading} />
+          <FinanceInstallmentForm onSuccess={() => loadDashboard()} loading={loading} />
         </div>
       )}
 
@@ -189,7 +190,7 @@ function AdminFinanceControl() {
             filters={filters}
             summary={summary}
             onFilterChange={setFilters}
-            onLoadDashboard={loadDashboard}
+            onLoadDashboard={() => loadDashboard()}
             onExportCsv={exportCsv}
             loading={loading}
           />
@@ -213,7 +214,7 @@ function AdminFinanceControl() {
             pagination={pagination}
             onPageChange={(newPage) => {
               setFilters((prev) => ({ ...prev, page: newPage }))
-              setTimeout(loadDashboard, 0)
+              loadDashboard({ page: newPage })
             }}
           />
         </div>

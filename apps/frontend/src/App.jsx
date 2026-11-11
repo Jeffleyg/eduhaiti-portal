@@ -6,6 +6,7 @@ import Landing from "./pages/Landing.jsx"
 import Login from "./pages/auth/Login.jsx"
 import ChangePassword from "./pages/auth/ChangePassword.jsx"
 import RedeemAccess from "./pages/auth/RedeemAccess.jsx"
+import VerifyTranscript from "./pages/VerifyTranscript.jsx"
 import OwnerDashboard from "./pages/owner/OwnerDashboard.jsx"
 import {
   AdminUsers,
@@ -57,6 +58,7 @@ function App() {
               <Route path="/redeem-access" element={<RedeemAccess />} />
               <Route path="/tuition-payment" element={<GuardianTuitionPayment />} />
               <Route path="/family" element={<FamilyPortal />} />
+              <Route path="/verify-transcript/:id" element={<VerifyTranscript />} />
               <Route path="/pagamento-escolaridade" element={<Navigate to="/tuition-payment" replace />} />
               <Route path="/familia" element={<Navigate to="/family" replace />} />
               <Route element={<ProtectedRoute />}>
@@ -85,10 +87,11 @@ function App() {
                   <Route path="attendance" element={<TeacherAttendance />} />
                   <Route path="resources" element={<TeacherResources />} />
                   <Route path="assignments" element={<TeacherAssignments />} />
-                    <Route path="lesson-plans" element={<TeacherLessonPlans />} />
+                  <Route path="lesson-plans" element={<TeacherLessonPlans />} />
                   <Route path="forum" element={<TeacherForum />} />
                   <Route path="messages" element={<TeacherMessages />} />
                   <Route path="profile" element={<UserProfile />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="academic-requests" element={<TeacherAcademicRequests />} />
                 </Route>
               </Route>
@@ -105,7 +108,7 @@ function App() {
                   <Route path="forum" element={<StudentForum />} />
                   <Route path="messages" element={<StudentMessages />} />
                   <Route path="profile" element={<UserProfile />} />
-                    <Route path="settings" element={<Settings />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="academic-requests" element={<StudentAcademicRequests />} />
                 </Route>
               </Route>
@@ -118,6 +121,7 @@ function App() {
                   <Route path="disciplines" element={<AdminDisciplineManagement />} />
                   <Route path="finance" element={<AdminFinanceControl />} />
                   <Route path="profile" element={<UserProfile />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="academic" element={<AdminAcademicConfig />} />
                   <Route path="academic-requests" element={<TeacherAcademicRequests />} />
                   <Route path="family-communication" element={<AdminFamilyCommunication />} />
@@ -128,6 +132,7 @@ function App() {
                 <Route path="/owner" element={<AppShell role="owner" />}>
                   <Route index element={<OwnerDashboard />} />
                   <Route path="profile" element={<UserProfile />} />
+                  <Route path="settings" element={<Settings />} />
                 </Route>
               </Route>
 

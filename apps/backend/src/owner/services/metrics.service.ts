@@ -5,6 +5,10 @@ import { Role } from '@prisma/client'
 /**
  * MetricsService - Business analytics and dashboard metrics
  */
+/** Haitian grading scale and the default pass mark on it. */
+const GRADE_SCALE = 20
+const PASSING_GRADE = 10
+
 @Injectable()
 export class MetricsService {
   constructor(private prisma: PrismaService) {}
@@ -46,20 +50,11 @@ export class MetricsService {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - periodDays)
 
-    // Try to get data from Finance model if exists, otherwise return placeholder
-    try {
-      // Placeholder - adjust based on actual finance schema
-      return {
-        defaultRate: 0,
-        period: { startDate, days: periodDays },
-        status: 'Finance module integration needed',
-      }
-    } catch (error) {
-      return {
-        defaultRate: 0,
-        period: { startDate, days: periodDays },
-        status: 'unavailable',
-      }
+    // Placeholder until the finance schema is wired into owner metrics
+    return {
+      defaultRate: 0,
+      period: { startDate, days: periodDays },
+      status: 'Finance module integration needed',
     }
   }
 
@@ -176,48 +171,51 @@ export class MetricsService {
   async getGradeDistribution(schoolId?: string) {
     const grades = await this.prisma.grade.findMany({
       where: schoolId ? { class: { academicYear: { schoolId } } } : undefined,
-      select: { score: true },
+      select: { score: true, maxScore: true },
     })
 
     if (grades.length === 0) {
       return {
         distribution: {},
-        statistics: { average: 0, highest: 0, lowest: 0, count: 0 },
+        statistics: { average: 0, highest: 0, lowest: 0, count: 0, scale: GRADE_SCALE },
       }
     }
 
-    // Bucket grades
+    // Grades are on the Haitian /20 scale; normalise any other maxScore to it.
     const distribution = {
-      '0-20': 0,
-      '21-40': 0,
-      '41-60': 0,
-      '61-80': 0,
-      '81-100': 0,
+      '0-5': 0,
+      '5-10': 0,
+      '10-12': 0,
+      '12-16': 0,
+      '16-20': 0,
     }
 
     let sum = 0
     let highest = 0
-    let lowest = 100
+    let lowest = GRADE_SCALE
 
     grades.forEach(g => {
-      sum += g.score
-      if (g.score > highest) highest = g.score
-      if (g.score < lowest) lowest = g.score
+      const maxScore = g.maxScore > 0 ? g.maxScore : GRADE_SCALE
+      const score = Math.min(GRADE_SCALE, Math.max(0, (g.score / maxScore) * GRADE_SCALE))
+      sum += score
+      if (score > highest) highest = score
+      if (score < lowest) lowest = score
 
-      if (g.score <= 20) distribution['0-20']++
-      else if (g.score <= 40) distribution['21-40']++
-      else if (g.score <= 60) distribution['41-60']++
-      else if (g.score <= 80) distribution['61-80']++
-      else distribution['81-100']++
+      if (score < 5) distribution['0-5']++
+      else if (score < 10) distribution['5-10']++
+      else if (score < 12) distribution['10-12']++
+      else if (score < 16) distribution['12-16']++
+      else distribution['16-20']++
     })
 
     return {
       distribution,
       statistics: {
         average: parseFloat((sum / grades.length).toFixed(2)),
-        highest,
-        lowest,
+        highest: parseFloat(highest.toFixed(2)),
+        lowest: parseFloat(lowest.toFixed(2)),
         count: grades.length,
+        scale: GRADE_SCALE,
       },
     }
   }
@@ -275,18 +273,14 @@ export class MetricsService {
       this.getEnrollmentByClass(schoolId),
     ])
 
-    // Calculate performance score (0-100)
+    // Performance score: the four factors below add up to at most 100 points.
     let performanceScore = 0
-    let factors = 0
 
     // Attendance factor (0-30 points)
     performanceScore += (dashboard.attendance.presentPercent / 100) * 30
-    factors++
 
-    // Academic factor (0-30 points)
-    const gradePercentage = (dashboard.academics.averageGrade / 100) * 100
-    performanceScore += (gradePercentage / 100) * 30
-    factors++
+    // Academic factor (0-30 points), average on the /20 scale
+    performanceScore += (dashboard.academics.averageGrade / GRADE_SCALE) * 30
 
     // Enrollment stability (0-20 points)
     const growthTrend = dashboard.enrollment.monthGrowthPercent
@@ -297,7 +291,6 @@ export class MetricsService {
     } else {
       performanceScore += 5
     }
-    factors++
 
     // Class capacity utilization (0-20 points)
     const avgOccupancy = classesList.reduce((sum, c) => sum + c.occupancyRate, 0) / (classesList.length || 1)
@@ -308,14 +301,13 @@ export class MetricsService {
     } else {
       performanceScore += 10
     }
-    factors++
 
     return {
       schoolId,
-      performanceScore: parseFloat((performanceScore / factors).toFixed(2)),
+      performanceScore: parseFloat(performanceScore.toFixed(2)),
       metrics: dashboard,
       classMetrics: classesList,
-      recommendations: this.generateRecommendations(performanceScore / factors, dashboard),
+      recommendations: this.generateRecommendations(performanceScore, dashboard),
     }
   }
 
@@ -329,7 +321,7 @@ export class MetricsService {
       recommendations.push('High absence rate detected. Consider implementing attendance incentives.')
     }
 
-    if (dashboard.academics.averageGrade < 60) {
+    if (dashboard.academics.averageGrade < PASSING_GRADE) {
       recommendations.push('Average grades are below passing. Consider implementing tutoring programs.')
     }
 

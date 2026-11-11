@@ -29,38 +29,44 @@ export class AcademicPeriodsController {
 
   @Get()
   listBySchool(@Request() req: any, @Query('schoolId') schoolId?: string) {
-    const targetSchoolId = schoolId || req.user?.schoolId;
+    // An admin linked to a school is always scoped to it
+    const targetSchoolId = req.user?.schoolId || schoolId;
     return this.academicPeriodsService.listBySchool(targetSchoolId);
   }
 
   @Post()
   create(@Request() req: any, @Body() body: CreateAcademicPeriodDto) {
-    if (!body.schoolId && req.user?.schoolId) {
+    if (req.user?.schoolId) {
       body.schoolId = req.user.schoolId;
     }
     return this.academicPeriodsService.create(body);
   }
 
   @Put(':periodId')
-  update(
+  async update(
+    @Request() req: any,
     @Param('periodId') periodId: string,
     @Body() body: UpdateAcademicPeriodDto,
   ) {
+    await this.academicPeriodsService.assertPeriodInSchool(periodId, req.user?.schoolId);
     return this.academicPeriodsService.update(periodId, body);
   }
 
   @Patch(':periodId/open')
-  open(@Param('periodId') periodId: string) {
+  async open(@Request() req: any, @Param('periodId') periodId: string) {
+    await this.academicPeriodsService.assertPeriodInSchool(periodId, req.user?.schoolId);
     return this.academicPeriodsService.setOpenState(periodId, true);
   }
 
   @Patch(':periodId/close')
-  close(@Param('periodId') periodId: string) {
+  async close(@Request() req: any, @Param('periodId') periodId: string) {
+    await this.academicPeriodsService.assertPeriodInSchool(periodId, req.user?.schoolId);
     return this.academicPeriodsService.setOpenState(periodId, false);
   }
 
   @Delete(':periodId')
-  remove(@Param('periodId') periodId: string) {
+  async remove(@Request() req: any, @Param('periodId') periodId: string) {
+    await this.academicPeriodsService.assertPeriodInSchool(periodId, req.user?.schoolId);
     return this.academicPeriodsService.remove(periodId);
   }
 }

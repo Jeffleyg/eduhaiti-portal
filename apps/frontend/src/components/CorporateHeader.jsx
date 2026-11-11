@@ -2,7 +2,7 @@ import { LogOut, Settings, User } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../lib/string.js"
+import { sanitizeText, displayName } from "../lib/string.js"
 import { useState } from "react"
 
 function CorporateHeader() {
@@ -10,7 +10,7 @@ function CorporateHeader() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
-  const roleLabelKey = user?.role === "TEACHER" ? "roleprofessor" : `role${user?.role}`
+  const roleLabelKey = user?.role === "TEACHER" ? "roleprofessor" : `role${(user?.role ?? "").toLowerCase()}`
 
   const getProfilePath = () => {
     switch (user?.role) {
@@ -20,8 +20,10 @@ function CorporateHeader() {
         return "/teacher/profile"
       case "STUDENT":
         return "/student/profile"
+      case "OWNER":
+        return "/owner/profile"
       default:
-        return "/profile"
+        return "/change-password"
     }
   }
 
@@ -29,9 +31,12 @@ function CorporateHeader() {
     switch (user?.role) {
       case "STUDENT":
         return "/student/settings"
-      case "ADMIN":
       case "TEACHER":
-        return "/change-password"
+        return "/teacher/settings"
+      case "ADMIN":
+        return "/admin/settings"
+      case "OWNER":
+        return "/owner/settings"
       default:
         return "/change-password"
     }
@@ -81,7 +86,7 @@ function CorporateHeader() {
               {user?.profilePhoto ? (
                 <img
                   src={user.profilePhoto}
-                  alt={maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}
+                  alt={displayName(user?.name)}
                   className="h-full w-full rounded-full object-cover"
                 />
               ) : (
@@ -96,7 +101,7 @@ function CorporateHeader() {
             <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-white/20 bg-white/95 shadow-xl backdrop-blur-sm">
               {/* Cabeçalho com Info do Usuário */}
               <div className="border-b border-brand-navy/10 px-4 py-3">
-                <p className="font-semibold text-brand-navy">{maskName(user?.name, user?.role === "STUDENT" ? "student" : user?.role === "TEACHER" ? "teacher" : "user")}</p>
+                <p className="font-semibold text-brand-navy">{displayName(user?.name)}</p>
                 <p className="text-xs text-brand-navy/60">{sanitizeText(user?.email)}</p>
                 <div className="mt-2 flex gap-2">
                   <span className={`badge ${getRoleBadgeColor()}`}>

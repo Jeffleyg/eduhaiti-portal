@@ -132,7 +132,7 @@ model AcademicYear {
   id        String   @id @default(uuid())
   school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   schoolId  String
-  year      String   @unique // "2025-2026"
+  year      String   // "2025-2026", unique per school (see @@unique below)
   startDate DateTime
   endDate   DateTime
   isActive  Boolean  @default(true)
@@ -145,7 +145,7 @@ model AcademicYear {
   gradeHistory GradeHistory[]
   scorecards Scorecard[]
 
-  @@index([schoolId, year])
+  @@unique([schoolId, year])
 }
 
 model Series {

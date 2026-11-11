@@ -20,59 +20,6 @@ export class AcademicYearsService {
       orderBy: { year: 'desc' },
     });
   }
-  private async resolveSchoolId(schoolRef?: string) {
-    if (!schoolRef || typeof schoolRef !== 'string') {
-      throw new BadRequestException('O identificador da escola (schoolId) é obrigatório.');
-    }
-
-    const normalized = schoolRef.trim();
-
-    if (!normalized) {
-      throw new BadRequestException('O identificador da escola (schoolId) é obrigatório.');
-    }
-
-    // Tentar correspondência exata por ID ou Nome
-    const exactMatches = await this.prisma.school.findMany({
-      where: {
-        OR: [
-          { id: normalized },
-          { name: { equals: normalized, mode: 'insensitive' } },
-        ],
-      },
-      select: { id: true, name: true },
-    });
-
-    if (exactMatches.length === 1) {
-      return exactMatches[0].id;
-    }
-
-    if (exactMatches.length > 1) {
-      throw new BadRequestException(
-        'Várias escolas correspondem a esse identificador. Utilize o ID da escola.',
-      );
-    }
-
-    // Tentar correspondência parcial por nome
-    const partialMatches = await this.prisma.school.findMany({
-      where: {
-        name: { contains: normalized, mode: 'insensitive' },
-      },
-      select: { id: true, name: true },
-      take: 10,
-    });
-
-    if (partialMatches.length === 1) {
-      return partialMatches[0].id;
-    }
-
-    if (partialMatches.length > 1) {
-      throw new BadRequestException(
-        'Várias escolas correspondem a esse nome. Utilize o ID da escola.',
-      );
-    }
-
-    throw new NotFoundException(`Escola "${schoolRef}" não encontrada.`);
-  }
 
   async create(schoolId: string, dto: CreateAcademicYearDto) {
     if (!schoolId) {

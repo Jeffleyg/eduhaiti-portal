@@ -1,41 +1,30 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildAuditData, safeParseJson } from '../common/audit-compat';
+import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
 
 @Injectable()
 export class FamilyAccessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly outboundSms: HybridOutboundSmsService,
+  ) {}
+
+  /** Staff endpoints only ever act inside the caller's own school. */
+  private requireSchool(schoolId?: string | null): string {
+    if (!schoolId) {
+      throw new ForbiddenException('User is not linked to a school');
+    }
+    return schoolId;
+  }
 
   private parseAuditChanges = (changes: unknown) =>
     safeParseJson<Record<string, unknown>>(changes);
-
-  private normalize(value: string) {
-    return value.trim().toLowerCase();
-  }
-
-  private ensureGuardianMatch(
-    student: { fatherName: string | null; motherName: string | null },
-    guardianName?: string,
-  ) {
-    if (!guardianName?.trim()) {
-      throw new BadRequestException('guardianName is required');
-    }
-
-    const normalized = this.normalize(guardianName);
-    const allowed = [student.fatherName, student.motherName]
-      .filter(Boolean)
-      .map((item) => this.normalize(item as string));
-
-    if (!allowed.length || !allowed.includes(normalized)) {
-      throw new BadRequestException(
-        'Guardian name does not match student records',
-      );
-    }
-  }
 
   private async getStudentByEnrollment(enrollmentNumber: string) {
     const student = await this.prisma.user.findFirst({
@@ -50,6 +39,7 @@ export class FamilyAccessService {
         enrollmentNumber: true,
         fatherName: true,
         motherName: true,
+        schoolId: true,
       },
     });
 
@@ -58,6 +48,32 @@ export class FamilyAccessService {
     }
 
     return student;
+  }
+
+  private async getStudentById(studentId: string) {
+    const student = await this.prisma.user.findFirst({
+      where: { id: studentId, role: 'STUDENT' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        enrollmentNumber: true,
+        fatherName: true,
+        motherName: true,
+        schoolId: true,
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    return student;
+  }
+
+  /** The student's school, falling back to the school of their latest class. */
+  private async resolveStudentSchoolId(student: { id: string; schoolId?: string | null }) {
+    return student.schoolId ?? (await this.getStudentSchoolId(student.id));
   }
 
   private async getStudentSchoolId(studentId: string) {
@@ -82,11 +98,11 @@ export class FamilyAccessService {
     return classWithSchool?.academicYear.schoolId ?? null;
   }
 
-  async getFamilyOverview(enrollmentNumber: string, guardianName?: string) {
-    const student = await this.getStudentByEnrollment(enrollmentNumber);
-    this.ensureGuardianMatch(student, guardianName);
+  /** Overview of the student bound to a verified family session. */
+  async getFamilyOverview(studentId: string) {
+    const student = await this.getStudentById(studentId);
 
-    const schoolId = await this.getStudentSchoolId(student.id);
+    const schoolId = await this.resolveStudentSchoolId(student);
 
     const [classes, grades, attendance, announcements, notices] =
       await Promise.all([
@@ -175,16 +191,16 @@ export class FamilyAccessService {
     };
   }
 
+  /** Contact request from a verified family session (guardian identity comes from it). */
   async createFamilyContactRequest(payload: {
-    enrollmentNumber: string;
+    studentId: string;
     guardianName: string;
     guardianPhone?: string;
     subject: string;
     body: string;
     urgent?: boolean;
   }) {
-    const student = await this.getStudentByEnrollment(payload.enrollmentNumber);
-    this.ensureGuardianMatch(student, payload.guardianName);
+    const student = await this.getStudentById(payload.studentId);
 
     const subject = payload.subject?.trim();
     const body = payload.body?.trim();
@@ -199,7 +215,7 @@ export class FamilyAccessService {
         entityId: student.id,
         action: 'CREATE',
         changes: {
-          enrollmentNumber: payload.enrollmentNumber,
+          enrollmentNumber: student.enrollmentNumber,
           guardianName: payload.guardianName,
           guardianPhone: payload.guardianPhone ?? null,
           subject,
@@ -209,14 +225,19 @@ export class FamilyAccessService {
       }),
     });
 
-    const admins = await this.prisma.user.findMany({
-      where: {
-        role: 'ADMIN',
-        isActive: true,
-      },
-      select: { id: true },
-      take: 20,
-    });
+    // Only the student's own school secretariat receives the request.
+    const schoolId = await this.resolveStudentSchoolId(student);
+    const admins = schoolId
+      ? await this.prisma.user.findMany({
+          where: {
+            role: 'ADMIN',
+            isActive: true,
+            schoolId,
+          },
+          select: { id: true },
+          take: 20,
+        })
+      : [];
 
     if (admins.length > 0) {
       await this.prisma.message.createMany({
@@ -232,11 +253,23 @@ export class FamilyAccessService {
     return { success: true };
   }
 
-  async listFamilyContactRequests() {
+  async listFamilyContactRequests(callerSchoolId?: string | null) {
+    const schoolId = this.requireSchool(callerSchoolId);
+    // Filter in the query: taking the latest 100 platform-wide and filtering afterwards
+    // let busy schools hide another school's requests.
+    const schoolStudents = await this.prisma.user.findMany({
+      where: { role: 'STUDENT', schoolId },
+      select: { id: true },
+    });
+    if (schoolStudents.length === 0) {
+      return [];
+    }
+
     const requests = await this.prisma.auditLog.findMany({
       where: {
         entityType: 'FAMILY_CONTACT_REQUEST',
         action: 'CREATE',
+        entityId: { in: schoolStudents.map((student) => student.id) },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -259,6 +292,7 @@ export class FamilyAccessService {
           name: true,
           email: true,
           enrollmentNumber: true,
+          schoolId: true,
         },
       }),
       this.prisma.auditLog.findMany({
@@ -335,8 +369,10 @@ export class FamilyAccessService {
     requestId: string;
     responseMessage: string;
     actorId: string;
+    schoolId?: string | null;
     notifyFamily?: boolean;
   }) {
+    const schoolId = this.requireSchool(payload.schoolId);
     if (!payload.actorId) {
       throw new BadRequestException('actorId is required');
     }
@@ -355,6 +391,17 @@ export class FamilyAccessService {
       request.entityType !== 'FAMILY_CONTACT_REQUEST' ||
       request.action !== 'CREATE'
     ) {
+      throw new NotFoundException('Family contact request not found');
+    }
+
+    const requester = request.entityId
+      ? await this.prisma.user.findUnique({
+          where: { id: request.entityId },
+          select: { id: true, schoolId: true },
+        })
+      : null;
+    if (!requester || (await this.resolveStudentSchoolId(requester)) !== schoolId) {
+      // Same answer as "missing" so other schools' request ids are not confirmed.
       throw new NotFoundException('Family contact request not found');
     }
 
@@ -419,8 +466,13 @@ export class FamilyAccessService {
     channel?: 'IN_APP' | 'SMS' | 'BOTH';
     guardianPhone?: string;
     actorId: string;
+    schoolId?: string | null;
   }) {
+    const schoolId = this.requireSchool(payload.schoolId);
     const student = await this.getStudentByEnrollment(payload.enrollmentNumber);
+    if ((await this.resolveStudentSchoolId(student)) !== schoolId) {
+      throw new NotFoundException('Student not found');
+    }
 
     const title = payload.title?.trim();
     const body = payload.body?.trim();
@@ -431,6 +483,10 @@ export class FamilyAccessService {
 
     const severity = payload.severity ?? 'normal';
     const channel = payload.channel ?? 'IN_APP';
+    const wantsSms = channel === 'SMS' || channel === 'BOTH';
+    const smsRecipients = wantsSms
+      ? await this.resolveGuardianPhones(student.id, payload.guardianPhone)
+      : [];
 
     await this.prisma.auditLog.create({
       data: buildAuditData({
@@ -444,10 +500,22 @@ export class FamilyAccessService {
           severity,
           channel,
           guardianPhone: payload.guardianPhone ?? null,
-          smsQueued: channel === 'SMS' || channel === 'BOTH',
+          smsRecipients: smsRecipients.length,
         },
       }),
     });
+
+    let smsSent = 0;
+    for (const phone of smsRecipients) {
+      const result = await this.outboundSms.sendSms({
+        to: phone,
+        text: `EduHaiti - ${title}: ${body}`.slice(0, 320),
+        context: { purpose: 'FAMILY_NOTICE', studentId: student.id },
+      });
+      if (result.delivered || result.queued) {
+        smsSent += 1;
+      }
+    }
 
     if (channel === 'IN_APP' || channel === 'BOTH') {
       await this.prisma.message.create({
@@ -460,6 +528,31 @@ export class FamilyAccessService {
       });
     }
 
-    return { success: true };
+    return {
+      success: true,
+      smsRequested: wantsSms,
+      smsSent,
+      // Lets the UI warn that nobody could be texted.
+      smsWithoutRecipient: wantsSms && smsRecipients.length === 0,
+    };
+  }
+
+  /** The phone typed by staff, or else every guardian phone linked to the student. */
+  private async resolveGuardianPhones(studentId: string, typedPhone?: string) {
+    const typed = typedPhone?.trim();
+    if (typed) {
+      return [typed];
+    }
+    const links = await this.prisma.guardianStudent.findMany({
+      where: { studentId },
+      select: { guardian: { select: { phoneNumber: true } } },
+    });
+    return Array.from(
+      new Set(
+        links
+          .map((link) => link.guardian.phoneNumber?.trim())
+          .filter((phone): phone is string => Boolean(phone)),
+      ),
+    );
   }
 }

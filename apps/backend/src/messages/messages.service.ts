@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
 
@@ -6,8 +6,11 @@ import { Role } from '@prisma/client';
 export class MessagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listRecipients(userId: string, role: Role) {
+  async listRecipients(userId: string, role: Role, schoolId?: string | null) {
     if (!userId) return [];
+    const adminFilter = schoolId
+      ? { role: Role.ADMIN, schoolId }
+      : { role: Role.ADMIN };
 
     if (role === Role.TEACHER) {
       return this.prisma.user.findMany({
@@ -18,7 +21,7 @@ export class MessagesService {
               role: Role.STUDENT,
               classesAttending: { some: { teacherId: userId } },
             },
-            { role: Role.ADMIN },
+            adminFilter,
           ],
         },
         select: { id: true, name: true, email: true, role: true },
@@ -41,7 +44,7 @@ export class MessagesService {
                 },
               },
             },
-            { role: Role.ADMIN },
+            adminFilter,
           ],
         },
         select: { id: true, name: true, email: true, role: true },
@@ -53,6 +56,7 @@ export class MessagesService {
       where: {
         id: { not: userId },
         isActive: true,
+        ...(schoolId ? { schoolId } : {}),
       },
       select: { id: true, name: true, email: true, role: true },
       orderBy: [{ role: 'asc' }, { name: 'asc' }],
@@ -78,7 +82,32 @@ export class MessagesService {
     });
   }
 
-  async send(fromId: string, toId: string, subject: string, body: string) {
+  async send(
+    fromId: string,
+    toId: string,
+    subject: string,
+    body: string,
+    sender?: { role?: Role; schoolId?: string | null },
+  ) {
+    if (!fromId) {
+      throw new ForbiddenException('Authentication required');
+    }
+    if (!toId || !body?.trim()) {
+      throw new BadRequestException('Recipient and message body are required');
+    }
+
+    // Only allow messaging users the sender is entitled to see as recipients
+    if (sender?.role && sender.role !== Role.OWNER) {
+      const allowed = await this.listRecipients(
+        fromId,
+        sender.role,
+        sender.schoolId,
+      );
+      if (!allowed.some((recipient) => recipient.id === toId)) {
+        throw new ForbiddenException('You cannot message this user');
+      }
+    }
+
     return this.prisma.message.create({
       data: { fromId, toId, subject, body },
       include: {

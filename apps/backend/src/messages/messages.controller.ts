@@ -31,24 +31,34 @@ export class MessagesController {
 
   @UseGuards(JwtAuthGuard)
   @Get('recipients')
-  async getRecipients(@Req() req: { user?: { sub?: string; role?: string } }) {
+  async getRecipients(
+    @Req() req: { user?: { sub?: string; role?: string; schoolId?: string | null } },
+  ) {
     const userId = req.user?.sub;
     const role = (req.user?.role as Role | undefined) ?? Role.STUDENT;
-    return this.messagesService.listRecipients(userId ?? '', role);
+    return this.messagesService.listRecipients(
+      userId ?? '',
+      role,
+      req.user?.schoolId,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Post()
   async sendMessage(
     @Body() body: any,
-    @Req() req: { user?: { sub?: string } },
+    @Req() req: { user?: { sub?: string; role?: string; schoolId?: string | null } },
   ) {
     const userId = req.user?.sub;
     return this.messagesService.send(
       userId ?? '',
-      body.toId,
-      body.subject,
-      body.body,
+      body?.toId,
+      body?.subject,
+      body?.body,
+      {
+        role: req.user?.role as Role | undefined,
+        schoolId: req.user?.schoolId,
+      },
     );
   }
 }

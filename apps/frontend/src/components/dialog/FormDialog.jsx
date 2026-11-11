@@ -12,7 +12,6 @@ import React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import Button from '../Button'
-import { useTranslation } from 'react-i18next'
 
 /**
  * FormDialog - Diálogo para formulários
@@ -46,7 +45,6 @@ export const FormDialog = ({
   validate,
   className = '',
 }) => {
-  const { t } = useTranslation()
   const [errors, setErrors] = React.useState({})
   const formRef = React.useRef(null)
 
@@ -145,6 +143,14 @@ export const FormDialog = ({
             noValidate
           >
             {children}
+            {/* Validation errors used to be collected but never shown. */}
+            {Object.keys(errors).length > 0 && (
+              <ul role="alert" className="list-disc space-y-1 pl-5 text-sm text-red-600">
+                {Object.entries(errors).map(([field, message]) => (
+                  <li key={field}>{String(message)}</li>
+                ))}
+              </ul>
+            )}
           </form>
 
           {/* Footer com Actions */}

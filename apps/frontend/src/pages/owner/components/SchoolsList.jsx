@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { apiFetch } from '../../../lib/api.js'
 import { sanitizeText } from '../../../lib/string.js'
 import SchoolFeatures from './SchoolFeatures.jsx'
 import PermissionCodeManager from './PermissionCodeManager.jsx'

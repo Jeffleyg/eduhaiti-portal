@@ -2,6 +2,11 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma/prisma.service'
 import { AuditService } from './audit.service'
 import * as crypto from 'crypto'
+import { maskSecret, requireSecret } from '../../common/security/secrets'
+
+const V2_PREFIX = 'v2:'
+
+type RevealOption = { reveal?: boolean }
 
 /**
  * GlobalSettingsService - Manages system-wide configuration
@@ -9,35 +14,50 @@ import * as crypto from 'crypto'
  */
 @Injectable()
 export class GlobalSettingsService {
-  private readonly encryptionKey = process.env.ENCRYPTION_KEY || 'default-insecure-key-change-in-production'
-  private readonly encryptionAlgorithm = 'aes-256-cbc'
+  private readonly rawKey: string
+  /** AES-256 key derived from ENCRYPTION_KEY, so any key length works. */
+  private readonly key: Buffer
 
   constructor(
     private prisma: PrismaService,
     private auditService: AuditService
-  ) {}
-
-  /**
-   * Encrypt sensitive string
-   */
-  private encrypt(text: string): string {
-    const iv = crypto.randomBytes(16)
-    const cipher = crypto.createCipheriv(this.encryptionAlgorithm, Buffer.from(this.encryptionKey, 'utf8').slice(0, 32), iv)
-    let encrypted = cipher.update(text)
-    encrypted = Buffer.concat([encrypted, cipher.final()])
-    return iv.toString('hex') + ':' + encrypted.toString('hex')
+  ) {
+    // Dev fallback equals the old hard-coded default so existing local data still decrypts.
+    this.rawKey = requireSecret('ENCRYPTION_KEY', process.env.ENCRYPTION_KEY, 'default-insecure-key-change-in-production')
+    this.key = crypto.createHash('sha256').update(this.rawKey).digest()
   }
 
   /**
-   * Decrypt sensitive string
+   * Encrypt with AES-256-GCM ("v2:iv:tag:data"), which also detects tampering.
+   */
+  private encrypt(text: string): string {
+    const iv = crypto.randomBytes(12)
+    const cipher = crypto.createCipheriv('aes-256-gcm', this.key, iv)
+    const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()])
+    const tag = cipher.getAuthTag()
+    return `${V2_PREFIX}${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`
+  }
+
+  /**
+   * Decrypt both the current format and values written before v2 ("iv:data", AES-CBC
+   * keyed by the first 32 bytes of ENCRYPTION_KEY).
    */
   private decrypt(text: string): string {
+    if (text.startsWith(V2_PREFIX)) {
+      const [ivHex, tagHex, dataHex] = text.slice(V2_PREFIX.length).split(':')
+      if (!ivHex || !tagHex || dataHex === undefined) throw new BadRequestException('Invalid encrypted payload')
+      const decipher = crypto.createDecipheriv('aes-256-gcm', this.key, Buffer.from(ivHex, 'hex'))
+      decipher.setAuthTag(Buffer.from(tagHex, 'hex'))
+      return Buffer.concat([decipher.update(Buffer.from(dataHex, 'hex')), decipher.final()]).toString('utf8')
+    }
+
     const parts = text.split(':')
     const ivHex = parts.shift()
     if (!ivHex) throw new BadRequestException('Invalid encrypted payload')
     const iv = Buffer.from(ivHex, 'hex')
     const encryptedText = Buffer.from(parts.join(':'), 'hex')
-    const decipher = crypto.createDecipheriv(this.encryptionAlgorithm, Buffer.from(this.encryptionKey, 'utf8').slice(0, 32), iv)
+    const legacyKey = Buffer.from(this.rawKey, 'utf8').subarray(0, 32)
+    const decipher = crypto.createDecipheriv('aes-256-cbc', legacyKey, iv)
     let decrypted = decipher.update(encryptedText)
     decrypted = Buffer.concat([decrypted, decipher.final()])
     return decrypted.toString()
@@ -102,9 +122,9 @@ export class GlobalSettingsService {
   }
 
   /**
-   * Get a setting (auto-decrypts if needed)
+   * Get a setting; encrypted values are masked unless { reveal: true }
    */
-  async getSetting(settingKey: string) {
+  async getSetting(settingKey: string, { reveal = false }: RevealOption = {}) {
     const setting = await this.prisma.globalSetting.findUnique({
       where: { key: settingKey },
     })
@@ -113,11 +133,15 @@ export class GlobalSettingsService {
       return null
     }
 
-    const value = setting.isEncrypted ? this.decrypt(setting.value) : setting.value
+    if (!setting.isEncrypted) {
+      return setting
+    }
 
+    // Encrypted values only leave the server masked unless a caller explicitly needs them.
+    const value = this.decrypt(setting.value)
     return {
       ...setting,
-      value: value,
+      value: reveal ? value : maskSecret(value),
     }
   }
 
@@ -184,14 +208,17 @@ export class GlobalSettingsService {
   }
 
   /**
-   * Get payment gateway config (decrypted)
+   * Get payment gateway config (masked; pass { reveal: true } for internal use)
    */
-  async getPaymentGatewayConfig(provider: 'STRIPE' | 'ASAAS' | 'EFI' | 'MONCASH') {
+  async getPaymentGatewayConfig(
+    provider: 'STRIPE' | 'ASAAS' | 'EFI' | 'MONCASH',
+    options: RevealOption = {}
+  ) {
     const key = `GATEWAY_${provider.toUpperCase()}_KEY`
     const secretKey = `GATEWAY_${provider.toUpperCase()}_SECRET`
 
-    const apiKeySetting = await this.getSetting(key)
-    const apiSecretSetting = await this.getSetting(secretKey)
+    const apiKeySetting = await this.getSetting(key, options)
+    const apiSecretSetting = await this.getSetting(secretKey, options)
 
     return {
       provider,
@@ -207,13 +234,13 @@ export class GlobalSettingsService {
   async initializeDefaults() {
     const defaults = {
       SYSTEM_NAME: { value: 'EduHaiti', encrypted: false, description: 'System display name' },
-      SYSTEM_LANGUAGE: { value: 'pt-BR', encrypted: false, description: 'Default system language' },
-      DEFAULT_PASSING_GRADE: { value: '60', encrypted: false, description: 'Minimum passing grade' },
+      SYSTEM_LANGUAGE: { value: 'fr', encrypted: false, description: 'Default system language' },
+      DEFAULT_PASSING_GRADE: { value: '10', encrypted: false, description: 'Minimum passing grade (out of 20)' },
       ACADEMIC_YEAR_START: { value: '01-09', encrypted: false, description: 'Academic year start month-day' },
       ACADEMIC_YEAR_END: { value: '30-06', encrypted: false, description: 'Academic year end month-day' },
       MAX_FILE_UPLOAD_SIZE_MB: { value: '50', encrypted: false, description: 'Maximum upload file size' },
       SYSTEM_MAINTENANCE_MODE: { value: 'false', encrypted: false, description: 'Enable maintenance mode' },
-      SUPPORTED_LANGUAGES: { value: 'pt-BR,en,fr', encrypted: false, description: 'Comma-separated list of supported languages' },
+      SUPPORTED_LANGUAGES: { value: 'fr,ht,pt,en', encrypted: false, description: 'Comma-separated list of supported languages' },
       EMAIL_FROM_ADDRESS: { value: 'noreply@eduhaiti.edu.ht', encrypted: false, description: 'Default email sender' },
       ENABLE_STUDENT_REGISTRATION: { value: 'true', encrypted: false, description: 'Allow student registration' },
       ENABLE_PARENT_ACCESS: { value: 'true', encrypted: false, description: 'Allow parent access' },

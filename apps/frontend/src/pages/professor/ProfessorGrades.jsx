@@ -9,7 +9,7 @@ import Button from "../../components/Button.jsx"
 import Input from "../../components/Input.jsx"
 import Select from "../../components/Select.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 
 function ProfessorGrades() {
   const { t } = useTranslation()
@@ -49,13 +49,8 @@ function ProfessorGrades() {
     setGradeDrafts(drafts)
   }
 
+  // Callers always pass a selected class
   const loadGrades = async (classId, disciplineId) => {
-    if (!classId) {
-      setGrades([])
-      setGradeDrafts({})
-      return []
-    }
-
     setLoadingGrades(true)
     try {
       const suffix = disciplineId ? `?disciplineId=${disciplineId}` : ""
@@ -232,12 +227,8 @@ function ProfessorGrades() {
     }
   }
 
+  // The publish button is disabled until a class and a discipline are selected
   const handlePublish = async () => {
-    if (!selectedClassId || !selectedDisciplineId) {
-      setError(t("selectClassAndDiscipline"))
-      return
-    }
-
     setPublishing(true)
     setError("")
     setMessage("")
@@ -274,7 +265,7 @@ function ProfessorGrades() {
             <div className="skeleton h-5 w-40 rounded" />
           ) : (
             <div>
-              <p className="font-semibold text-brand-navy">{maskName(student.name ?? student.email, "student")}</p>
+              <p className="font-semibold text-brand-navy">{displayName(student.name ?? student.email)}</p>
               <p className="text-xs text-brand-navy/60">{sanitizeText(student.email)}</p>
             </div>
           )}
@@ -307,7 +298,7 @@ function ProfessorGrades() {
 
   const historyRows = (grades ?? []).map((grade) => ({
     id: grade.id,
-    student: maskName(grade.student?.name ?? grade.student?.email, "student"),
+    student: displayName(grade.student?.name ?? grade.student?.email),
     subject: sanitizeText(grade.discipline?.name ?? "-"),
     score: `${grade.score}/${grade.maxScore}`,
     status: grade.status === "DRAFT" ? t("gradeDraft") : t("gradePublished"),

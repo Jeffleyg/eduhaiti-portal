@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import DataTablePaginated from "../../components/DataTablePaginated.jsx"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 
@@ -99,7 +99,7 @@ function StudentSchedule() {
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <p className="font-semibold text-sm text-brand-navy">{sanitizeText(cls.name)}</p>
-                      <p className="text-xs text-brand-navy/75">{maskName(cls.teacher?.name, "teacher") || sanitizeText(cls.teacher?.email)}</p>
+                      <p className="text-xs text-brand-navy/75">{displayName(cls.teacher?.name) || sanitizeText(cls.teacher?.email)}</p>
                     </div>
                   </div>
                 </div>

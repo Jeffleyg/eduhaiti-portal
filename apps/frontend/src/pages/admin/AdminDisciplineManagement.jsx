@@ -7,7 +7,6 @@ import { apiFetch } from "../../lib/api.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
 import ListItemCard from "../../components/ListItemCard.jsx"
 import { BookOpen } from "lucide-react"
-import AdminSectionToolbar from "../../components/AdminSectionToolbar.jsx"
 
 const initialForm = {
   name: "",
@@ -22,7 +21,6 @@ function AdminDisciplineManagement() {
   const [selectedSeriesId, setSelectedSeriesId] = useState("")
   const [disciplines, setDisciplines] = useState([])
   const [form, setForm] = useState(initialForm)
-  const [activeSection, setActiveSection] = useState("list")
   const [editingId, setEditingId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -160,28 +158,20 @@ function AdminDisciplineManagement() {
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
       <section className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-brand-navy">{t("adminSelectSeries")}</h3>
-          <AdminSectionToolbar
-            sections={[{ key: "list", label: t("list") }, { key: "filters", label: t("filters") }, { key: "create", label: t("create") }]}
-            active={activeSection}
-            onChange={(k) => setActiveSection(k)}
-          />
-        </div>
-        {activeSection !== "list" && (
-          <select
-            value={selectedSeriesId}
-            onChange={(event) => handleSeriesChange(event.target.value)}
-            className="mt-3 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
-          >
-            <option value="">{t("adminSelectSeriesOption")}</option>
-            {series.map((ser) => (
-              <option key={ser.id} value={ser.id}>
-                {sanitizeText(ser.name)} ({ser.academicYear?.year})
-              </option>
-            ))}
-          </select>
-        )}
+        <h3 className="text-base font-semibold text-brand-navy">{t("adminSelectSeries")}</h3>
+        {/* Always visible: without a series nothing else on this page can load. */}
+        <select
+          value={selectedSeriesId}
+          onChange={(event) => handleSeriesChange(event.target.value)}
+          className="mt-3 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
+        >
+          <option value="">{t("adminSelectSeriesOption")}</option>
+          {series.map((ser) => (
+            <option key={ser.id} value={ser.id}>
+              {sanitizeText(ser.name)} ({ser.academicYear?.year})
+            </option>
+          ))}
+        </select>
       </section>
 
       {selectedSeriesId && (

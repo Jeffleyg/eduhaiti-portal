@@ -5,14 +5,13 @@ import SectionHeader from "../../components/SectionHeader.jsx"
 import { useTranslation } from "react-i18next"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
-import { sanitizeText, maskName } from "../../lib/string.js"
+import { sanitizeText, displayName } from "../../lib/string.js"
 import * as QRCode from "qrcode"
 import { Printer, Download } from "lucide-react"
 
 function StudentTranscript() {
   const { t } = useTranslation()
   const { token, user } = useAuth()
-  const [grades, setGrades] = useState([])
   const [academicYears, setAcademicYears] = useState([])
   const [selectedYearId, setSelectedYearId] = useState("")
   const [loading, setLoading] = useState(true)
@@ -21,46 +20,37 @@ function StudentTranscript() {
   const [transcriptId, setTranscriptId] = useState("")
   const [qrCodeUrl, setQrCodeUrl] = useState("")
 
-  // Gerar um ID único para o histórico com checksum
-  const generateTranscriptId = () => {
-    const timestamp = new Date().getTime()
-    const studentIdStr = user?.id ?? "unknown"
-    const yearStr = selectedYearId ?? "current"
-    const hash = btoa(`${studentIdStr}-${yearStr}-${timestamp}`).replace(/[^a-zA-Z0-9]/g, "").substring(0, 12)
-    return `TR-${hash}-${new Date().getFullYear()}`
-  }
+  const verificationUrl = (id) => `${window.location.origin}/verify-transcript/${id}`
 
-  // Gerar QR code
-  const generateQRCode = async (id) => {
+  /**
+   * Registers the transcript on the server so its QR code can really be checked at
+   * /verify-transcript/:id. Without published grades there is nothing to certify.
+   */
+  const issueVerifiableTranscript = async (yearId, reportData) => {
+    setTranscriptId("")
+    setQrCodeUrl("")
+    if (!reportData?.grades?.length) return
     try {
-      const url = await QRCode.toDataURL(
-        `${window.location.origin}/verify-transcript?id=${id}&student=${user?.id}&year=${selectedYearId}`,
-        { width: 200 }
-      )
-      setQrCodeUrl(url)
+      const issued = await apiFetch(`/grades/transcript/${yearId}/issue`, { method: "POST", token })
+      setTranscriptId(issued.scorecardId)
+      setQrCodeUrl(await QRCode.toDataURL(verificationUrl(issued.scorecardId), { width: 200 }))
     } catch (err) {
-      console.error("Erro ao gerar QR code:", err)
+      console.error("Erro ao emitir histórico verificável:", err)
     }
   }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [myGrades, years] = await Promise.all([
-          apiFetch("/grades/my-grades", { token }),
-          apiFetch("/grades/my-academic-years", { token }),
-        ])
-        setGrades(myGrades ?? [])
+        const years = await apiFetch("/grades/my-academic-years", { token })
         setAcademicYears(years ?? [])
         if (years?.length > 0) {
           const active = years.find((item) => item.isActive)
           const defaultYearId = active?.id ?? years[0].id
           setSelectedYearId(defaultYearId)
-          const newTranscriptId = generateTranscriptId()
-          setTranscriptId(newTranscriptId)
-          await generateQRCode(newTranscriptId)
           const reportData = await apiFetch(`/grades/report/${defaultYearId}`, { token })
           setReport(reportData)
+          await issueVerifiableTranscript(defaultYearId, reportData)
         }
       } catch (err) {
         setError(err.message)
@@ -74,13 +64,11 @@ function StudentTranscript() {
 
   const handleYearChange = async (yearId) => {
     setSelectedYearId(yearId)
-    const newTranscriptId = generateTranscriptId()
-    setTranscriptId(newTranscriptId)
-    await generateQRCode(newTranscriptId)
     try {
       const reportData = await apiFetch(`/grades/report/${yearId}`, { token })
       setReport(reportData)
       setError("")
+      await issueVerifiableTranscript(yearId, reportData)
     } catch (err) {
       setError(err.message)
     }
@@ -125,7 +113,7 @@ function StudentTranscript() {
       doc.setFont("Helvetica", "normal")
       doc.setFontSize(10)
       const studentInfo = [
-        [`Nom et Prénom:`, `${maskName(user?.name ?? user?.email, "student")}`],
+        [`Nom et Prénom:`, `${displayName(user?.name ?? user?.email)}`],
         [`Numéro d'Inscription:`, user?.enrollmentNumber ?? "-"],
         [`Année Académique:`, selectedYear?.year ?? "-"],
         [`Date d'Émission:`, new Date().toLocaleDateString("fr-FR")],
@@ -233,26 +221,29 @@ function StudentTranscript() {
       // Pied de page avec QR Code
       yPos = pageHeight - 45
       
-      // Génération du QR code
-      const qrDataUrl = await QRCode.toDataURL(
-        `${window.location.origin}/verify-transcript?id=${transcriptId}&student=${user?.id}&year=${selectedYearId}`,
-        { width: 80 }
-      )
-      
-      // Ajout du QR code au PDF
-      doc.addImage(qrDataUrl, "PNG", pageWidth - 40, yPos - 10, 25, 25)
-      
-      doc.setFont("Helvetica", "bold")
-      doc.setFontSize(9)
-      doc.text("Vérifier:", pageWidth - 40, yPos + 20)
-      
+      // QR code only when the transcript is registered and therefore verifiable
+      if (transcriptId) {
+        const qrDataUrl = await QRCode.toDataURL(verificationUrl(transcriptId), { width: 80 })
+        doc.addImage(qrDataUrl, "PNG", pageWidth - 40, yPos - 10, 25, 25)
+        doc.setFont("Helvetica", "bold")
+        doc.setFontSize(9)
+        doc.text("Vérifier:", pageWidth - 40, yPos + 20)
+      }
+
       doc.setFont("Helvetica", "italic")
       doc.setFontSize(8)
       doc.setDrawColor(200)
       doc.line(15, yPos - 5, pageWidth - 50, yPos - 5)
-      doc.text("Ce document est généré automatiquement et a valeur de relevé officiel.", 15, yPos, { maxWidth: pageWidth - 50 })
-      doc.text(`ID Vérification: ${transcriptId}`, 15, yPos + 5, { maxWidth: pageWidth - 50 })
-      doc.text(`Signature numérique: ${new Date().toLocaleString("fr-FR")}`, 15, yPos + 10, { maxWidth: pageWidth - 50 })
+      doc.text(
+        transcriptId
+          ? "Document généré automatiquement. Authenticité vérifiable via le QR code."
+          : "Document généré automatiquement (aucune note publiée : non vérifiable).",
+        15,
+        yPos,
+        { maxWidth: pageWidth - 50 },
+      )
+      doc.text(`ID Vérification: ${transcriptId || "-"}`, 15, yPos + 5, { maxWidth: pageWidth - 50 })
+      doc.text(`Émis le: ${new Date().toLocaleString("fr-FR")}`, 15, yPos + 10, { maxWidth: pageWidth - 50 })
 
       const filename = `Releve_de_Notes_${selectedYear?.year ?? "academique"}.pdf`
       doc.save(filename)
@@ -328,7 +319,7 @@ function StudentTranscript() {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="module-card compact p-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-brand-navy/60">Informations Étudiante</p>
-          <p className="mt-2 text-sm font-semibold text-brand-navy">{maskName(user?.name ?? user?.email, "student")}</p>
+          <p className="mt-2 text-sm font-semibold text-brand-navy">{displayName(user?.name ?? user?.email)}</p>
           <p className="text-xs text-brand-navy/75">N° d'Inscription: {user?.enrollmentNumber ?? "-"}</p>
           <p className="text-xs text-brand-navy/75 mt-1">Date d'Émission: {new Date().toLocaleDateString("fr-FR")}</p>
         </div>

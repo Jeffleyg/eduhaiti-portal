@@ -31,7 +31,7 @@ out/
 # Prisma
 # ===============================
 node_modules/.prisma
-prisma/migrations
+# NOTE: prisma/migrations must be committed (needed by `prisma migrate deploy`)
 
 # ===============================
 # Logs

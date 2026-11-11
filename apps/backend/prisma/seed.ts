@@ -115,7 +115,7 @@ async function main() {
 
   // 5. Criar ou Atualizar Ano Letivo e Série Curricular
   let academicYear = await prisma.academicYear.findUnique({
-    where: { year: "2025-2026" },
+    where: { schoolId_year: { schoolId: school.id, year: "2025-2026" } },
   })
   if (!academicYear) {
     academicYear = await prisma.academicYear.create({

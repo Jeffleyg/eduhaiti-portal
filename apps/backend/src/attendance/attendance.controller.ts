@@ -14,10 +14,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role, AttendanceStatus } from '@prisma/client';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ClassAccessService } from '../prisma/class-access.service';
 
 @Controller('admin/attendance')
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(
+    private readonly attendanceService: AttendanceService,
+    private readonly classAccess: ClassAccessService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
@@ -78,9 +82,11 @@ export class AttendanceController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId')
   async getClassAttendance(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
     @Query('date') date?: string,
   ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.attendanceService.findByClass(
       classId,
       date ? new Date(date) : undefined,
@@ -90,7 +96,11 @@ export class AttendanceController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId/report')
-  async getClassReport(@Param('classId') classId: string) {
+  async getClassReport(
+    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
+    @Param('classId') classId: string,
+  ) {
+    await this.classAccess.assertCanManageClass(classId, req.user);
     return this.attendanceService.getClassAttendanceReport(classId);
   }
 }

@@ -26,6 +26,16 @@ if (!fs.existsSync(profilePhotoDir)) {
   fs.mkdirSync(profilePhotoDir, { recursive: true });
 }
 
+export function profilePhotoFilename(
+  _req: unknown,
+  file: { originalname: string },
+  cb: (error: Error | null, filename: string) => void,
+) {
+  const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+  const extension = path.extname(file.originalname).toLowerCase() || '.jpg';
+  cb(null, `${uniqueSuffix}${extension}`);
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -81,11 +91,7 @@ export class AuthController {
     FileInterceptor('profilePhoto', {
       storage: diskStorage({
         destination: profilePhotoDir,
-        filename: (req, file, cb) => {
-          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-          const extension = path.extname(file.originalname).toLowerCase() || '.jpg';
-          cb(null, `${uniqueSuffix}${extension}`);
-        },
+        filename: profilePhotoFilename,
       }),
     }),
   )

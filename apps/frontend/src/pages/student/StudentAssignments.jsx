@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { apiFetch } from "../../lib/api";
+import { apiAssetUrl, apiFetch, apiUpload } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext.jsx";
 import SectionCard from "../../components/SectionCard";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
@@ -10,9 +11,38 @@ import Feedback from "../../components/Feedback";
 
 export default function StudentAssignments() {
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState(null);
+  const [files, setFiles] = useState({});
+  const [submittingId, setSubmittingId] = useState(null);
+
+  // Max upload accepted by the server for a submission.
+  const MAX_SUBMISSION_BYTES = 20 * 1024 * 1024;
+
+  const submit = async (assignmentId) => {
+    const file = files[assignmentId];
+    if (!file) return;
+    if (file.size > MAX_SUBMISSION_BYTES) {
+      setFeedback({ type: "error", message: t("submissionTooLarge") });
+      return;
+    }
+    setSubmittingId(assignmentId);
+    setFeedback(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await apiUpload(`/assignments/${assignmentId}/submit`, { token, formData });
+      setFiles((prev) => ({ ...prev, [assignmentId]: null }));
+      await fetchAssignments();
+      setFeedback({ type: "success", message: t("submissionSent") });
+    } catch (err) {
+      setFeedback({ type: "error", message: err.message || t("submissionFailed") });
+    } finally {
+      setSubmittingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchAssignments();
@@ -22,8 +52,7 @@ export default function StudentAssignments() {
     try {
       setLoading(true);
       setFeedback(null);
-      const token = localStorage.getItem("token");
-      const data = await apiFetch("/assignments", { token });
+      const data = await apiFetch("/assignments/my-assignments", { token });
       setAssignments(Array.isArray(data) ? data : data?.data || []);
     } catch (err) {
       console.error("Erro ao carregar tarefas:", err);
@@ -100,9 +129,9 @@ export default function StudentAssignments() {
                     ? `${t("assignments.dueDate", "Dat limit")}: ${new Date(item.dueDate).toLocaleDateString()}`
                     : t("assignments.noDueDate", "San dat limit")}
                 </span>
-                {item.fileUrl && (
+                {(item.fileUrl || item.filePath) && (
                   <a
-                    href={item.fileUrl}
+                    href={item.fileUrl || apiAssetUrl(item.filePath)}
                     target="_blank"
                     rel="noreferrer"
                     className="text-indigo-600 hover:underline font-medium"
@@ -111,6 +140,46 @@ export default function StudentAssignments() {
                   </a>
                 )}
               </div>
+
+              {(() => {
+                const submission = item.submissions?.[0];
+                return (
+                  <div className="mt-3 space-y-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                    {submission ? (
+                      <p data-testid={`submission-${item.id}`}>
+                        {submission.status === "LATE" ? t("submissionLate") : t("submissionDone")}:{" "}
+                        {new Date(submission.submittedAt).toLocaleString()}
+                        {submission.grade != null ? ` | ${t("gradeLabel")}: ${submission.grade}` : ""}
+                        {submission.feedback ? ` | ${submission.feedback}` : ""}
+                      </p>
+                    ) : (
+                      <p>{t("submissionPending")}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="file"
+                        aria-label={`${t("submissionFile")} ${item.title}`}
+                        onChange={(event) =>
+                          setFiles((prev) => ({ ...prev, [item.id]: event.target.files?.[0] ?? null }))
+                        }
+                        className="text-xs"
+                      />
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={!files[item.id] || submittingId === item.id}
+                        onClick={() => submit(item.id)}
+                      >
+                        {submittingId === item.id
+                          ? t("loading")
+                          : submission
+                            ? t("submissionResend")
+                            : t("submissionSend")}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
             </SectionCard>
           ))}
         </div>

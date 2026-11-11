@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
 import { apiFetch } from "../../lib/api.js"
-import { maskName } from "../../lib/string.js"
+import { displayName } from "../../lib/string.js"
 
 const initialRequest = {
   classId: "",
@@ -76,8 +76,9 @@ function StudentAcademicRequests() {
         },
       })
       setForm(initialRequest)
-      setMessage(t("academicRequestCreated"))
+      // reload first: loadData clears the feedback messages
       await loadData()
+      setMessage(t("academicRequestCreated"))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -163,7 +164,7 @@ function StudentAcademicRequests() {
                 </div>
                 <p className="mt-3 text-sm text-brand-navy/80">{item.details}</p>
                 <p className="mt-2 text-xs text-brand-navy/60">
-                  {t("academicRequestReviewer")}: {maskName(item.reviewedBy?.name ?? item.reviewedBy?.email, "user") || item.reviewedBy?.email || "-"}
+                  {t("academicRequestReviewer")}: {displayName(item.reviewedBy?.name ?? item.reviewedBy?.email) || item.reviewedBy?.email || "-"}
                 </p>
                 <p className="mt-1 text-xs text-brand-navy/60">
                   {t("academicRequestResolution")}: {item.resolutionComment || "-"}

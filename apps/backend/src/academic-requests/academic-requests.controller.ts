@@ -44,6 +44,7 @@ export class AcademicRequestsController {
       {
         id: req.user.sub,
         role: req.user.role,
+        schoolId: req.user.schoolId,
       },
       query,
     );
@@ -61,6 +62,7 @@ export class AcademicRequestsController {
       {
         id: req.user.sub,
         role: req.user.role,
+        schoolId: req.user.schoolId,
       },
       body,
     );

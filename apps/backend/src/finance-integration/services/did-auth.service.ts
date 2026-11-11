@@ -9,6 +9,7 @@ import {
   randomBytes,
   timingSafeEqual,
 } from 'node:crypto';
+import { requireSecret } from '../../common/security/secrets';
 
 export interface TrustTokenPayload {
   deviceId: string;
@@ -30,8 +31,15 @@ export class DidAuthService {
     const rawEnc = this.config.get<string>('DID_KEY_ENCRYPTION_KEY');
     const rawSign = this.config.get<string>('DID_TRUST_SIGNING_KEY');
 
-    this.encryptionKey = this.materializeKey(rawEnc, 'did-encryption-fallback');
-    this.signingKey = this.materializeKey(rawSign, 'did-signing-fallback');
+    // Production refuses to boot without real keys; dev gets a known, logged fallback.
+    this.encryptionKey = this.materializeKey(
+      requireSecret('DID_KEY_ENCRYPTION_KEY', rawEnc, 'did-encryption-dev-key'),
+      'did-encryption-fallback',
+    );
+    this.signingKey = this.materializeKey(
+      requireSecret('DID_TRUST_SIGNING_KEY', rawSign, 'did-signing-dev-key'),
+      'did-signing-fallback',
+    );
   }
 
   async issueTrustToken(
@@ -107,14 +115,7 @@ export class DidAuthService {
     return payload;
   }
 
-  private materializeKey(
-    rawKey: string | undefined,
-    fallbackSeed: string,
-  ): Buffer {
-    if (!rawKey) {
-      return createHmac('sha256', fallbackSeed).update('eduhaiti').digest();
-    }
-
+  private materializeKey(rawKey: string, fallbackSeed: string): Buffer {
     if (/^[A-Fa-f0-9]{64}$/.test(rawKey)) {
       return Buffer.from(rawKey, 'hex');
     }

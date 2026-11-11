@@ -167,7 +167,11 @@ export class FinanceIntegrationController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   createTuitionCharge(@Body() dto: CreateTuitionChargeDto, @Req() req: any) {
-    return this.financeService.createTuitionCharge(dto, req.user.sub);
+    return this.financeService.createTuitionCharge(
+      dto,
+      req.user.sub,
+      req.user?.schoolId,
+    );
   }
 
   @Post('admin/installment-plans')
@@ -177,14 +181,18 @@ export class FinanceIntegrationController {
     @Body() dto: CreateInstallmentPlanDto,
     @Req() req: any,
   ) {
-    return this.financeService.createInstallmentPlan(dto, req.user.sub);
+    return this.financeService.createInstallmentPlan(
+      dto,
+      req.user.sub,
+      req.user?.schoolId,
+    );
   }
 
   @Get('admin/payments')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  listPayments(@Query() filters: AdminPaymentsQueryDto) {
-    return this.financeService.listPaymentsForAdmin(filters);
+  listPayments(@Query() filters: AdminPaymentsQueryDto, @Req() req: any) {
+    return this.financeService.listPaymentsForAdmin(filters, req.user?.schoolId);
   }
 
   @Get('admin/payments/export')
@@ -195,15 +203,18 @@ export class FinanceIntegrationController {
     'Content-Disposition',
     'attachment; filename="financial-payments-report.csv"',
   )
-  exportPaymentsCsv(@Query() filters: AdminPaymentsQueryDto) {
-    return this.financeService.exportPaymentsCsvForAdmin(filters);
+  exportPaymentsCsv(@Query() filters: AdminPaymentsQueryDto, @Req() req: any) {
+    return this.financeService.exportPaymentsCsvForAdmin(
+      filters,
+      req.user?.schoolId,
+    );
   }
 
   @Get('admin/summary')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  getSummary(@Query() filters: AdminFinanceSummaryQueryDto) {
-    return this.financeService.getAdminFinanceSummary(filters);
+  getSummary(@Query() filters: AdminFinanceSummaryQueryDto, @Req() req: any) {
+    return this.financeService.getAdminFinanceSummary(filters, req.user?.schoolId);
   }
 
   @Get('admin/audit-report')
