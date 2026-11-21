@@ -487,7 +487,15 @@ function AdminDashboard() {
         >
           <ClassPerformance classes={grades.classes} />
         </Card>
-        <Card title={t("dashboardAtRisk")} icon={AlertTriangle}>
+        <Card
+          title={t("dashboardAtRisk")}
+          icon={AlertTriangle}
+          action={
+            <Link to="/admin/early-warning" className="text-xs font-semibold text-brand-navy/70 hover:text-brand-navy hover:underline">
+              {t("dashboardSeeAll")}
+            </Link>
+          }
+        >
           <RiskList risk={risk} />
         </Card>
       </div>

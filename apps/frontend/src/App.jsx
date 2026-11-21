@@ -33,6 +33,7 @@ const AttendanceReport = fromModule(commonPages, "AttendanceReport")
 const AdminDashboard = fromModule(adminPages, "AdminDashboard")
 const AdminUsers = fromModule(adminPages, "AdminUsers")
 const AdminAnnouncements = fromModule(adminPages, "AdminAnnouncements")
+const AdminEarlyWarning = fromModule(adminPages, "AdminEarlyWarning")
 const AdminStudentManagement = fromModule(adminPages, "AdminStudentManagement")
 const AdminDisciplineManagement = fromModule(adminPages, "AdminDisciplineManagement")
 const AdminClassManagement = fromModule(adminPages, "AdminClassManagement")
@@ -149,6 +150,7 @@ function App() {
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="announcements" element={<AdminAnnouncements />} />
                   <Route path="attendance" element={<AttendanceReport />} />
+                  <Route path="early-warning" element={<AdminEarlyWarning />} />
                   <Route path="students" element={<AdminStudentManagement />} />
                   <Route path="classes" element={<AdminClassManagement />} />
                   <Route path="disciplines" element={<AdminDisciplineManagement />} />

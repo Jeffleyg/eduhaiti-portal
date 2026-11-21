@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AnalyticsService } from './analytics.service';
+import { EARLY_WARNING_RULES } from './early-warning.service';
 import type { AnalyticsReportType } from './analytics.service';
 import {
   EXPORT_FORMATS,
@@ -27,7 +28,9 @@ import {
 type AnalyticsUser = { sub?: string; role?: Role; schoolId?: string | null };
 
 /** Reports that aggregate data across every school; only the platform owner may read them. */
-const CROSS_SCHOOL_REPORTS: ReadonlySet<string> = new Set(['media-notas-regiao']);
+const CROSS_SCHOOL_REPORTS: ReadonlySet<string> = new Set([
+  'media-notas-regiao',
+]);
 
 @Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -63,7 +66,7 @@ export class AnalyticsController {
     const report = await this.analyticsService.getEarlyWarningReport(
       this.resolveSchoolScope(req.user, schoolId),
     );
-    return { report };
+    return { report, rules: EARLY_WARNING_RULES };
   }
 
   /** Sends alert messages, so it is a POST (GET must stay free of side effects). */
@@ -138,7 +141,9 @@ export class AnalyticsController {
 
   private assertReportAllowed(user: AnalyticsUser, type: string) {
     if (CROSS_SCHOOL_REPORTS.has(type) && user.role !== Role.OWNER) {
-      throw new ForbiddenException('This report is restricted to the platform owner');
+      throw new ForbiddenException(
+        'This report is restricted to the platform owner',
+      );
     }
   }
 
