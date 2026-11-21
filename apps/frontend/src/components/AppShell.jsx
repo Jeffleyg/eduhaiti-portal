@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import React, { useState, useEffect } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 import Sidebar from "./Sidebar.jsx"
+import ErrorBoundary from "./ErrorBoundary.jsx"
 import CorporateHeader from "./CorporateHeader.jsx"
 import TopBar from "./TopBar.jsx"
 import { useSurvivalMode } from "../context/useSurvivalMode.js"
@@ -136,7 +137,9 @@ function AppShell({ role }) {
 
           {/* Painel de Conteúdo das Páginas (Outlet) */}
           <main id="main-content" tabIndex={-1} className="surface-panel flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-x-auto focus:outline-none">
-            <Outlet />
+            <ErrorBoundary resetKey={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
       </div>

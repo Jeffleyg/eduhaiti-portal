@@ -47,7 +47,8 @@ export const studentNav = [
 ]
 
 export const adminNav = [
-  { to: "/admin", icon: Users, labelKey: "navUsers" },
+  { to: "/admin", icon: LayoutDashboard, labelKey: "navOverview" },
+  { to: "/admin/users", icon: Users, labelKey: "navUsers" },
   { to: "/admin/students", icon: GraduationCap, labelKey: "adminStudents" },
   { to: "/admin/classes", icon: CalendarDays, labelKey: "adminClasses" },
   { to: "/admin/disciplines", icon: BookOpen, labelKey: "adminDisciplines" },

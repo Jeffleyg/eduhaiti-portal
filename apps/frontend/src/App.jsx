@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext.jsx"
 import AppShell from "./components/AppShell.jsx"
 import ProtectedRoute from "./components/ProtectedRoute.jsx"
+import ErrorBoundary from "./components/ErrorBoundary.jsx"
 import Landing from "./pages/Landing.jsx"
 import Login from "./pages/auth/Login.jsx"
 import { SurvivalModeProvider } from "./context/SurvivalModeContext.jsx"
@@ -27,6 +28,7 @@ const FamilyPortal = fromModule(() => import("./modules/family/index.js"), "Fami
 const UserProfile = fromModule(commonPages, "UserProfile")
 const Settings = fromModule(commonPages, "Settings")
 
+const AdminDashboard = fromModule(adminPages, "AdminDashboard")
 const AdminUsers = fromModule(adminPages, "AdminUsers")
 const AdminStudentManagement = fromModule(adminPages, "AdminStudentManagement")
 const AdminDisciplineManagement = fromModule(adminPages, "AdminDisciplineManagement")
@@ -70,6 +72,7 @@ function App() {
       <SurvivalModeProvider>
         <SyncControlProvider>
           <BrowserRouter>
+            <ErrorBoundary>
             <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Landing />} />
@@ -136,7 +139,8 @@ function App() {
 
               <Route element={<ProtectedRoute role="admin" />}>
                 <Route path="/admin" element={<AppShell role="admin" />}>
-                  <Route index element={<AdminUsers />} />
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsers />} />
                   <Route path="students" element={<AdminStudentManagement />} />
                   <Route path="classes" element={<AdminClassManagement />} />
                   <Route path="disciplines" element={<AdminDisciplineManagement />} />
@@ -160,6 +164,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             </Suspense>
+            </ErrorBoundary>
           </BrowserRouter>
         </SyncControlProvider>
       </SurvivalModeProvider>

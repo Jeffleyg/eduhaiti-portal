@@ -107,7 +107,8 @@ describe("Sidebar", () => {
 describe("navigation helpers", () => {
   it("finds the menu entry of nested and settings pages", async () => {
     const { findNavItem, roleLabelKey, isExactNavItem } = await import("./navigation.js")
-    expect(findNavItem("admin", "/admin/").labelKey).toBe("navUsers")
+    expect(findNavItem("admin", "/admin/").labelKey).toBe("navOverview")
+    expect(findNavItem("admin", "/admin/users").labelKey).toBe("navUsers")
     expect(findNavItem("admin", "/admin/finance").labelKey).toBe("navFinance")
     expect(findNavItem("teacher", "/teacher/grades/123").labelKey).toBe("navGrades")
     expect(findNavItem("professor", "/teacher/settings").labelKey).toBe("settings")
