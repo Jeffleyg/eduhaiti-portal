@@ -27,6 +27,15 @@ import { FinanceObservabilityService } from './services/finance-observability.se
 import { IdempotencyService } from './services/idempotency.service';
 import { ImmutableLedgerService } from './services/immutable-ledger.service';
 
+import {
+  buildPaymentsCsv,
+  ExportLanguage,
+  PaymentExportRow,
+} from './finance-export';
+import type { LedgerRecord } from './services/immutable-ledger.service';
+
+const EXPORT_MAX_ROWS = 10000;
+
 @Injectable()
 export class FinanceIntegrationService {
   private readonly logger = new Logger(FinanceIntegrationService.name);
@@ -633,9 +642,15 @@ export class FinanceIntegrationService {
       where: {
         studentId: student.id,
         schoolId,
-        ...(sourcePaymentIds.length > 0 ? { id: { in: sourcePaymentIds } } : {}),
+        ...(sourcePaymentIds.length > 0
+          ? { id: { in: sourcePaymentIds } }
+          : {}),
         status: {
-          in: [PaymentStatus.PENDING, PaymentStatus.OVERDUE, PaymentStatus.PARTIAL],
+          in: [
+            PaymentStatus.PENDING,
+            PaymentStatus.OVERDUE,
+            PaymentStatus.PARTIAL,
+          ],
         },
         OR: [
           { description: null },
@@ -658,7 +673,9 @@ export class FinanceIntegrationService {
     });
 
     if (sourcePayments.length === 0) {
-      throw new BadRequestException('No eligible debt records found for renegotiation');
+      throw new BadRequestException(
+        'No eligible debt records found for renegotiation',
+      );
     }
 
     const originalTotal = this.roundCurrency(
@@ -669,7 +686,9 @@ export class FinanceIntegrationService {
     );
 
     if (totalAmount <= 0) {
-      throw new BadRequestException('Installment total must be greater than zero');
+      throw new BadRequestException(
+        'Installment total must be greater than zero',
+      );
     }
 
     const planId = `PLAN-${new Date().toISOString().slice(0, 10)}-${crypto
@@ -790,11 +809,40 @@ export class FinanceIntegrationService {
     };
   }
 
-  async getFinancialAuditReport(filters: AdminLedgerReportQueryDto) {
+  /**
+   * Ledger report for ONE school. The ledger file is shared by every school,
+   * so records are kept only when they belong to this school's payments
+   * (or to its own earlier audit reports). The integrity check still covers
+   * the whole chain, which is what proves nothing was altered.
+   */
+  async getFinancialAuditReport(
+    filters: AdminLedgerReportQueryDto,
+    schoolId: string,
+  ) {
+    const payments = await this.prisma.payment.findMany({
+      where: { schoolId },
+      select: { id: true },
+    });
+    const paymentIds = new Set(payments.map((item) => item.id));
+    const include = (record: LedgerRecord) => {
+      if (paymentIds.has(record.transactionId)) return true;
+      const payload = record.payload ?? {};
+      if (record.category === 'finance-audit-report') {
+        return payload.schoolId === schoolId;
+      }
+      const sources = payload.sourcePaymentIds;
+      return (
+        record.category === 'installment-plan' &&
+        Array.isArray(sources) &&
+        sources.some((id) => paymentIds.has(String(id)))
+      );
+    };
+
     const report = await this.ledger.buildFinancialTransparencyReport({
       startDate: filters.startDate,
       endDate: filters.endDate,
       limit: filters.limit,
+      include,
     });
 
     await this.prisma.auditLog.create({
@@ -803,6 +851,7 @@ export class FinanceIntegrationService {
         entityId: report.lastHash,
         action: 'GENERATE',
         changes: {
+          schoolId,
           generatedAt: report.generatedAt,
           totalRecords: report.totalRecords,
           integrity: report.integrity,
@@ -815,6 +864,7 @@ export class FinanceIntegrationService {
       `audit-report-${Date.now()}`,
       'finance-audit-report',
       {
+        schoolId,
         generatedAt: report.generatedAt,
         totalRecords: report.totalRecords,
         integrity: report.integrity,
@@ -863,12 +913,6 @@ export class FinanceIntegrationService {
     };
   }
 
-  private escapeCsvCell(value: unknown): string {
-    const raw = value === null || value === undefined ? '' : String(value);
-    const escaped = raw.replace(/"/g, '""');
-    return `"${escaped}"`;
-  }
-
   async listPaymentsForAdmin(
     filters: AdminPaymentsQueryDto,
     schoolId?: string | null,
@@ -915,16 +959,15 @@ export class FinanceIntegrationService {
     };
   }
 
-  async exportPaymentsCsvForAdmin(
+  /** Every payment matching the filters (max 10 000), oldest due date first. */
+  private async collectPaymentRows(
     filters: AdminPaymentsQueryDto,
-    schoolId?: string | null,
-  ) {
-    const where = this.buildAdminPaymentsWhere(filters, schoolId);
-
+    schoolId: string,
+  ): Promise<PaymentExportRow[]> {
     const rows = await this.prisma.payment.findMany({
-      where,
-      orderBy: [{ createdAt: 'desc' }],
-      take: 10000,
+      where: this.buildAdminPaymentsWhere(filters, schoolId),
+      orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
+      take: EXPORT_MAX_ROWS,
       select: {
         id: true,
         amount: true,
@@ -934,46 +977,78 @@ export class FinanceIntegrationService {
         description: true,
         receiptNumber: true,
         createdAt: true,
-        student: {
-          select: {
-            name: true,
-            enrollmentNumber: true,
-          },
-        },
+        student: { select: { name: true, enrollmentNumber: true } },
       },
     });
+    return rows.map((row) => ({
+      id: row.id,
+      receiptNumber: row.receiptNumber,
+      studentName: row.student?.name ?? null,
+      enrollmentNumber: row.student?.enrollmentNumber ?? null,
+      amountHtg: Number(row.amount),
+      status: row.status,
+      dueDate: row.dueDate,
+      paidDate: row.paidDate,
+      description: row.description,
+      createdAt: row.createdAt,
+    }));
+  }
 
-    const header = [
-      'paymentId',
-      'studentName',
-      'studentEnrollmentNumber',
-      'amountHtg',
-      'status',
-      'dueDate',
-      'paidDate',
-      'receiptNumber',
-      'description',
-      'createdAt',
-    ];
+  async exportPaymentsCsvForAdmin(
+    filters: AdminPaymentsQueryDto,
+    schoolId: string,
+    language: ExportLanguage = 'fr',
+  ) {
+    const rows = await this.collectPaymentRows(filters, schoolId);
+    return buildPaymentsCsv(rows, language);
+  }
 
-    const lines = rows.map((row) => {
-      const cells = [
-        row.id,
-        row.student?.name ?? '',
-        row.student?.enrollmentNumber ?? '',
-        Number(row.amount).toFixed(2),
-        row.status,
-        row.dueDate.toISOString(),
-        row.paidDate ? row.paidDate.toISOString() : '',
-        row.receiptNumber ?? '',
-        row.description ?? '',
-        row.createdAt.toISOString(),
-      ];
-
-      return cells.map((cell) => this.escapeCsvCell(cell)).join(',');
-    });
-
-    return [header.join(','), ...lines].join('\n');
+  /** Data for the printable (PDF) payments report. */
+  async getPaymentsReport(filters: AdminPaymentsQueryDto, schoolId: string) {
+    const [school, rows] = await Promise.all([
+      this.prisma.school.findUnique({
+        where: { id: schoolId },
+        select: { name: true, address: true, city: true },
+      }),
+      this.collectPaymentRows(filters, schoolId),
+    ]);
+    const now = new Date();
+    const byStatus: Record<string, { count: number; amountHtg: number }> = {};
+    let totalAmountHtg = 0;
+    let overdueCount = 0;
+    for (const row of rows) {
+      const bucket = (byStatus[row.status] ??= { count: 0, amountHtg: 0 });
+      bucket.count += 1;
+      bucket.amountHtg += row.amountHtg;
+      totalAmountHtg += row.amountHtg;
+      if (row.status !== 'PAID' && row.dueDate < now) overdueCount += 1;
+    }
+    const paidAmountHtg = byStatus.PAID?.amountHtg ?? 0;
+    return {
+      generatedAt: now.toISOString(),
+      school,
+      filters: {
+        status: filters.status ?? null,
+        startDate: filters.startDate ?? null,
+        endDate: filters.endDate ?? null,
+        studentEnrollmentNumber: filters.studentEnrollmentNumber ?? null,
+      },
+      totals: {
+        count: rows.length,
+        amountHtg: totalAmountHtg,
+        paidAmountHtg,
+        outstandingAmountHtg: totalAmountHtg - paidAmountHtg,
+        overdueCount,
+      },
+      byStatus,
+      truncated: rows.length >= EXPORT_MAX_ROWS,
+      rows: rows.map((row) => ({
+        ...row,
+        dueDate: row.dueDate.toISOString(),
+        paidDate: row.paidDate?.toISOString() ?? null,
+        createdAt: row.createdAt.toISOString(),
+      })),
+    };
   }
 
   async getAdminFinanceSummary(
@@ -1264,8 +1339,9 @@ export class FinanceIntegrationService {
     const base = Math.floor(cents / count);
     const remainder = cents - base * count;
 
-    const values = Array.from({ length: count }, (_, index) =>
-      (base + (index < remainder ? 1 : 0)) / 100,
+    const values = Array.from(
+      { length: count },
+      (_, index) => (base + (index < remainder ? 1 : 0)) / 100,
     );
 
     return values.map((value) => this.roundCurrency(value));
@@ -1317,7 +1393,9 @@ export class FinanceIntegrationService {
       return schools[0].id;
     }
 
-    throw new NotFoundException('Could not determine the school for this student');
+    throw new NotFoundException(
+      'Could not determine the school for this student',
+    );
   }
 
   /** Student lookup restricted to an admin's school (when provided). */

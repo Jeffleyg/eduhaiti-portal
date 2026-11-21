@@ -24,6 +24,8 @@ async function bootstrap() {
   );
   app.enableCors({
     origin: resolveCorsOrigin(process.env),
+    // Lets the SPA read the file name of downloads (CSV/PDF exports).
+    exposedHeaders: ['Content-Disposition'],
   });
   // Student hand-ins stored before assignment files became private must not
   // stay public: they are served only by GET /api/assignments/.../file.

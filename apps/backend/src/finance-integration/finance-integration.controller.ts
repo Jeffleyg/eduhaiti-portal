@@ -1,17 +1,30 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
-  Header,
   Headers,
   HttpCode,
   Param,
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import type { Response } from 'express';
+import { exportFileName, normalizeExportLanguage } from './finance-export';
+
+type AdminRequest = { user?: { sub?: string; schoolId?: string | null } };
+
+/** Every admin finance route works on the admin's own school only. */
+export function adminSchool(req: AdminRequest): string {
+  if (!req.user?.schoolId) {
+    throw new ForbiddenException('Admin is not linked to a school');
+  }
+  return req.user.schoolId;
+}
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -166,11 +179,15 @@ export class FinanceIntegrationController {
   @Post('admin/tuition-charges')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  createTuitionCharge(@Body() dto: CreateTuitionChargeDto, @Req() req: any) {
+  createTuitionCharge(
+    @Body() dto: CreateTuitionChargeDto,
+    @Req() req: AdminRequest,
+  ) {
+    const schoolId = adminSchool(req);
     return this.financeService.createTuitionCharge(
       dto,
-      req.user.sub,
-      req.user?.schoolId,
+      req.user?.sub ?? '',
+      schoolId,
     );
   }
 
@@ -179,48 +196,84 @@ export class FinanceIntegrationController {
   @Roles(Role.ADMIN)
   createInstallmentPlan(
     @Body() dto: CreateInstallmentPlanDto,
-    @Req() req: any,
+    @Req() req: AdminRequest,
   ) {
+    const schoolId = adminSchool(req);
     return this.financeService.createInstallmentPlan(
       dto,
-      req.user.sub,
-      req.user?.schoolId,
+      req.user?.sub ?? '',
+      schoolId,
     );
   }
 
   @Get('admin/payments')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  listPayments(@Query() filters: AdminPaymentsQueryDto, @Req() req: any) {
-    return this.financeService.listPaymentsForAdmin(filters, req.user?.schoolId);
+  listPayments(
+    @Query() filters: AdminPaymentsQueryDto,
+    @Req() req: AdminRequest,
+  ) {
+    return this.financeService.listPaymentsForAdmin(filters, adminSchool(req));
   }
 
+  /** Spreadsheet export; `lang` (fr|ht|pt|en) picks headers and number format. */
   @Get('admin/payments/export')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @Header('Content-Type', 'text/csv; charset=utf-8')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename="financial-payments-report.csv"',
-  )
-  exportPaymentsCsv(@Query() filters: AdminPaymentsQueryDto, @Req() req: any) {
-    return this.financeService.exportPaymentsCsvForAdmin(
+  async exportPaymentsCsv(
+    @Query() filters: AdminPaymentsQueryDto,
+    @Query('lang') lang: string | undefined,
+    @Req() req: AdminRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const language = normalizeExportLanguage(lang);
+    const csv = await this.financeService.exportPaymentsCsvForAdmin(
       filters,
-      req.user?.schoolId,
+      adminSchool(req),
+      language,
     );
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exportFileName(language)}"`,
+    );
+    return csv;
+  }
+
+  /** Data for the printable PDF report (same filters as the export). */
+  @Get('admin/payments/report')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getPaymentsReport(
+    @Query() filters: AdminPaymentsQueryDto,
+    @Req() req: AdminRequest,
+  ) {
+    return this.financeService.getPaymentsReport(filters, adminSchool(req));
   }
 
   @Get('admin/summary')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  getSummary(@Query() filters: AdminFinanceSummaryQueryDto, @Req() req: any) {
-    return this.financeService.getAdminFinanceSummary(filters, req.user?.schoolId);
+  getSummary(
+    @Query() filters: AdminFinanceSummaryQueryDto,
+    @Req() req: AdminRequest,
+  ) {
+    return this.financeService.getAdminFinanceSummary(
+      filters,
+      adminSchool(req),
+    );
   }
 
   @Get('admin/audit-report')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  getAuditReport(@Query() filters: AdminLedgerReportQueryDto) {
-    return this.financeService.getFinancialAuditReport(filters);
+  getAuditReport(
+    @Query() filters: AdminLedgerReportQueryDto,
+    @Req() req: AdminRequest,
+  ) {
+    return this.financeService.getFinancialAuditReport(
+      filters,
+      adminSchool(req),
+    );
   }
 }

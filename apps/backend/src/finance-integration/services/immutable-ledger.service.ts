@@ -117,6 +117,8 @@ export class ImmutableLedgerService {
     startDate?: string;
     endDate?: string;
     limit?: number;
+    /** Keeps only matching records (e.g. one school's); integrity still covers the whole chain. */
+    include?: (record: LedgerRecord) => boolean;
   }): Promise<{
     generatedAt: string;
     totalRecords: number;
@@ -145,7 +147,7 @@ export class ImmutableLedgerService {
         return false;
       }
 
-      return true;
+      return filters?.include ? filters.include(record) : true;
     });
 
     const integrity = this.verifyChain(allRecords);

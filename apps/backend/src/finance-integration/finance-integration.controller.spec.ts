@@ -1,3 +1,4 @@
+import { ForbiddenException } from '@nestjs/common';
 import { describe, expect, it, jest } from '@jest/globals';
 import { autoMock } from '../test-utils/auto-mock';
 import { FinanceIntegrationController } from './finance-integration.controller';
@@ -19,7 +20,11 @@ const make = () => {
 describe('FinanceIntegrationController', () => {
   it('logs and processes mobile money and guardian payments', async () => {
     const { finance, observability, ctrl } = make();
-    const dto: any = { provider: 'moncash', idempotencyKey: 'k', studentEnrollmentNumber: 'e' };
+    const dto: any = {
+      provider: 'moncash',
+      idempotencyKey: 'k',
+      studentEnrollmentNumber: 'e',
+    };
     await ctrl.payViaMobileMoney(dto);
     await ctrl.payTuitionAsGuardian(dto);
     expect(observability.logPaymentStage).toHaveBeenCalledTimes(2);
@@ -37,24 +42,91 @@ describe('FinanceIntegrationController', () => {
     const { finance, ctrl } = make();
     const req = { user: { sub: 'a' } };
     await ctrl.getPendingTuition('e');
-    await ctrl.issueDidToken({ deviceId: 'd', studentEnrollmentNumber: 'e' } as any);
+    await ctrl.issueDidToken({
+      deviceId: 'd',
+      studentEnrollmentNumber: 'e',
+    } as any);
     await ctrl.verifyDidToken({ trustToken: 't' });
     const adminReq = { user: { sub: 'a', schoolId: 's1' } };
     await ctrl.createTuitionCharge({ x: 1 } as any, adminReq);
-    await ctrl.createInstallmentPlan({ y: 1 } as any, req);
+    await ctrl.createInstallmentPlan({ y: 1 } as any, adminReq);
     await ctrl.listPayments({ p: 1 } as any, adminReq);
-    await ctrl.exportPaymentsCsv({ p: 2 } as any, {});
+    const res = { setHeader: jest.fn() };
+    finance.exportPaymentsCsvForAdmin.mockResolvedValue('csv');
+    await expect(
+      ctrl.exportPaymentsCsv({ p: 2 } as any, 'pt-BR', adminReq, res as any),
+    ).resolves.toBe('csv');
+    await ctrl.exportPaymentsCsv(
+      { p: 2 } as any,
+      undefined,
+      adminReq,
+      res as any,
+    );
+    await ctrl.getPaymentsReport({ p: 5 } as any, adminReq);
     await ctrl.getSummary({ p: 3 } as any, adminReq);
-    await ctrl.getAuditReport({ p: 4 } as any);
+    await ctrl.getAuditReport({ p: 4 } as any, adminReq);
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'text/csv; charset=utf-8',
+    );
+    expect(res.setHeader.mock.calls[1][1]).toMatch(
+      /^attachment; filename="pagamentos-\d{4}-\d{2}-\d{2}\.csv"$/,
+    );
+    expect(res.setHeader.mock.calls[3][1]).toMatch(/filename="paiements-/);
+    expect(finance.getPaymentsReport).toHaveBeenCalledWith({ p: 5 }, 's1');
     expect(finance.listPendingTuitionByEnrollment).toHaveBeenCalledWith('e');
     expect(finance.issueDidTrustToken).toHaveBeenCalledWith('d', 'e');
     expect(finance.verifyDidTrustTokenOffline).toHaveBeenCalledWith('t');
-    expect(finance.createTuitionCharge).toHaveBeenCalledWith({ x: 1 }, 'a', 's1');
-    expect(finance.createInstallmentPlan).toHaveBeenCalledWith({ y: 1 }, 'a', undefined);
+    expect(finance.createTuitionCharge).toHaveBeenCalledWith(
+      { x: 1 },
+      'a',
+      's1',
+    );
+    expect(finance.createInstallmentPlan).toHaveBeenCalledWith(
+      { y: 1 },
+      'a',
+      's1',
+    );
     expect(finance.listPaymentsForAdmin).toHaveBeenCalledWith({ p: 1 }, 's1');
-    expect(finance.exportPaymentsCsvForAdmin).toHaveBeenCalledWith({ p: 2 }, undefined);
+    expect(finance.exportPaymentsCsvForAdmin.mock.calls).toEqual([
+      [{ p: 2 }, 's1', 'pt'],
+      [{ p: 2 }, 's1', 'fr'],
+    ]);
     expect(finance.getAdminFinanceSummary).toHaveBeenCalledWith({ p: 3 }, 's1');
-    expect(finance.getFinancialAuditReport).toHaveBeenCalledWith({ p: 4 });
+    expect(finance.getFinancialAuditReport).toHaveBeenCalledWith(
+      { p: 4 },
+      's1',
+    );
+    expect(req.user.sub).toBe('a');
+  });
+
+  it('refuses admin finance routes without a school (no cross-school data)', async () => {
+    const { finance, ctrl } = make();
+    const noSchool = { user: { sub: 'a' } };
+    expect(() => ctrl.createTuitionCharge({} as any, noSchool)).toThrow(
+      ForbiddenException,
+    );
+    expect(() => ctrl.createInstallmentPlan({} as any, {})).toThrow(
+      ForbiddenException,
+    );
+    expect(() => ctrl.listPayments({} as any, noSchool)).toThrow(
+      ForbiddenException,
+    );
+    await expect(
+      ctrl.exportPaymentsCsv({} as any, 'fr', noSchool, {
+        setHeader: jest.fn(),
+      } as any),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(() => ctrl.getPaymentsReport({} as any, noSchool)).toThrow(
+      ForbiddenException,
+    );
+    expect(() => ctrl.getSummary({} as any, noSchool)).toThrow(
+      ForbiddenException,
+    );
+    expect(() => ctrl.getAuditReport({} as any, noSchool)).toThrow(
+      ForbiddenException,
+    );
+    expect(finance.getFinancialAuditReport).not.toHaveBeenCalled();
   });
 
   describe('diaspora webhook', () => {
@@ -63,11 +135,16 @@ describe('FinanceIntegrationController', () => {
     it('rejects an invalid signature', async () => {
       const { signature, alerts, finance, ctrl } = make();
       signature.verifyDiasporaSignature.mockReturnValue(false);
-      await expect(ctrl.handleDiasporaWebhook(dto, 'sig', 'ts')).resolves.toEqual({
+      await expect(
+        ctrl.handleDiasporaWebhook(dto, 'sig', 'ts'),
+      ).resolves.toEqual({
         accepted: false,
         reason: 'Invalid signature',
       });
-      expect(alerts.recordAttempt).toHaveBeenCalledWith(false, 'invalid_signature_or_ts');
+      expect(alerts.recordAttempt).toHaveBeenCalledWith(
+        false,
+        'invalid_signature_or_ts',
+      );
       expect(finance.processDiasporaRemittance).not.toHaveBeenCalled();
     });
 
@@ -75,7 +152,9 @@ describe('FinanceIntegrationController', () => {
       const { signature, alerts, finance, ctrl } = make();
       signature.verifyDiasporaSignature.mockReturnValue(true);
       finance.processDiasporaRemittance.mockResolvedValue({ ok: 1 });
-      await expect(ctrl.handleDiasporaWebhook(dto, 'sig', 'ts')).resolves.toEqual({
+      await expect(
+        ctrl.handleDiasporaWebhook(dto, 'sig', 'ts'),
+      ).resolves.toEqual({
         accepted: true,
         result: { ok: 1 },
       });
@@ -85,18 +164,25 @@ describe('FinanceIntegrationController', () => {
     it('records processing errors and rethrows', async () => {
       const { signature, alerts, finance, observability, ctrl } = make();
       signature.verifyDiasporaSignature.mockReturnValue(true);
-      finance.processDiasporaRemittance.mockRejectedValueOnce(new Error('boom'));
+      finance.processDiasporaRemittance.mockRejectedValueOnce(
+        new Error('boom'),
+      );
       await expect(ctrl.handleDiasporaWebhook(dto)).rejects.toThrow('boom');
-      expect(alerts.recordAttempt).toHaveBeenCalledWith(false, 'processing_error');
+      expect(alerts.recordAttempt).toHaveBeenCalledWith(
+        false,
+        'processing_error',
+      );
       const last = observability.logPaymentStage.mock.calls.at(-1)!;
       expect(last[0]).toBe('IDEMPOTENCY_FAILED');
       expect(last[1]).toMatchObject({ error: 'boom' });
 
       finance.processDiasporaRemittance.mockRejectedValueOnce('weird');
       await expect(ctrl.handleDiasporaWebhook(dto)).rejects.toBe('weird');
-      expect(observability.logPaymentStage.mock.calls.at(-1)![1]).toMatchObject({
-        error: 'Unknown webhook error',
-      });
+      expect(observability.logPaymentStage.mock.calls.at(-1)![1]).toMatchObject(
+        {
+          error: 'Unknown webhook error',
+        },
+      );
     });
   });
 });

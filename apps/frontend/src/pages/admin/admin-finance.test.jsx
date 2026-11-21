@@ -41,6 +41,9 @@ describe("AdminFinanceControl", () => {
     expect(screen.getByText("paymentHistoryDesc")).toBeInTheDocument()
     await userEvent.click(screen.getByText("btnCreateCharge"))
     expect(screen.getByText("createTuitionChargeDesc")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "financeReportsTab" }))
+    expect(screen.getByText("financeReportsDesc")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "financeCsvAction" })).toBeInTheDocument()
   })
 
   it("loads the dashboard with filters and paginates the history", async () => {
@@ -59,7 +62,9 @@ describe("AdminFinanceControl", () => {
     await userEvent.click(await screen.findByRole("option", { name: "paymentStatusPaid" }))
     await userEvent.click(screen.getByText("loadDashboard"))
     expect(await screen.findByText("dashboardLoaded")).toBeInTheDocument()
-    expect(apiFetch.mock.calls[0][0]).toBe(
+    // The first two calls are the silent load when the page opens.
+    expect(apiFetch.mock.calls[0][0]).toBe("/finance/admin/summary?page=1&pageSize=20")
+    expect(apiFetch.mock.calls.at(-2)[0]).toBe(
       "/finance/admin/summary?studentEnrollmentNumber=E1&status=PAID&startDate=2026-01-01&endDate=2026-12-31&page=1&pageSize=20",
     )
     expect(screen.getByText("100.00")).toBeInTheDocument()
@@ -74,8 +79,11 @@ describe("AdminFinanceControl", () => {
   })
 
   it("handles sparse payment payloads and load errors", async () => {
-    apiFetch.mockImplementationOnce(async () => ({})).mockImplementationOnce(async () => ({}))
+    apiFetch.mockResolvedValue({})
     renderWithRouter(<AdminFinanceControl />)
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2))
+    // Opening the page loads silently: no success banner yet.
+    expect(screen.queryByText("dashboardLoaded")).toBeNull()
     await userEvent.click(screen.getByText("btnFilters"))
     await userEvent.click(screen.getByText("loadDashboard"))
     expect(await screen.findByText("dashboardLoaded")).toBeInTheDocument()
@@ -90,16 +98,24 @@ describe("AdminFinanceControl", () => {
     const revokeObjectURL = vi.fn()
     Object.assign(URL, { createObjectURL, revokeObjectURL })
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
-    apiFetchRaw.mockResolvedValueOnce({ text: async () => "a,b\n1,2" })
+    apiFetch.mockResolvedValue({ rows: [] })
+    const file = (disposition) => ({ blob: async () => new Blob(["a;b"]), headers: { get: () => disposition } })
+    apiFetchRaw.mockResolvedValueOnce(file('attachment; filename="paiements-2026-11-21.csv"'))
     renderWithRouter(<AdminFinanceControl />)
     await userEvent.click(screen.getByText("btnFilters"))
     await userEvent.click(screen.getByText("exportCsv"))
     expect(await screen.findByText("csvExported")).toBeInTheDocument()
-    expect(apiFetchRaw.mock.calls[0][0]).toBe("/finance/admin/payments/export?")
+    expect(apiFetchRaw.mock.calls[0][0]).toMatch(/^\/finance\/admin\/payments\/export\?lang=\w{2}$/)
     expect(click).toHaveBeenCalled()
+    expect(click.mock.contexts[0].download).toBe("paiements-2026-11-21.csv")
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:x")
     act(() => vi.advanceTimersByTime(3100))
     await waitFor(() => expect(screen.queryByText("csvExported")).toBeNull())
+
+    apiFetchRaw.mockResolvedValueOnce(file(null))
+    await userEvent.click(screen.getByText("exportCsv"))
+    await waitFor(() => expect(click).toHaveBeenCalledTimes(2))
+    expect(click.mock.contexts[1].download).toBe("paiements.csv")
 
     apiFetchRaw.mockRejectedValueOnce(new Error("export failed"))
     await userEvent.click(screen.getByText("exportCsv"))
@@ -113,7 +129,7 @@ describe("AdminFinanceControl", () => {
       return { rows: [] }
     })
     renderWithRouter(<AdminFinanceControl />)
-    fireEvent.submit(screen.getByText("createCharge").closest("form"))
+    fireEvent.submit((await screen.findByText("createCharge")).closest("form"))
     await waitFor(() => expect(apiFetch.mock.calls.some((c) => c[0].startsWith("/finance/admin/summary"))).toBe(true))
     apiFetch.mockClear()
     await userEvent.click(screen.getByText("btnInstallment"))

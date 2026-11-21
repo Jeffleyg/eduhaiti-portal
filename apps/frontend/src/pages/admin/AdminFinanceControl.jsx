@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useAuth } from "../../context/AuthContext.jsx"
@@ -7,12 +7,14 @@ import FinanceChargeForm from "./components/FinanceChargeForm.jsx"
 import FinanceInstallmentForm from "./components/FinanceInstallmentForm.jsx"
 import FinanceFiltersAndSummary from "./components/FinanceFiltersAndSummary.jsx"
 import FinancePaymentHistory from "./components/FinancePaymentHistory.jsx"
+import FinanceReports from "./components/FinanceReports.jsx"
+import { downloadBlob, fileNameFrom } from "../../lib/download.js"
 import LoadingState from "../../components/LoadingState.jsx"
 import Button from "../../components/Button.jsx"
-import { CreditCard, Handshake, History } from "lucide-react"
+import { CreditCard, FileDown, Handshake, History } from "lucide-react"
 
 function AdminFinanceControl() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { token } = useAuth()
   const [filters, setFilters] = useState({
     studentEnrollmentNumber: "",
@@ -52,7 +54,8 @@ function AdminFinanceControl() {
   }
 
   // `overrides` lets callers load a page before the filters state has re-rendered
-  const loadDashboard = async (overrides = {}) => {
+  // `silent` skips the success banner (used for the automatic load on open).
+  const loadDashboard = async (overrides = {}, { silent = false } = {}) => {
     setLoading(true)
     setError("")
     setMessage("")
@@ -72,7 +75,7 @@ function AdminFinanceControl() {
         total: Number(paymentsData.total ?? 0),
         totalPages: Number(paymentsData.totalPages ?? 1),
       })
-      setMessage(t("dashboardLoaded"))
+      if (!silent) setMessage(t("dashboardLoaded"))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -85,21 +88,14 @@ function AdminFinanceControl() {
     setError("")
 
     try {
-      const query = buildFilterQuery(false)
-      const response = await apiFetchRaw(`/finance/admin/payments/export?${query}`, {
+      const params = new URLSearchParams(buildFilterQuery(false))
+      params.set("lang", (i18n.resolvedLanguage || i18n.language || "fr").slice(0, 2))
+      const response = await apiFetchRaw(`/finance/admin/payments/export?${params}`, {
         token,
       })
 
-      const csvText = await response.text()
-      const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `financeiro-${new Date().toISOString().slice(0, 10)}.csv`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
+      const blob = await response.blob()
+      downloadBlob(blob, fileNameFrom(response.headers.get("content-disposition"), "paiements.csv"))
 
       setMessage(t("csvExported"))
       setTimeout(() => setMessage(""), 3000)
@@ -109,6 +105,13 @@ function AdminFinanceControl() {
       setLoading(false)
     }
   }
+
+  // Load the summary and the first page of payments when the page opens, so
+  // the history is never empty just because nobody pressed "load" yet.
+  useEffect(() => {
+    if (token) loadDashboard({}, { silent: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   return (
     <div className="space-y-6">
@@ -149,6 +152,13 @@ function AdminFinanceControl() {
           onClick={() => setActiveSection("history")}
         >
           {t("btnHistory")}
+        </Button>
+        <Button
+          type="button"
+          variant={activeSection === "reports" ? "primary" : "outline"}
+          onClick={() => setActiveSection("reports")}
+        >
+          {t("financeReportsTab")}
         </Button>
       </div>
 
@@ -194,6 +204,21 @@ function AdminFinanceControl() {
             onExportCsv={exportCsv}
             loading={loading}
           />
+        </div>
+      )}
+
+      {activeSection === "reports" && (
+        <div className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6 mt-4">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-lg bg-brand-navy/10 p-2">
+              <FileDown className="h-5 w-5 text-brand-navy" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-brand-navy">{t("financeReportsTab")}</h2>
+              <p className="text-xs text-brand-navy/60">{t("financeReportsDesc")}</p>
+            </div>
+          </div>
+          <FinanceReports />
         </div>
       )}
 
