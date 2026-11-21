@@ -44,7 +44,7 @@ function Signup() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sky-100 text-sm font-semibold mb-2">{t("email")}</label>
-            <input
+            <input aria-label={t("email")}
               type="email"
               name="email"
               value={formData.email}
@@ -57,7 +57,7 @@ function Signup() {
 
           <div>
             <label className="block text-sky-100 text-sm font-semibold mb-2">{t("fullName")}</label>
-            <input
+            <input aria-label={t("fullName")}
               type="text"
               name="name"
               value={formData.name}
@@ -70,7 +70,7 @@ function Signup() {
 
           <div>
             <label className="block text-sky-100 text-sm font-semibold mb-2">{t("role")}</label>
-            <select
+            <select aria-label={t("role")}
               name="role"
               value={formData.role}
               onChange={handleChange}

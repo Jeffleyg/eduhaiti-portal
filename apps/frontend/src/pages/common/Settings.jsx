@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import SectionHeader from "../../components/SectionHeader.jsx"
 import { useSyncControl } from "../../context/useSyncControl.js"
+import { formatLastUpdated } from "../../offline/sqliteCache"
 
 const NOTIFICATIONS_KEY = "eduhaiti.settings.notifications"
 
@@ -32,7 +33,7 @@ function writeNotificationsPreference(value) {
 export default function Settings() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { conflictStrategy, setConflictStrategy } = useSyncControl()
+  const { conflictStrategy, setConflictStrategy, syncHistory = [] } = useSyncControl()
 
   const currentLanguage = (i18n.resolvedLanguage || i18n.language || "fr").slice(0, 2)
   const [language, setLanguage] = useState(currentLanguage)
@@ -61,8 +62,8 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-sand">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div>
+      <div className="mx-auto max-w-3xl">
         <div className="rounded-3xl border border-brand-navy/10 bg-white/70 p-6">
           <div className="mb-6 flex items-center justify-between">
             <SectionHeader title={t("settings")} subtitle={t("settingsSubtitle") || ""} />
@@ -90,7 +91,27 @@ export default function Settings() {
                 <option value="lww">{t("syncStrategyLWW")}</option>
                 <option value="manual">{t("syncStrategyManual")}</option>
               </select>
+              <p className="mt-1 text-xs text-brand-navy/60">{t("syncModeHelp")}</p>
             </div>
+
+            {syncHistory.length > 0 ? (
+              <section aria-labelledby="settings-sync-history" className="rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 text-sm text-brand-navy/85">
+                <h3 id="settings-sync-history" className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">{t("syncHistory")}</h3>
+                <ul className="mt-2 space-y-1">
+                  {syncHistory.slice(0, 5).map((item) => (
+                    <li key={item.id} className="flex flex-wrap justify-between gap-2">
+                      <span>{formatLastUpdated(item.createdAt, i18n.resolvedLanguage || i18n.language)}</span>
+                      <span>
+                        {item.completedTasks}/{item.totalTasks} •{" "}
+                        <span className={item.status === "success" ? "text-emerald-700" : "text-brand-red"}>
+                          {t(item.status === "success" ? "syncSuccess" : "syncFailed")}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             <div className="flex items-center justify-between">
               <div>

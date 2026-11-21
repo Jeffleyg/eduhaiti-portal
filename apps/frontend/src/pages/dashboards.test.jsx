@@ -114,7 +114,7 @@ describe("StudentDashboard", () => {
   it("computes grades and attendance rates (case-insensitive) and shows badges", async () => {
     routes()
     renderWithRouter(<StudentDashboard />)
-    expect(await screen.findByText("12.5")).toBeInTheDocument()
+    expect(await screen.findByText("12.5/20")).toBeInTheDocument()
     expect(screen.getByText("50%")).toBeInTheDocument()
     expect(screen.getByText("Badge!")).toBeInTheDocument()
     expect(screen.getByText("80")).toBeInTheDocument()

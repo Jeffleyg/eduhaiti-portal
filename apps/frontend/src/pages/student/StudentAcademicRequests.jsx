@@ -121,7 +121,7 @@ function StudentAcademicRequests() {
             ))}
           </select>
 
-          <input
+          <input aria-label={t("academicRequestSubject")}
             value={form.title}
             onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm md:col-span-2"
@@ -129,7 +129,7 @@ function StudentAcademicRequests() {
             required
           />
 
-          <textarea
+          <textarea aria-label={t("academicRequestDetails")}
             value={form.details}
             onChange={(event) => setForm((prev) => ({ ...prev, details: event.target.value }))}
             className="min-h-[120px] rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm md:col-span-2"

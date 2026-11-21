@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
+import { apiFetch } from "./lib/api.js"
 
 vi.mock("./lib/api.js", async (orig) => ({ ...(await orig()), apiFetch: vi.fn(async () => ({})) }))
 
@@ -60,5 +61,33 @@ describe("module barrels", () => {
       exports.forEach((component) => expect(typeof component).toBe("function"))
     }
     expect(studentModule.StudentGrades).toBe(studentModule.StudentResults)
+  })
+})
+
+describe("lazy-loaded areas", () => {
+  const fallbackGone = () =>
+    waitFor(() => expect(document.querySelector('[role="status"][aria-live="polite"] .animate-spin')).toBeNull(), {
+      timeout: 10000,
+    })
+
+  it.each([
+    ["ADMIN", ["/admin", "/admin/profile", "/teacher", "/student"]],
+    ["OWNER", ["/owner"]],
+    ["STUDENT", ["/change-password"]],
+    [null, ["/verify-transcript/abc"]],
+  ])("loads the %s pages on demand", async (role, paths) => {
+    if (role) localStorage.setItem("eduhaiti_token", "t")
+    apiFetch.mockImplementation(async (path) => (path === "/auth/me" ? { role, name: "N" } : []))
+    try {
+      for (const path of paths) {
+        visit(path)
+        await waitFor(() => expect(window.location.pathname).toBe(path))
+        await fallbackGone()
+        cleanup()
+      }
+    } finally {
+      localStorage.removeItem("eduhaiti_token")
+      apiFetch.mockImplementation(async () => ({}))
+    }
   })
 })

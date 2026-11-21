@@ -129,7 +129,7 @@ function StudentDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label={t("metricGrades")} value={stats.grades ?? "0"} />
+        <StatCard label={t("overallAverage")} value={`${stats.grades ?? "0"}/20`} />
         <StatCard label={t("metricAttendance")} value={stats.attendance ?? "0"} />
         <StatCard label={t("metricMessages")} value={stats.messages ?? "0"} />
         <StatCard label={t("myClasses")} value={stats.classes ?? "0"} />

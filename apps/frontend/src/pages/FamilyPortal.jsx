@@ -117,7 +117,7 @@ function FamilyPortal() {
             <h2 className="text-base font-semibold text-brand-navy">{t("familyAccessTitle")}</h2>
             {step === "identify" ? (
               <form className="mt-3 grid gap-3 md:grid-cols-3" onSubmit={requestCode}>
-                <input
+                <input aria-label={t("familyEnrollmentPlaceholder")}
                   value={enrollmentNumber}
                   onChange={(event) => setEnrollmentNumber(event.target.value)}
                   placeholder={t("familyEnrollmentPlaceholder")}
@@ -125,7 +125,7 @@ function FamilyPortal() {
                   autoComplete="off"
                   required
                 />
-                <input
+                <input aria-label={t("familyPhonePlaceholder")}
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                   placeholder={t("familyPhonePlaceholder")}
@@ -140,7 +140,7 @@ function FamilyPortal() {
               </form>
             ) : (
               <form className="mt-3 grid gap-3 md:grid-cols-3" onSubmit={verifyCode}>
-                <input
+                <input aria-label={t("familyCodePlaceholder")}
                   value={code}
                   onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder={t("familyCodePlaceholder")}
@@ -291,14 +291,14 @@ function FamilyPortal() {
             <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
               <h3 className="font-semibold text-brand-navy">{t("directContactTitle")}</h3>
               <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={sendContactRequest}>
-                <input
+                <input aria-label={t("subjectPlaceholder")}
                   value={contactForm.subject}
                   onChange={(event) => setContactForm((prev) => ({ ...prev, subject: event.target.value }))}
                   placeholder={t("subjectPlaceholder")}
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm md:col-span-2"
                   required
                 />
-                <textarea
+                <textarea aria-label={t("messagePlaceholder")}
                   value={contactForm.body}
                   onChange={(event) => setContactForm((prev) => ({ ...prev, body: event.target.value }))}
                   placeholder={t("messagePlaceholder")}

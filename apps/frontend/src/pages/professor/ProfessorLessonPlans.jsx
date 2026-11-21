@@ -126,15 +126,15 @@ function ProfessorLessonPlans() {
 
           <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="rounded-2xl border px-3 py-2 bg-sand" required />
 
-          <input value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder={t("titleLabel")} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" required />
+          <input aria-label={t("titleLabel")} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder={t("titleLabel")} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" required />
 
-          <textarea value={form.objectives} onChange={(e) => setForm((p) => ({ ...p, objectives: e.target.value }))} placeholder={t("objectives")} rows={3} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <textarea aria-label={t("objectives")} value={form.objectives} onChange={(e) => setForm((p) => ({ ...p, objectives: e.target.value }))} placeholder={t("objectives")} rows={3} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
-          <textarea value={form.methodology} onChange={(e) => setForm((p) => ({ ...p, methodology: e.target.value }))} placeholder={t("methodologyPlaceholder")} rows={2} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <textarea aria-label={t("methodologyPlaceholder")} value={form.methodology} onChange={(e) => setForm((p) => ({ ...p, methodology: e.target.value }))} placeholder={t("methodologyPlaceholder")} rows={2} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
-          <textarea value={form.content} onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} placeholder={t("contentActivities")} rows={4} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <textarea aria-label={t("contentActivities")} value={form.content} onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} placeholder={t("contentActivities")} rows={4} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
-          <input value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} placeholder={t("tagsPlaceholder")} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
+          <input aria-label={t("tagsPlaceholder")} value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} placeholder={t("tagsPlaceholder")} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2" />
 
           <select value={form.visibility} onChange={(e) => setForm((p) => ({ ...p, visibility: e.target.value }))} className="rounded-2xl border px-3 py-2 bg-sand md:col-span-2">
             <option value="SCHOOL">{t("shareWithTeachers")}</option>
@@ -166,7 +166,7 @@ function ProfessorLessonPlans() {
 
       <section className="rounded-2xl border border-brand-navy/10 bg-white p-4">
         <h3 className="font-semibold text-brand-navy">{t("methodologyRepository")}</h3>
-        <input
+        <input aria-label={t("searchPlansPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("searchPlansPlaceholder")}

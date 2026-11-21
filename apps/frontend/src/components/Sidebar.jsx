@@ -1,78 +1,22 @@
 import React, { useState } from "react"
-import {
-  BookOpen,
-  CalendarDays,
-  ClipboardCheck,
-  FileCheck2,
-  ListChecks,
-  GraduationCap,
-  LayoutDashboard,
-  Mail,
-  MessageSquare,
-  NotebookPen,
-  HandCoins,
-  Settings,
-  UploadCloud,
-  Users,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react"
+import { LogOut, ChevronLeft, ChevronRight } from "lucide-react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext.jsx"
+import { isExactNavItem, navForRole, roleLabelKey } from "./navigation.js"
 
-const professorNav = [
-  { to: "/teacher", icon: LayoutDashboard, labelKey: "navOverview" },
-  { to: "/teacher/profile", icon: Users, labelKey: "navProfile" },
-  { to: "/teacher/grades", icon: GraduationCap, labelKey: "navGrades" },
-  { to: "/teacher/attendance", icon: ClipboardCheck, labelKey: "navAttendance" },
-  { to: "/teacher/resources", icon: UploadCloud, labelKey: "navResources" },
-  { to: "/teacher/assignments", icon: BookOpen, labelKey: "navHomework" },
-  { to: "/teacher/lesson-plans", icon: NotebookPen, labelKey: "lessonPlansTitle" },
-  { to: "/teacher/forum", icon: MessageSquare, labelKey: "navForum" },
-  { to: "/teacher/messages", icon: Mail, labelKey: "navMessages" },
-  { to: "/teacher/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
-]
-
-const studentNav = [
-  { to: "/student", icon: LayoutDashboard, labelKey: "navOverview" },
-  { to: "/student/profile", icon: Users, labelKey: "navProfile" },
-  { to: "/student/grades", icon: BookOpen, labelKey: "navResults" },
-  { to: "/student/transcript", icon: GraduationCap, labelKey: "navTranscript" },
-  { to: "/student/schedule", icon: CalendarDays, labelKey: "navSchedule" },
-  { to: "/student/resources", icon: UploadCloud, labelKey: "navResources" },
-  { to: "/student/assignments", icon: ClipboardCheck, labelKey: "navHomework" },
-  { to: "/student/lesson-plans", icon: NotebookPen, labelKey: "lessonPlansTitle" },
-  { to: "/student/forum", icon: MessageSquare, labelKey: "navForum" },
-  { to: "/student/messages", icon: Mail, labelKey: "navMessages" },
-  { to: "/student/academic-requests", icon: FileCheck2, labelKey: "navAcademicRequests" },
-]
-
-const adminNav = [
-  { to: "/admin", icon: Users, labelKey: "navUsers" },
-  { to: "/admin/profile", icon: Settings, labelKey: "navProfile" },
-  { to: "/admin/students", icon: GraduationCap, labelKey: "adminStudents" },
-  { to: "/admin/classes", icon: CalendarDays, labelKey: "adminClasses" },
-  { to: "/admin/disciplines", icon: BookOpen, labelKey: "adminDisciplines" },
-  { to: "/admin/finance", icon: HandCoins, labelKey: "navFinance" },
-  { to: "/admin/family-communication", icon: Mail, labelKey: "navFamilyCommunication" },
-  { to: "/admin/academic", icon: Settings, labelKey: "navAcademicAdmin" },
-  { to: "/admin/academic-requests", icon: ListChecks, labelKey: "navAcademicRequestsReview" },
-]
-
-const ownerNav = [
-  { to: "/owner", icon: LayoutDashboard, labelKey: "controlPanel" },
-  { to: "/owner/profile", icon: Settings, labelKey: "navProfile" },
-]
-
-function Sidebar({ role }) {
+/**
+ * Role navigation. `variant="drawer"` is the mobile off-canvas version: no
+ * collapse toggle and no fixed viewport height (the drawer scrolls itself).
+ */
+function Sidebar({ role, variant = "panel" }) {
   const { t } = useTranslation()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsedState, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const navItems = role === "owner" ? ownerNav : role === "admin" ? adminNav : role === "teacher" || role === "professor" ? professorNav : studentNav
-  const roleLabelKey = role === "teacher" ? "roleprofessor" : `role${role}`
+  const inDrawer = variant === "drawer"
+  const collapsed = inDrawer ? false : collapsedState
+  const navItems = navForRole(role)
 
   const handleLogout = async () => {
     await logout()
@@ -81,63 +25,74 @@ function Sidebar({ role }) {
 
   return (
     <aside
-      className={`glass-panel sticky top-6 flex h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 ${
-        collapsed ? "w-16" : "w-64 xl:w-72"
-      }`}
+      aria-label={t("mainNavigation")}
+      className={
+        inDrawer
+          ? "flex h-full flex-col gap-5"
+          : `glass-panel sticky top-6 flex h-[calc(100vh-3rem)] flex-col gap-5 overflow-hidden rounded-3xl px-4 py-5 transition-[width] duration-200 ${
+              collapsed ? "w-16" : "w-64 xl:w-72"
+            }`
+      }
     >
-      <div className="shrink-0 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
           <img
             src="/LogoEdu.png"
             alt={t("brand")}
-            className={`h-10 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 ${collapsed ? "" : ""}`}
+            className="h-10 w-auto shrink-0 rounded-xl border border-brand-navy/10 bg-white px-2 py-1"
           />
           {!collapsed ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/60">{t("appSubtitle")}</p>
-              <h2 className="mt-1 font-display text-xl text-brand-navy">{t("brand")}</h2>
-              <p className="mt-1 text-sm text-brand-navy/70">{t(roleLabelKey)}</p>
+            <div className="min-w-0">
+              <h2 className="truncate font-display text-xl text-brand-navy">{t("brand")}</h2>
+              <p className="truncate text-xs font-medium text-brand-navy/70">{t(roleLabelKey(role))}</p>
             </div>
           ) : null}
         </div>
 
-        <button
-          onClick={() => setCollapsed((s) => !s)}
-          className="rounded-full p-1 text-brand-navy/70 hover:bg-white"
-          aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
+        {!inDrawer ? (
+          <button
+            type="button"
+            onClick={() => setCollapsed((s) => !s)}
+            className="rounded-full p-1 text-brand-navy/70 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy"
+            aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
+        ) : null}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-2 overflow-y-auto pr-1 pt-3">
+      <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto pr-1 pt-2">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === "/teacher" || item.to === "/student" || item.to === "/owner"}
-            title={t(item.labelKey)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive ? "bg-brand-navy text-white" : "text-brand-navy/90 hover:bg-white/30"
-                    } ${collapsed ? "justify-center px-0" : ""}`
-                  }
-                  >
-            <item.icon className="h-4 w-4" />
-            {!collapsed ? t(item.labelKey) : null}
+            end={isExactNavItem(item.to)}
+            title={collapsed ? t(item.labelKey) : undefined}
+            aria-label={collapsed ? t(item.labelKey) : undefined}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky ${
+                isActive ? "bg-brand-navy text-white shadow-sm" : "text-brand-navy/90 hover:bg-white/60"
+              } ${collapsed ? "justify-center px-0" : ""}`
+            }
+          >
+            <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {!collapsed ? <span className="truncate">{t(item.labelKey)}</span> : null}
           </NavLink>
         ))}
       </nav>
 
-      <div className="mt-auto">
+      <div className="mt-auto border-t border-brand-navy/10 pt-3">
         <button
+          type="button"
           onClick={handleLogout}
-          className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red ${
+          className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-brand-navy/70 transition-colors hover:bg-brand-red/10 hover:text-brand-red focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-red ${
             collapsed ? "justify-center" : ""
           }`}
-          title={t("logout")}
+          title={collapsed ? t("logout") : undefined}
+          aria-label={collapsed ? t("logout") : undefined}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           {!collapsed ? t("logout") : null}
         </button>
       </div>

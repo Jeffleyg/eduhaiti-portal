@@ -82,25 +82,62 @@ describe("Sidebar", () => {
     inRouter(<Sidebar role="student" />, "/student")
     await userEvent.click(screen.getByLabelText("collapseSidebar"))
     expect(screen.queryByText("rolestudent")).toBeNull()
+    // Collapsed: icons only, named for assistive technology.
+    expect(screen.getByLabelText("navTranscript")).toBeInTheDocument()
+    expect(screen.getByTitle("logout")).toBeInTheDocument()
     await userEvent.click(screen.getByLabelText("expandSidebar"))
-    await userEvent.click(screen.getByTitle("logout"))
+    await userEvent.click(screen.getByText("logout"))
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/login"))
     expect(auth.logout).toHaveBeenCalled()
+  })
+
+  it("highlights only the current admin page (home link is exact)", () => {
+    inRouter(<Sidebar role="admin" />, "/admin/finance")
+    const active = screen.getAllByRole("link").filter((link) => link.className.includes("bg-brand-navy text-white"))
+    expect(active.map((link) => link.getAttribute("href"))).toEqual(["/admin/finance"])
+  })
+
+  it("renders the drawer variant without the collapse toggle", () => {
+    inRouter(<Sidebar role="teacher" variant="drawer" />, "/teacher")
+    expect(screen.queryByLabelText("collapseSidebar")).toBeNull()
+    expect(screen.getByText("navGrades")).toBeInTheDocument()
+  })
+})
+
+describe("navigation helpers", () => {
+  it("finds the menu entry of nested and settings pages", async () => {
+    const { findNavItem, roleLabelKey, isExactNavItem } = await import("./navigation.js")
+    expect(findNavItem("admin", "/admin/").labelKey).toBe("navUsers")
+    expect(findNavItem("admin", "/admin/finance").labelKey).toBe("navFinance")
+    expect(findNavItem("teacher", "/teacher/grades/123").labelKey).toBe("navGrades")
+    expect(findNavItem("professor", "/teacher/settings").labelKey).toBe("settings")
+    expect(findNavItem("owner", "/owner/unknown")).toBeNull()
+    expect(findNavItem("student")).toBeNull()
+    expect(roleLabelKey("teacher")).toBe("roleprofessor")
+    expect(roleLabelKey("owner")).toBe("roleowner")
+    expect(isExactNavItem("/admin")).toBe(true)
+    expect(isExactNavItem("/admin/finance")).toBe(false)
   })
 })
 
 describe("TopBar", () => {
-  it("syncs, switches strategy and shows status", async () => {
-    inRouter(<TopBar role="teacher" />)
+  it("shows the current page title and syncs", async () => {
+    inRouter(<TopBar role="teacher" />, "/teacher/grades")
     expect(screen.getByText("roleprofessor")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("navGrades")
     await userEvent.click(screen.getByText("syncNow"))
     expect(sync.syncNow).toHaveBeenCalledWith("teacher")
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "manual" } })
-    expect(sync.setConflictStrategy).toHaveBeenCalledWith("manual")
+    // The conflict strategy moved to Settings.
+    expect(screen.queryByRole("combobox")).toBeNull()
     expect(screen.queryByText(/survivalMode/)).toBeNull()
   })
 
-  it("shows syncing progress, errors, conflicts, history and survival reasons", () => {
+  it("falls back to the generic title outside the menu", () => {
+    inRouter(<TopBar role="owner" />, "/owner/elsewhere")
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("dashboardTitle")
+  })
+
+  it("shows syncing progress, errors, conflicts and survival reasons", () => {
     Object.assign(sync, {
       isSyncing: true,
       currentTask: "grades",
@@ -115,11 +152,9 @@ describe("TopBar", () => {
     Object.assign(survival, { isSurvivalMode: true, isLowBattery: true })
     const { rerender } = inRouter(<TopBar role="admin" />)
     expect(screen.getByText("syncProgress")).toBeInTheDocument()
-    expect(screen.getByTitle("syncingTask: grades")).toBeDisabled()
-    expect(screen.getByText("boom")).toBeInTheDocument()
+    expect(screen.getByTitle(/^syncingTask: grades/)).toBeDisabled()
+    expect(screen.getByRole("alert")).toHaveTextContent("boom")
     expect(screen.getByText("syncConflictsDetected")).toBeInTheDocument()
-    expect(screen.getByText(/syncSuccess/)).toBeInTheDocument()
-    expect(screen.getByText(/syncFailed/)).toBeInTheDocument()
     expect(screen.getByText("survivalMode: lowBattery")).toBeInTheDocument()
 
     Object.assign(survival, { isLowBattery: false, is2G: true })

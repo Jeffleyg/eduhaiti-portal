@@ -133,7 +133,7 @@ function AdminFamilyCommunication() {
 
       {activeSection === "compose" && (
         <form onSubmit={submit} className="rounded-2xl border border-brand-navy/10 bg-white p-6 grid gap-3 md:grid-cols-2">
-        <input
+        <input aria-label={t("studentEnrollmentPlaceholder")}
           value={form.enrollmentNumber}
           onChange={(event) => setForm((prev) => ({ ...prev, enrollmentNumber: event.target.value }))}
           placeholder={t("studentEnrollmentPlaceholder")}
@@ -160,14 +160,14 @@ function AdminFamilyCommunication() {
           <option value="BOTH">{t("inAppPlusSmsQueue")}</option>
         </select>
 
-        <input
+        <input aria-label={t("guardianPhonePlaceholder")}
           value={form.guardianPhone}
           onChange={(event) => setForm((prev) => ({ ...prev, guardianPhone: event.target.value }))}
           placeholder={t("guardianPhonePlaceholder")}
           className="rounded-xl border border-brand-navy/20 px-3 py-2"
         />
 
-        <input
+        <input aria-label={t("noticeTitlePlaceholder")}
           value={form.title}
           onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
           placeholder={t("noticeTitlePlaceholder")}
@@ -175,7 +175,7 @@ function AdminFamilyCommunication() {
           required
         />
 
-        <textarea
+        <textarea aria-label={t("noticeBodyPlaceholder")}
           value={form.body}
           onChange={(event) => setForm((prev) => ({ ...prev, body: event.target.value }))}
           placeholder={t("noticeBodyPlaceholder")}
@@ -249,7 +249,7 @@ function AdminFamilyCommunication() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <textarea
+                    <textarea aria-label={t("familyResponsePlaceholder")}
                       value={responseDrafts[request.requestId] ?? ""}
                       onChange={(event) =>
                         setResponseDrafts((prev) => ({

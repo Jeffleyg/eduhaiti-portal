@@ -125,7 +125,7 @@ function ProfessorResources() {
 
         <div>
           <label className="block text-sm font-semibold text-brand-navy mb-2">{t("title") || 'Title'}</label>
-          <input
+          <input aria-label={t("resourceTitleExample")}
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -137,7 +137,7 @@ function ProfessorResources() {
 
         <div>
           <label className="block text-sm font-semibold text-brand-navy mb-2">{t("description") || 'Description (optional)'}</label>
-          <textarea
+          <textarea aria-label={t("materialDescription")}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full px-4 py-2 border border-brand-navy/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red"

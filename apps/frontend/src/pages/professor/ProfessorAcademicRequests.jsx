@@ -183,7 +183,7 @@ function ProfessorAcademicRequests() {
                       ))}
                     </select>
 
-                    <input
+                    <input aria-label={t("academicRequestResolution")}
                       value={form.resolutionComment}
                       onChange={(event) =>
                         handleReviewField(item.id, "resolutionComment", event.target.value)

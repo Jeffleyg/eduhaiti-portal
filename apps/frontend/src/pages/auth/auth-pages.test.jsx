@@ -37,7 +37,7 @@ afterEach(() => {
 
 describe("Login", () => {
   const fill = (email, password) => {
-    fireEvent.change(screen.getByPlaceholderText("seu@email.ht"), { target: { value: email } })
+    fireEvent.change(screen.getByPlaceholderText("emailPlaceholder"), { target: { value: email } })
     fireEvent.change(screen.getByPlaceholderText("••••••••"), { target: { value: password } })
   }
 
@@ -72,6 +72,7 @@ describe("Login", () => {
     ["401 nope", "invalidCredentials"],
     ["Unauthorized", "invalidCredentials"],
     ["Temporary password expired", "temporaryPasswordExpired"],
+    ["Too many login attempts. Try again later.", "tooManyLoginAttempts"],
     ["Request failed", "serverError"],
     ["", "serverError"],
     ["Something else", "errorOccurred"],
@@ -110,7 +111,7 @@ describe("Login", () => {
 describe("RedeemAccess", () => {
   const fillAccount = () => {
     fireEvent.change(screen.getByPlaceholderText("fullNamePlaceholder"), { target: { value: "Jean" } })
-    fireEvent.change(screen.getByPlaceholderText("seu@email.ht"), { target: { value: "j@x.ht" } })
+    fireEvent.change(screen.getByPlaceholderText("emailPlaceholder"), { target: { value: "j@x.ht" } })
   }
 
   it("lets the user type a code and continue to the account form", async () => {
@@ -144,7 +145,7 @@ describe("RedeemAccess", () => {
   it("shows errors, sends no empty name and links to login", async () => {
     apiFetch.mockRejectedValueOnce(new Error("Invalid or expired permission code")).mockRejectedValueOnce(new Error(""))
     renderAt(<RedeemAccess />, "/redeem-access?code=XYZ")
-    fireEvent.change(screen.getByPlaceholderText("seu@email.ht"), { target: { value: "j@x.ht" } })
+    fireEvent.change(screen.getByPlaceholderText("emailPlaceholder"), { target: { value: "j@x.ht" } })
     fireEvent.submit(screen.getByText("createAccount").closest("form"))
     expect(await screen.findByText("Invalid or expired permission code")).toBeInTheDocument()
     expect(apiFetch.mock.calls[0][1].body.name).toBeUndefined()
@@ -185,5 +186,19 @@ describe("Landing", () => {
     expect(screen.getAllByText("brand").length).toBeGreaterThan(0)
     expect(screen.getAllByText("metricAttendance").length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link").length).toBeGreaterThan(0)
+  })
+})
+
+describe("Login password visibility", () => {
+  it("toggles the password between hidden and visible", async () => {
+    apiFetch.mockRejectedValue(new Error("no test creds"))
+    renderAt(<Login />, "/login")
+    const input = screen.getByLabelText("password")
+    expect(input).toHaveAttribute("type", "password")
+    expect(screen.getByLabelText("email")).toHaveAttribute("autocomplete", "username")
+    fireEvent.click(screen.getByLabelText("showPassword"))
+    expect(input).toHaveAttribute("type", "text")
+    fireEvent.click(screen.getByLabelText("hidePassword"))
+    expect(input).toHaveAttribute("type", "password")
   })
 })

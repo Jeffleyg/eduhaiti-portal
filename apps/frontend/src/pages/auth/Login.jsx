@@ -1,4 +1,4 @@
-import { Lock, Mail } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -14,6 +14,7 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [testAccounts, setTestAccounts] = useState([])
+  const [showPassword, setShowPassword] = useState(false)
 
   const runLogin = async (nextEmail, nextPassword) => {
     setLoading(true)
@@ -41,7 +42,9 @@ function Login() {
         navigate("/student", { replace: true })
       }
     } catch (err) {
-      if (err.message.includes("Temporary password expired")) {
+      if (err.message.includes("Too many login attempts")) {
+        setError(t("tooManyLoginAttempts"))
+      } else if (err.message.includes("Temporary password expired")) {
         setError(t("temporaryPasswordExpired"))
       } else if (
         err.message.includes("Invalid credentials") ||
@@ -147,14 +150,18 @@ function Login() {
             }}
           >
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
+              <label htmlFor="login-email" className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                 {t("email")}
               </label>
-              <div className="mt-2 flex items-center gap-3 rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 transition-all focus-within:border-brand-navy/30 focus-within:bg-sand/80">
-                <Mail className="h-5 w-5 text-brand-navy/60" />
+              <div className="mt-2 flex items-center gap-3 rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 transition-all focus-within:border-brand-navy/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-sky/30">
+                <Mail className="h-5 w-5 text-brand-navy/60" aria-hidden="true" />
                 <input
+                  id="login-email"
+                  name="email"
+                  autoComplete="username"
+                  aria-required="true"
                   className="flex-1 bg-transparent text-sm text-brand-navy placeholder-brand-navy/40 outline-none"
-                  placeholder="seu@email.ht"
+                  placeholder={t("emailPlaceholder")}
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -163,23 +170,36 @@ function Login() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
+              <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                 {t("password")}
               </label>
-              <div className="mt-2 flex items-center gap-3 rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 transition-all focus-within:border-brand-navy/30 focus-within:bg-sand/80">
-                <Lock className="h-5 w-5 text-brand-navy/60" />
+              <div className="mt-2 flex items-center gap-3 rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 transition-all focus-within:border-brand-navy/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-sky/30">
+                <Lock className="h-5 w-5 text-brand-navy/60" aria-hidden="true" />
                 <input
+                  id="login-password"
+                  name="password"
+                  autoComplete="current-password"
+                  aria-required="true"
                   className="flex-1 bg-transparent text-sm text-brand-navy placeholder-brand-navy/40 outline-none"
                   placeholder="••••••••"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="rounded-lg p-1 text-brand-navy/60 hover:text-brand-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky"
+                  aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                </button>
               </div>
             </div>
 
             {error ? (
-              <div className="rounded-2xl border border-brand-red/30 bg-brand-red/10 p-3 text-sm text-brand-red">
+              <div role="alert" className="rounded-2xl border border-brand-red/30 bg-brand-red/10 p-3 text-sm text-brand-red">
                 {error}
               </div>
             ) : null}

@@ -42,7 +42,7 @@ function SchoolsList({ schools, loading, onEdit, onDelete, token }) {
                   <div className="mt-2 flex gap-4 text-xs text-brand-navy/70">
                     <span>👥 {school.usageAnalytics.totalUsers} {t("usersUnit")}</span>
                     <span>📚 {school.usageAnalytics.classCount} {t("classesUnit")}</span>
-                    <span>✅ {school.usageAnalytics.attendanceRecords} presenças</span>
+                    <span>✅ {school.usageAnalytics.attendanceRecords} {t("attendanceRecordsUnit")}</span>
                   </div>
                 )}
               </div>

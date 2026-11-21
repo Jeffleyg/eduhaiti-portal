@@ -1,5 +1,5 @@
 {
-  "brand": "Education Portal",
+  "brand": "EduHaiti",
   "tagline": "An education portal for clear, collaborative school management.",
   "login": "Sign in",
   "loading": "Loading",
@@ -907,5 +907,15 @@
   "noSubmissions": "No student has submitted yet.",
   "submissionsOnlyCreator": "Only the teacher who created the assignment can see the submissions.",
   "assignmentAttachment": "Assignment document (optional)",
-  "assignmentAttachmentHint": "Only students of this class can view and download it. 20 MB maximum."
+  "assignmentAttachmentHint": "Only students of this class can view and download it. 20 MB maximum.",
+  "skipToContent": "Skip to main content",
+  "syncModeHelp": "Chooses which version is kept when data was changed both offline and on the server.",
+  "emailPlaceholder": "name@school.ht",
+  "overallAverageInPeriod": "Overall average for the period: {{value}}/20",
+  "attendanceRecordsUnit": "attendance records",
+  "tooManyLoginAttempts": "Too many sign-in attempts. For your security, try again in 15 minutes.",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "userMenu": "Account menu",
+  "overallAverage": "Overall average"
 }

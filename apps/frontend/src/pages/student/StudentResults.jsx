@@ -149,7 +149,7 @@ function StudentResults() {
 
       <section className="mt-6 rounded-2xl border border-brand-navy/10 bg-white p-5 space-y-4">
         <h3 className="text-lg font-semibold text-brand-navy">{t("myEvolution")}</h3>
-        <p className="text-sm text-brand-navy/70">Media geral no periodo: {Number(evolution?.overallAverage ?? 0).toFixed(2)}/20</p>
+        <p className="text-sm text-brand-navy/70">{t("overallAverageInPeriod", { value: Number(evolution?.overallAverage ?? 0).toFixed(2) })}</p>
 
         <div className="grid gap-3 md:grid-cols-2">
           <div className="module-card compact p-3">

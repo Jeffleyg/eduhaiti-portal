@@ -1,5 +1,5 @@
 {
-  "brand": "Portal Education",
+  "brand": "EduHaiti",
   "tagline": "Potal edikatif pou jesyon lekol klè ak kolaboratif.",
   "subtitle": "Tablo de bor, nòt, prezans ak kominikasyon mete ansanm nan yon eksperyans fasil.",
   "cta": "Eksplore potal la",
@@ -35,7 +35,7 @@
   "footer": "Konsepsyon pou lavni edikasyon an nan Ayiti.",
   "languageLabel": "Lang",
   "languageSwitch": "Francais",
-  "appSubtitle": "Potal Edikatif",
+  "appSubtitle": "Pòtay edikatif",
   "login": "Koneksyon",
   "loginTitle": "Antre ak modpas sekirite",
   "loginSubtitle": "Antre imel ak modpas pou antre nan espas ou.",
@@ -1040,5 +1040,14 @@
   "noSubmissions": "Pa gen elèv ki remèt li poko.",
   "submissionsOnlyCreator": "Se sèlman pwofesè ki kreye devwa a ki ka wè travay elèv yo remèt.",
   "assignmentAttachment": "Dokiman devwa a (si ou vle)",
-  "assignmentAttachmentHint": "Se sèlman elèv klas sa a ki ka wè l epi telechaje l. 20 MB maksimòm."
+  "assignmentAttachmentHint": "Se sèlman elèv klas sa a ki ka wè l epi telechaje l. 20 MB maksimòm.",
+  "skipToContent": "Ale nan kontni prensipal la",
+  "syncModeHelp": "Chwazi ki vèsyon ki rete lè yon done chanje san entènèt ak sou sèvè a.",
+  "emailPlaceholder": "non@lekol.ht",
+  "overallAverageInPeriod": "Mwayèn jeneral pou peryòd la : {{value}}/20",
+  "attendanceRecordsUnit": "prezans",
+  "tooManyLoginAttempts": "Twòp tantativ koneksyon. Pou sekirite ou, eseye ankò nan 15 minit.",
+  "showPassword": "Montre modpas la",
+  "hidePassword": "Kache modpas la",
+  "userMenu": "Meni kont lan"
 }

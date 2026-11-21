@@ -181,7 +181,7 @@ function AdminDisciplineManagement() {
               {editingId ? t("adminEditDiscipline") : t("adminCreateDiscipline")}
             </h3>
             <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitForm}>
-              <input
+              <input aria-label={t("adminDisciplineName")}
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                 className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm md:col-span-2"
@@ -189,14 +189,14 @@ function AdminDisciplineManagement() {
                 required
               />
 
-              <input
+              <input aria-label={t("adminDisciplineCode")}
                 value={form.code}
                 onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
                 className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
                 placeholder={t("adminDisciplineCode")}
               />
 
-              <input
+              <input aria-label={t("adminDisciplineCredits")}
                 type="number"
                 min="0"
                 value={form.credits}

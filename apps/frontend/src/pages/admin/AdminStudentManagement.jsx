@@ -135,7 +135,7 @@ function AdminStudentManagement() {
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <input
+          <input aria-label={t("searchByNameEmail")}
             type="text"
             placeholder={t("searchByNameEmail")}
             value={searchName}

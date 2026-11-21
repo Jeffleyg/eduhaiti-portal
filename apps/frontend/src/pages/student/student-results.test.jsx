@@ -59,7 +59,7 @@ describe("StudentResults", () => {
     expect(await screen.findByText("15/20")).toBeInTheDocument()
     expect(screen.getByText("gradePublished")).toBeInTheDocument()
     expect(screen.getByText("gradeDraft")).toBeInTheDocument()
-    expect(screen.getByText("Media geral no periodo: 11.50/20")).toBeInTheDocument()
+    expect(screen.getByText("overallAverageInPeriod")).toBeInTheDocument()
     expect(screen.getByText("12.00/20")).toBeInTheDocument()
     expect(screen.getByRole("combobox")).toHaveValue("y2")
     expect(apiFetch).toHaveBeenCalledWith("/grades/evolution?academicYearId=y2", { token: "tok" })

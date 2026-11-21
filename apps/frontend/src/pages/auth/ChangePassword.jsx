@@ -68,7 +68,7 @@ function ChangePassword() {
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                 {t("currentPassword")}
               </label>
-              <input
+              <input aria-label={t("currentPassword")}
                 className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm text-brand-navy outline-none"
                 type="password"
                 value={currentPassword}
@@ -80,7 +80,7 @@ function ChangePassword() {
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                 {t("newPassword")}
               </label>
-              <input
+              <input aria-label={t("newPassword")}
                 className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm text-brand-navy outline-none"
                 type="password"
                 value={newPassword}
@@ -92,7 +92,7 @@ function ChangePassword() {
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                 {t("confirmPassword")}
               </label>
-              <input
+              <input aria-label={t("confirmPassword")}
                 className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm text-brand-navy outline-none"
                 type="password"
                 value={confirmPassword}

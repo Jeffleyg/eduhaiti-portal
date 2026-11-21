@@ -110,7 +110,7 @@ function StudentMessages() {
           </label>
           <label className="text-sm text-brand-navy/80 md:col-span-2">
             {t("messageSubject")}
-            <input
+            <input aria-label={t("messageSubject")}
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               className="mt-1 w-full rounded-2xl border border-brand-navy/15 px-3 py-2"
@@ -119,7 +119,7 @@ function StudentMessages() {
           </label>
           <label className="text-sm text-brand-navy/80 md:col-span-2">
             {t("messageBody")}
-            <textarea
+            <textarea aria-label={t("messageBody")}
               value={body}
               onChange={(event) => setBody(event.target.value)}
               rows={4}

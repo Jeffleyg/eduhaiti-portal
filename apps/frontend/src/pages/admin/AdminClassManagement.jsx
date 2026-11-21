@@ -234,7 +234,7 @@ function AdminClassManagement() {
         </h3>
 
         <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitClass}>
-          <input
+          <input aria-label={t("adminClassName")}
             value={form.name}
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
@@ -242,7 +242,7 @@ function AdminClassManagement() {
             required
           />
 
-          <input
+          <input aria-label={t("adminClassLevel")}
             value={form.level}
             onChange={(event) => setForm((prev) => ({ ...prev, level: event.target.value }))}
             className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
@@ -264,7 +264,7 @@ function AdminClassManagement() {
             ))}
           </select>
 
-          <input
+          <input aria-label={t("adminMaxStudents")}
             type="number"
             min="1"
             value={form.maxStudents}

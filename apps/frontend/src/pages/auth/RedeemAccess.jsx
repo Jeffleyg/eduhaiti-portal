@@ -72,7 +72,7 @@ function RedeemAccess() {
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                     {t("redeemPermissionCode")}
                   </label>
-                  <input
+                  <input aria-label={t("redeemPermissionCode")}
                     className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 font-mono text-sm font-bold uppercase text-brand-navy placeholder-brand-navy/40 outline-none focus:border-brand-navy/30 focus:bg-sand/80 transition-all"
                     placeholder="XXXXXXXX"
                     value={form.code}
@@ -215,7 +215,7 @@ function RedeemAccess() {
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                     {t("fullName")}
                   </label>
-                  <input
+                  <input aria-label={t("fullName")}
                     className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 text-sm text-brand-navy placeholder-brand-navy/40 outline-none focus:border-brand-navy/30 focus:bg-sand/80 transition-all"
                     placeholder={t("fullNamePlaceholder")}
                     value={form.name}
@@ -229,10 +229,10 @@ function RedeemAccess() {
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
                     {t("email")}
                   </label>
-                  <input
+                  <input aria-label={t("email")}
                     className="mt-2 w-full rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 text-sm text-brand-navy placeholder-brand-navy/40 outline-none focus:border-brand-navy/30 focus:bg-sand/80 transition-all"
                     type="email"
-                    placeholder="seu@email.ht"
+                    placeholder={t("emailPlaceholder")}
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     required

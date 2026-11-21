@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar.jsx"
 import CorporateHeader from "./CorporateHeader.jsx"
 import TopBar from "./TopBar.jsx"
 import { useSurvivalMode } from "../context/useSurvivalMode.js"
+import { roleLabelKey } from "./navigation.js"
 
 function AppShell({ role }) {
   const { t } = useTranslation()
@@ -37,7 +38,7 @@ function AppShell({ role }) {
 
   return (
     <div
-      className={`min-h-screen bg-sand text-brand-navy flex flex-col ${
+      className={`relative min-h-screen bg-sand text-brand-navy flex flex-col ${
         disableAnimations ? "survival-no-animations" : ""
       }`}
     >
@@ -46,6 +47,13 @@ function AppShell({ role }) {
         <div className="pointer-events-none absolute inset-0 bg-atlas bg-grid opacity-50" />
       )}
 
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-brand-navy focus:px-4 focus:py-2 focus:text-white"
+      >
+        {t("skipToContent")}
+      </a>
+
       {/* Cabeçalho Institucional do Topo */}
       <CorporateHeader />
 
@@ -53,11 +61,9 @@ function AppShell({ role }) {
       <div className="relative mx-auto flex w-full max-w-7xl flex-1 gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-6 lg:gap-6 lg:px-6 lg:py-8">
         
         {/* ================= NAVEGAÇÃO DESKTOP ================= */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-6">
-            <Sidebar role={role} />
-          </div>
-        </aside>
+        <div className="hidden shrink-0 lg:block">
+          <Sidebar role={role} />
+        </div>
 
         {/* ================= NAVEGAÇÃO MOBILE (DRAWER OFF-CANVAS) ================= */}
         {/* Fundo escuro (Backdrop) com detecção de clique fora */}
@@ -101,7 +107,7 @@ function AppShell({ role }) {
 
           {/* Conteúdo da Sidebar no mobile */}
           <div className="flex-1 overflow-y-auto p-4">
-            <Sidebar role={role} />
+            <Sidebar role={role} variant="drawer" />
           </div>
         </div>
 
@@ -121,7 +127,7 @@ function AppShell({ role }) {
             </button>
 
             <span className="text-xs font-semibold uppercase tracking-wider text-brand-navy/60">
-              {role}
+              {t(roleLabelKey(role))}
             </span>
           </div>
 
@@ -129,7 +135,7 @@ function AppShell({ role }) {
           <TopBar role={role} />
 
           {/* Painel de Conteúdo das Páginas (Outlet) */}
-          <main className="surface-panel flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-x-auto">
+          <main id="main-content" tabIndex={-1} className="surface-panel flex-1 p-4 sm:p-5 lg:p-6 min-w-0 overflow-x-auto focus:outline-none">
             <Outlet />
           </main>
         </div>

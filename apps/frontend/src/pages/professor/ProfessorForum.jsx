@@ -143,13 +143,13 @@ function ProfessorForum() {
       <section className="module-card compact card-compact space-y-4">
         <h3 className="font-semibold text-brand-navy">{t("createTopic")}</h3>
         <form className="space-y-3" onSubmit={createThread}>
-          <input
+          <input aria-label={t("threadTitlePlaceholder")}
             value={newThread.title}
             onChange={(event) => setNewThread((prev) => ({ ...prev, title: event.target.value }))}
             placeholder={t("threadTitlePlaceholder")}
             className="w-full rounded-xl border border-brand-navy/20 px-3 py-2"
           />
-          <textarea
+          <textarea aria-label={t("threadInitialMessagePlaceholder")}
             value={newThread.body}
             onChange={(event) => setNewThread((prev) => ({ ...prev, body: event.target.value }))}
             placeholder={t("threadInitialMessagePlaceholder")}
@@ -218,7 +218,7 @@ function ProfessorForum() {
               </div>
 
               <form className="space-y-2" onSubmit={createPost}>
-                <textarea
+                <textarea aria-label={t("replyPlaceholder")}
                   value={newPost}
                   onChange={(event) => setNewPost(event.target.value)}
                   rows={2}

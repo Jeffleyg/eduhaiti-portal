@@ -263,7 +263,7 @@ export default function AdminAcademicConfig() {
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                     {t("schoolYearRequiredLabel")}
                   </label>
-                  <input
+                  <input aria-label={t("schoolYearRequiredLabel")}
                     type="text"
                     required
                     placeholder="Ex: 2026-2027"
@@ -277,7 +277,7 @@ export default function AdminAcademicConfig() {
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                     {t("startDate")}
                   </label>
-                  <input
+                  <input aria-label={t("startDate")}
                     type="date"
                     value={yearForm.startDate}
                     onChange={(e) => setYearForm({ ...yearForm, startDate: e.target.value })}
@@ -289,7 +289,7 @@ export default function AdminAcademicConfig() {
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                     {t("endDate")}
                   </label>
-                  <input
+                  <input aria-label={t("endDate")}
                     type="date"
                     value={yearForm.endDate}
                     onChange={(e) => setYearForm({ ...yearForm, endDate: e.target.value })}
@@ -371,7 +371,7 @@ export default function AdminAcademicConfig() {
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                     {t("seriesNameLabel")}
                   </label>
-                  <input
+                  <input aria-label={t("seriesNameLabel")}
                     type="text"
                     required
                     placeholder={t("seriesNameExample")}
@@ -385,7 +385,7 @@ export default function AdminAcademicConfig() {
                   <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                     {t("seriesCodeLabel")}
                   </label>
-                  <input
+                  <input aria-label={t("seriesCodeLabel")}
                     type="text"
                     placeholder="Ex: 3AF ou NS1"
                     value={seriesForm.code}

@@ -23,6 +23,23 @@ describe("Settings", () => {
   beforeEach(() => {
     sync.conflictStrategy = "lww"
     sync.setConflictStrategy = vi.fn()
+    delete sync.syncHistory
+  })
+
+  it("lists the recent synchronisations", () => {
+    sync.syncHistory = [
+      { id: 1, createdAt: "2026-01-01T00:00:00Z", completedTasks: 2, totalTasks: 2, status: "success" },
+      { id: 2, createdAt: "2026-01-02T00:00:00Z", completedTasks: 0, totalTasks: 2, status: "failed" },
+    ]
+    renderSettings()
+    expect(screen.getByText("syncHistory")).toBeInTheDocument()
+    expect(screen.getByText("syncSuccess")).toHaveClass("text-emerald-700")
+    expect(screen.getByText("syncFailed")).toHaveClass("text-brand-red")
+  })
+
+  it("hides the history when nothing was synchronised", () => {
+    renderSettings()
+    expect(screen.queryByText("syncHistory")).toBeNull()
   })
   afterEach(async () => {
     await i18n.changeLanguage("cimode")

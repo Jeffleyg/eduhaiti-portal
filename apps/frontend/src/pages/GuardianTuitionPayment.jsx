@@ -143,7 +143,7 @@ function GuardianTuitionPayment() {
         <section className="module-card compact p-4">
           <h2 className="text-base font-semibold text-brand-navy">{t("lookupChargesTitle")}</h2>
           <form className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={loadPending}>
-            <input
+            <input aria-label={t("enrollmentPlaceholderPayment")}
               value={enrollmentNumber}
               onChange={(event) => setEnrollmentNumber(event.target.value)}
               placeholder={t("enrollmentPlaceholderPayment")}
@@ -216,7 +216,7 @@ function GuardianTuitionPayment() {
               ))}
             </select>
 
-            <input
+            <input aria-label={t("accountNumberPlaceholder")}
               value={paymentForm.accountNumber}
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, accountNumber: event.target.value }))
@@ -227,7 +227,7 @@ function GuardianTuitionPayment() {
               required
             />
 
-            <input
+            <input aria-label={t("amountPlaceholder")}
               type="number"
               min="1"
               step="0.01"
@@ -241,21 +241,21 @@ function GuardianTuitionPayment() {
 
             {paymentForm.provider === "card" ? (
               <>
-                <input
+                <input aria-label={t("cardNumberPlaceholder")}
                   value={paymentForm.cardNumber || ""}
                   onChange={(event) => setPaymentForm((prev) => ({ ...prev, cardNumber: event.target.value }))}
                   placeholder={t("cardNumberPlaceholder")}
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
                   autoComplete="off"
                 />
-                <input
+                <input aria-label={t("cardExpiryPlaceholder")}
                   value={paymentForm.cardExpiry || ""}
                   onChange={(event) => setPaymentForm((prev) => ({ ...prev, cardExpiry: event.target.value }))}
                   placeholder={t("cardExpiryPlaceholder")}
                   className="rounded-2xl border border-brand-navy/10 bg-sand px-3 py-2 text-sm"
                   autoComplete="off"
                 />
-                <input
+                <input aria-label={t("cardCvvPlaceholder")}
                   value={paymentForm.cardCvv || ""}
                   onChange={(event) => setPaymentForm((prev) => ({ ...prev, cardCvv: event.target.value }))}
                   placeholder={t("cardCvvPlaceholder")}
@@ -280,7 +280,7 @@ function GuardianTuitionPayment() {
               ))}
             </select>
 
-            <input
+            <input aria-label={t("guardianNamePlaceholderPayment")}
               value={paymentForm.guardianName}
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, guardianName: event.target.value }))
@@ -290,7 +290,7 @@ function GuardianTuitionPayment() {
               autoComplete="name"
             />
 
-            <input
+            <input aria-label={t("guardianPhonePlaceholderPayment")}
               value={paymentForm.guardianPhone}
               onChange={(event) =>
                 setPaymentForm((prev) => ({ ...prev, guardianPhone: event.target.value }))

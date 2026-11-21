@@ -74,7 +74,7 @@ function PermissionCodeManager({ schoolId, token }) {
 
       {showForm && (
         <form onSubmit={handleGenerate} className="flex gap-2 text-xs">
-          <input
+          <input aria-label={t("nameOptional")}
             type="text"
             placeholder={t("nameOptional")}
             value={form.name}

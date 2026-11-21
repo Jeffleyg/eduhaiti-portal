@@ -1,50 +1,66 @@
+import { Suspense, lazy } from "react"
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext.jsx"
 import AppShell from "./components/AppShell.jsx"
 import ProtectedRoute from "./components/ProtectedRoute.jsx"
 import Landing from "./pages/Landing.jsx"
 import Login from "./pages/auth/Login.jsx"
-import ChangePassword from "./pages/auth/ChangePassword.jsx"
-import RedeemAccess from "./pages/auth/RedeemAccess.jsx"
-import VerifyTranscript from "./pages/VerifyTranscript.jsx"
-import OwnerDashboard from "./pages/owner/OwnerDashboard.jsx"
-import {
-  AdminUsers,
-  AdminStudentManagement,
-  AdminDisciplineManagement,
-  AdminClassManagement,
-  AdminFinanceControl,
-  AdminAcademicConfig,
-  AdminFamilyCommunication,
-} from "./modules/admin/index.js"
-import {
-  TeacherDashboard,
-  TeacherGrades,
-  TeacherAttendance,
-  TeacherResources,
-  TeacherAssignments,
-  TeacherMessages,
-  TeacherForum,
-  TeacherAcademicRequests,
-  TeacherLessonPlans,
-} from "./modules/teacher/index.js"
-import {
-  StudentDashboard,
-  StudentGrades,
-  StudentTranscript,
-  StudentSchedule,
-  StudentResources,
-  StudentAssignments,
-  StudentMessages,
-  StudentForum,
-  StudentAcademicRequests,
-  StudentLessonPlans,
-} from "./modules/student/index.js"
-import { UserProfile, Settings } from "./modules/common/index.js"
-import { GuardianTuitionPayment } from "./modules/payments/index.js"
-import { FamilyPortal } from "./modules/family/index.js"
 import { SurvivalModeProvider } from "./context/SurvivalModeContext.jsx"
 import { SyncControlProvider } from "./context/SyncControlContext.jsx"
+
+// Route-level code splitting: each role's pages (and heavy libraries such as
+// jsPDF) are downloaded only when that area is opened - important on 2G.
+const fromModule = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })))
+const adminPages = () => import("./modules/admin/index.js")
+const teacherPages = () => import("./modules/teacher/index.js")
+const studentPages = () => import("./modules/student/index.js")
+const commonPages = () => import("./modules/common/index.js")
+
+const ChangePassword = lazy(() => import("./pages/auth/ChangePassword.jsx"))
+const RedeemAccess = lazy(() => import("./pages/auth/RedeemAccess.jsx"))
+const VerifyTranscript = lazy(() => import("./pages/VerifyTranscript.jsx"))
+const OwnerDashboard = lazy(() => import("./pages/owner/OwnerDashboard.jsx"))
+const GuardianTuitionPayment = fromModule(() => import("./modules/payments/index.js"), "GuardianTuitionPayment")
+const FamilyPortal = fromModule(() => import("./modules/family/index.js"), "FamilyPortal")
+const UserProfile = fromModule(commonPages, "UserProfile")
+const Settings = fromModule(commonPages, "Settings")
+
+const AdminUsers = fromModule(adminPages, "AdminUsers")
+const AdminStudentManagement = fromModule(adminPages, "AdminStudentManagement")
+const AdminDisciplineManagement = fromModule(adminPages, "AdminDisciplineManagement")
+const AdminClassManagement = fromModule(adminPages, "AdminClassManagement")
+const AdminFinanceControl = fromModule(adminPages, "AdminFinanceControl")
+const AdminAcademicConfig = fromModule(adminPages, "AdminAcademicConfig")
+const AdminFamilyCommunication = fromModule(adminPages, "AdminFamilyCommunication")
+
+const TeacherDashboard = fromModule(teacherPages, "TeacherDashboard")
+const TeacherGrades = fromModule(teacherPages, "TeacherGrades")
+const TeacherAttendance = fromModule(teacherPages, "TeacherAttendance")
+const TeacherResources = fromModule(teacherPages, "TeacherResources")
+const TeacherAssignments = fromModule(teacherPages, "TeacherAssignments")
+const TeacherMessages = fromModule(teacherPages, "TeacherMessages")
+const TeacherForum = fromModule(teacherPages, "TeacherForum")
+const TeacherAcademicRequests = fromModule(teacherPages, "TeacherAcademicRequests")
+const TeacherLessonPlans = fromModule(teacherPages, "TeacherLessonPlans")
+
+const StudentDashboard = fromModule(studentPages, "StudentDashboard")
+const StudentGrades = fromModule(studentPages, "StudentGrades")
+const StudentTranscript = fromModule(studentPages, "StudentTranscript")
+const StudentSchedule = fromModule(studentPages, "StudentSchedule")
+const StudentResources = fromModule(studentPages, "StudentResources")
+const StudentAssignments = fromModule(studentPages, "StudentAssignments")
+const StudentMessages = fromModule(studentPages, "StudentMessages")
+const StudentForum = fromModule(studentPages, "StudentForum")
+const StudentAcademicRequests = fromModule(studentPages, "StudentAcademicRequests")
+const StudentLessonPlans = fromModule(studentPages, "StudentLessonPlans")
+
+function PageFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-brand-navy/20 border-t-brand-navy" />
+    </div>
+  )
+}
 
 function App() {
   return (
@@ -52,6 +68,7 @@ function App() {
       <SurvivalModeProvider>
         <SyncControlProvider>
           <BrowserRouter>
+            <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
@@ -138,6 +155,7 @@ function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
         </SyncControlProvider>
       </SurvivalModeProvider>

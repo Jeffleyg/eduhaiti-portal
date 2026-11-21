@@ -136,7 +136,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                 {t("schoolFormName")}
               </label>
-              <input
+              <input aria-label={t("schoolFormName")}
                 type="text"
                 placeholder="Ex: EduHaiti Academy"
                 value={form.name}
@@ -150,7 +150,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                 {t("schoolFormEmail")}
               </label>
-              <input
+              <input aria-label={t("schoolFormEmail")}
                 type="email"
                 placeholder="contact@ecole.ht"
                 value={form.email}
@@ -164,7 +164,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                 {t("schoolFormPhone")}
               </label>
-              <input
+              <input aria-label={t("schoolFormPhone")}
                 type="tel"
                 placeholder="+509 3700-0000"
                 value={form.phone}
@@ -177,7 +177,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                 {t("schoolFormPrincipal")}
               </label>
-              <input
+              <input aria-label={t("schoolFormPrincipal")}
                 type="text"
                 placeholder="Ex: Jean-Pierre Dessalines"
                 value={form.principal}
@@ -191,7 +191,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                 {t("schoolFormCity")}
               </label>
-              <input
+              <input aria-label={t("schoolFormCity")}
                 type="text"
                 placeholder="Port-au-Prince"
                 value={form.city}
@@ -204,7 +204,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
               <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                 {t("address")}
               </label>
-              <input
+              <input aria-label={t("address")}
                 type="text"
                 placeholder="Rue Capois, Champ de Mars"
                 value={form.address}
@@ -227,7 +227,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                 <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                   {t("schoolFormAdminName")}
                 </label>
-                <input
+                <input aria-label={t("schoolFormAdminName")}
                   type="text"
                   required
                   placeholder={t("schoolFormAdminNamePlaceholder")}
@@ -241,7 +241,7 @@ function SchoolForm({ school, onSuccess, onCancel, token }) {
                 <label className="block text-xs font-bold text-brand-navy uppercase mb-1">
                   {t("schoolFormAdminEmail")}
                 </label>
-                <input
+                <input aria-label={t("schoolFormAdminEmail")}
                   type="email"
                   required
                   placeholder="admin@ecole.ht"

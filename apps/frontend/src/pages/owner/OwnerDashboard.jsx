@@ -119,7 +119,7 @@ function OwnerDashboard() {
       <main className="flex-1 space-y-6">
         <section className="surface-panel overflow-hidden">
           <div className="bg-atlas bg-grid px-5 py-6 sm:px-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-5">
               <div className="max-w-2xl space-y-2">
                 <span className="chip">{t("controlPanel")}</span>
                 <h1 className="font-display text-3xl text-brand-navy sm:text-4xl">{t("centralManagementEcosystem")}</h1>
@@ -128,15 +128,15 @@ function OwnerDashboard() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                   [t("schools"), totalSchools],
                   [t("withMetrics"), schoolsWithAnalytics],
                   [t("users"), totalUsers],
                   [t("logins"), totalLogins],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-2xl border border-white/50 bg-white/85 px-4 py-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-navy/50">{label}</p>
+                  <div key={label} className="min-w-0 rounded-2xl border border-white/50 bg-white/85 px-4 py-3 shadow-sm">
+                    <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-navy/60" title={label}>{label}</p>
                     <p className="mt-1 text-2xl font-semibold text-brand-navy">{value}</p>
                   </div>
                 ))}

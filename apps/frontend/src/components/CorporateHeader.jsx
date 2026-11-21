@@ -80,8 +80,12 @@ function CorporateHeader() {
         <div className="relative flex items-center gap-4">
           {/* Foto de Perfil */}
           <button
+            type="button"
             onClick={() => setShowMenu(!showMenu)}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            aria-label={t("userMenu")}
+            aria-haspopup="menu"
+            aria-expanded={showMenu}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
               {user?.profilePhoto ? (
                 <img

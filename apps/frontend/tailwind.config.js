@@ -171,7 +171,7 @@ export default {
 
   plugins: [
     // Component layer for reusable styles
-    function ({ addBase, addComponents, e, theme }) {
+    function ({ addBase, addComponents }) {
       // Base improvements
       addBase({
         "html": { scrollBehavior: "smooth" },
