@@ -82,7 +82,8 @@ export class AttendanceController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId')
   async getClassAttendance(
-    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
+    @Req()
+    req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
     @Query('date') date?: string,
   ) {
@@ -97,7 +98,8 @@ export class AttendanceController {
   @Roles(Role.TEACHER, Role.ADMIN)
   @Get('class/:classId/report')
   async getClassReport(
-    @Req() req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
+    @Req()
+    req: { user?: { sub?: string; role?: Role; schoolId?: string | null } },
     @Param('classId') classId: string,
   ) {
     await this.classAccess.assertCanManageClass(classId, req.user);

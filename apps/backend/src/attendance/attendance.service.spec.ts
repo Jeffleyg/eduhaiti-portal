@@ -1,5 +1,17 @@
-import { BadRequestException, ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import { AttendanceStatus, Role } from '@prisma/client';
 import { createPrismaMock, PrismaMock } from '../test-utils/prisma-mock';
 import { autoMock, AutoMock } from '../test-utils/auto-mock';
@@ -24,8 +36,19 @@ describe('AttendanceService', () => {
 
   describe('markAttendance', () => {
     const payload = (over: Record<string, unknown> = {}) =>
-      ({ studentId: 's', classId: 'c', date: new Date('2026-03-02T10:00:00'), status: AttendanceStatus.PRESENT, ...over }) as any;
-    const cls = { id: 'c', name: '3e', teacherId: 't', students: [{ id: 's' }] };
+      ({
+        studentId: 's',
+        classId: 'c',
+        date: new Date('2026-03-02T10:00:00'),
+        status: AttendanceStatus.PRESENT,
+        ...over,
+      }) as any;
+    const cls = {
+      id: 'c',
+      name: '3e',
+      teacherId: 't',
+      students: [{ id: 's' }],
+    };
     const record = (over: Record<string, unknown> = {}) => ({
       id: 'att',
       student: { id: 's', name: 'Ana' },
@@ -35,15 +58,21 @@ describe('AttendanceService', () => {
 
     it('validates student, class, teacher and enrollment', async () => {
       prisma.user.findUnique.mockResolvedValueOnce(null);
-      await expect(svc.markAttendance(payload())).rejects.toThrow('Student not found');
+      await expect(svc.markAttendance(payload())).rejects.toThrow(
+        'Student not found',
+      );
       prisma.user.findUnique.mockResolvedValue({ id: 's' });
       prisma.class.findUnique.mockResolvedValueOnce(null);
-      await expect(svc.markAttendance(payload())).rejects.toBeInstanceOf(NotFoundException);
-      prisma.class.findUnique.mockResolvedValue(cls);
-      await expect(svc.markAttendance(payload(), { id: 'x', role: Role.TEACHER })).rejects.toBeInstanceOf(
-        ForbiddenException,
+      await expect(svc.markAttendance(payload())).rejects.toBeInstanceOf(
+        NotFoundException,
       );
-      await expect(svc.markAttendance(payload({ studentId: 'z' }))).rejects.toBeInstanceOf(BadRequestException);
+      prisma.class.findUnique.mockResolvedValue(cls);
+      await expect(
+        svc.markAttendance(payload(), { id: 'x', role: Role.TEACHER }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        svc.markAttendance(payload({ studentId: 'z' })),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('creates a record, writes a family notice and skips SMS when present', async () => {
@@ -51,10 +80,20 @@ describe('AttendanceService', () => {
       prisma.class.findUnique.mockResolvedValue(cls);
       prisma.attendance.findFirst.mockResolvedValue(null);
       prisma.attendance.create.mockResolvedValue(record());
-      await svc.markAttendance(payload({ remarks: ' late bus ' }), { id: 't', role: Role.TEACHER });
+      await svc.markAttendance(payload({ remarks: ' late bus ' }), {
+        id: 't',
+        role: Role.TEACHER,
+      });
       const notice = prisma.auditLog.create.mock.calls[0][0].data;
-      expect(notice).toMatchObject({ entityType: 'FAMILY_NOTICE', entityId: 's', userId: 't' });
-      expect(notice.changes).toMatchObject({ severity: 'normal', attendanceStatus: 'PRESENT' });
+      expect(notice).toMatchObject({
+        entityType: 'FAMILY_NOTICE',
+        entityId: 's',
+        userId: 't',
+      });
+      expect(notice.changes).toMatchObject({
+        severity: 'normal',
+        attendanceStatus: 'PRESENT',
+      });
       expect(notice.changes.body).toContain('Observation : late bus.');
       await flush();
       expect(prisma.$queryRaw).not.toHaveBeenCalled();
@@ -63,27 +102,44 @@ describe('AttendanceService', () => {
     it('updates an existing record and alerts guardians on new absences', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: 's' });
       prisma.class.findUnique.mockResolvedValue(cls);
-      prisma.attendance.findFirst.mockResolvedValue({ id: 'att', status: 'PRESENT' });
-      prisma.attendance.update.mockResolvedValue(record({ student: { id: 's', name: null } }));
+      prisma.attendance.findFirst.mockResolvedValue({
+        id: 'att',
+        status: 'PRESENT',
+      });
+      prisma.attendance.update.mockResolvedValue(
+        record({ student: { id: 's', name: null } }),
+      );
       prisma.$queryRaw.mockResolvedValue([
         { phoneNumber: ' 509 ' },
         { phoneNumber: '509' },
         { phoneNumber: null },
         { phoneNumber: '510' },
       ]);
-      await svc.markAttendance(payload({ status: AttendanceStatus.ABSENT, remarks: 'sick' }));
+      await svc.markAttendance(
+        payload({ status: AttendanceStatus.ABSENT, remarks: 'sick' }),
+      );
       await flush();
       expect(prisma.attendance.update).toHaveBeenCalled();
-      expect(prisma.auditLog.create.mock.calls[0][0].data.changes.severity).toBe('urgent');
-      expect(sms.sendSms.mock.calls.map((c: any) => c[0].to)).toEqual(['509', '510']);
-      expect(sms.sendSms.mock.calls[0][0].text).toContain('Aluno sem nome cadastrado');
+      expect(
+        prisma.auditLog.create.mock.calls[0][0].data.changes.severity,
+      ).toBe('urgent');
+      expect(sms.sendSms.mock.calls.map((c: any) => c[0].to)).toEqual([
+        '509',
+        '510',
+      ]);
+      expect(sms.sendSms.mock.calls[0][0].text).toContain(
+        'Aluno sem nome cadastrado',
+      );
       expect(sms.sendSms.mock.calls[0][0].text).toContain('Nòt: sick.');
     });
 
     it('does not re-alert when the student was already absent', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: 's' });
       prisma.class.findUnique.mockResolvedValue(cls);
-      prisma.attendance.findFirst.mockResolvedValue({ id: 'att', status: 'ABSENT' });
+      prisma.attendance.findFirst.mockResolvedValue({
+        id: 'att',
+        status: 'ABSENT',
+      });
       prisma.attendance.update.mockResolvedValue(record());
       await svc.markAttendance(payload({ status: AttendanceStatus.ABSENT }));
       await flush();
@@ -106,7 +162,9 @@ describe('AttendanceService', () => {
       prisma.$queryRaw.mockRejectedValueOnce('weird');
       await svc.markAttendance(payload({ status: AttendanceStatus.ABSENT }));
       await flush();
-      const warnings = (Logger.prototype.warn as jest.Mock).mock.calls.map((c) => c[0]);
+      const warnings = (Logger.prototype.warn as jest.Mock).mock.calls.map(
+        (c) => c[0],
+      );
       expect(warnings).toEqual([
         expect.stringContaining('no table'),
         expect.stringContaining('absence_sms_unknown_error'),
@@ -115,9 +173,16 @@ describe('AttendanceService', () => {
 
     it('labels every status in the family notice', async () => {
       const build = (status: AttendanceStatus) =>
-        (svc as any).buildAttendanceFamilyNotice({ status, date: new Date(), className: 'C', attendanceId: 'a' });
+        (svc as any).buildAttendanceFamilyNotice({
+          status,
+          date: new Date(),
+          className: 'C',
+          attendanceId: 'a',
+        });
       expect(build(AttendanceStatus.LATE).body).toContain('en retard');
-      expect(build(AttendanceStatus.EXCUSED).body).toContain('absence justifiée');
+      expect(build(AttendanceStatus.EXCUSED).body).toContain(
+        'absence justifiée',
+      );
     });
   });
 
@@ -137,7 +202,9 @@ describe('AttendanceService', () => {
     await svc.findByStudent('s');
     await svc.findByClass('c', new Date('2026-01-05T12:00:00'));
     await svc.findByClass('c');
-    const where = prisma.attendance.findMany.mock.calls.map((c: any) => c[0].where);
+    const where = prisma.attendance.findMany.mock.calls.map(
+      (c: any) => c[0].where,
+    );
     expect(where[0]).toEqual({ studentId: 's', date: { gte: d1, lte: d2 } });
     expect(where[1]).toEqual({ studentId: 's', date: { gte: d1 } });
     expect(where[2]).toEqual({ studentId: 's', date: { lte: d2 } });
@@ -148,7 +215,11 @@ describe('AttendanceService', () => {
 
   it('computes stats and the class report', async () => {
     prisma.attendance.findMany.mockResolvedValueOnce([]);
-    expect(await svc.getStudentAttendanceStats('s', 'c')).toMatchObject({ total: 0, absencePercentage: 0, isAtRisk: false });
+    expect(await svc.getStudentAttendanceStats('s', 'c')).toMatchObject({
+      total: 0,
+      absencePercentage: 0,
+      isAtRisk: false,
+    });
 
     prisma.attendance.findMany.mockResolvedValue([
       { status: 'PRESENT' },
@@ -167,7 +238,9 @@ describe('AttendanceService', () => {
       isAtRisk: false,
     });
 
-    prisma.user.findMany.mockResolvedValue([{ id: 's', name: 'A', email: 'e' }]);
+    prisma.user.findMany.mockResolvedValue([
+      { id: 's', name: 'A', email: 'e' },
+    ]);
     const report = await svc.getClassAttendanceReport('c');
     expect(report[0]).toMatchObject({ student: { id: 's' }, total: 5 });
   });
@@ -176,6 +249,8 @@ describe('AttendanceService', () => {
     prisma.attendance.findUnique.mockResolvedValueOnce(null);
     await expect(svc.delete('a')).rejects.toBeInstanceOf(NotFoundException);
     prisma.attendance.findUnique.mockResolvedValueOnce({ id: 'a' });
-    await expect(svc.delete('a')).resolves.toEqual({ message: 'Attendance record deleted' });
+    await expect(svc.delete('a')).resolves.toEqual({
+      message: 'Attendance record deleted',
+    });
   });
 });

@@ -27,11 +27,8 @@ import { FinanceObservabilityService } from './services/finance-observability.se
 import { IdempotencyService } from './services/idempotency.service';
 import { ImmutableLedgerService } from './services/immutable-ledger.service';
 
-import {
-  buildPaymentsCsv,
-  ExportLanguage,
-  PaymentExportRow,
-} from './finance-export';
+import { buildPaymentsCsv, PaymentExportRow } from './finance-export';
+import type { ExportLanguage } from '../common/csv';
 import type { LedgerRecord } from './services/immutable-ledger.service';
 
 const EXPORT_MAX_ROWS = 10000;

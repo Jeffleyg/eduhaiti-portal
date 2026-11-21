@@ -1,6 +1,9 @@
 import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
-import { ClassAccessService, ClassRequester } from '../prisma/class-access.service';
+import {
+  ClassAccessService,
+  ClassRequester,
+} from '../prisma/class-access.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';

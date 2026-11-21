@@ -28,6 +28,7 @@ const FamilyPortal = fromModule(() => import("./modules/family/index.js"), "Fami
 const UserProfile = fromModule(commonPages, "UserProfile")
 const Settings = fromModule(commonPages, "Settings")
 const Announcements = fromModule(commonPages, "Announcements")
+const AttendanceReport = fromModule(commonPages, "AttendanceReport")
 
 const AdminDashboard = fromModule(adminPages, "AdminDashboard")
 const AdminUsers = fromModule(adminPages, "AdminUsers")
@@ -111,6 +112,7 @@ function App() {
                   <Route index element={<TeacherDashboard />} />
                   <Route path="grades" element={<TeacherGrades />} />
                   <Route path="attendance" element={<TeacherAttendance />} />
+                  <Route path="attendance-report" element={<AttendanceReport />} />
                   <Route path="resources" element={<TeacherResources />} />
                   <Route path="assignments" element={<TeacherAssignments />} />
                   <Route path="lesson-plans" element={<TeacherLessonPlans />} />
@@ -146,6 +148,7 @@ function App() {
                   <Route index element={<AdminDashboard />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="announcements" element={<AdminAnnouncements />} />
+                  <Route path="attendance" element={<AttendanceReport />} />
                   <Route path="students" element={<AdminStudentManagement />} />
                   <Route path="classes" element={<AdminClassManagement />} />
                   <Route path="disciplines" element={<AdminDisciplineManagement />} />

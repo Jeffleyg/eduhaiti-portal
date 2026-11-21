@@ -14,7 +14,8 @@ import {
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { Response } from 'express';
-import { exportFileName, normalizeExportLanguage } from './finance-export';
+import { exportFileName } from './finance-export';
+import { normalizeExportLanguage } from '../common/csv';
 
 type AdminRequest = { user?: { sub?: string; schoolId?: string | null } };
 

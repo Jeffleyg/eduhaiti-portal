@@ -1,10 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
-import {
-  buildPaymentsCsv,
-  csvCell,
-  exportFileName,
-  normalizeExportLanguage,
-} from './finance-export';
+import { buildPaymentsCsv, exportFileName } from './finance-export';
+import { csvCell, normalizeExportLanguage } from '../common/csv';
 
 describe('finance export helpers', () => {
   it('normalises the language and names the file', () => {

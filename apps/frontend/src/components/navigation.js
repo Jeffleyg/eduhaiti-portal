@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ChartColumn,
   CalendarDays,
   ClipboardCheck,
   FileCheck2,
@@ -24,6 +25,7 @@ export const professorNav = [
   { to: "/teacher", icon: LayoutDashboard, labelKey: "navOverview" },
   { to: "/teacher/grades", icon: GraduationCap, labelKey: "navGrades" },
   { to: "/teacher/attendance", icon: ClipboardCheck, labelKey: "navAttendance" },
+  { to: "/teacher/attendance-report", icon: ChartColumn, labelKey: "navAttendanceReport" },
   { to: "/teacher/assignments", icon: BookOpen, labelKey: "navHomework" },
   { to: "/teacher/resources", icon: UploadCloud, labelKey: "navResources" },
   { to: "/teacher/lesson-plans", icon: NotebookPen, labelKey: "lessonPlansTitle" },
@@ -55,6 +57,7 @@ export const adminNav = [
   { to: "/admin/students", icon: GraduationCap, labelKey: "adminStudents" },
   { to: "/admin/classes", icon: CalendarDays, labelKey: "adminClasses" },
   { to: "/admin/disciplines", icon: BookOpen, labelKey: "adminDisciplines" },
+  { to: "/admin/attendance", icon: ClipboardCheck, labelKey: "navAttendanceReport" },
   { to: "/admin/finance", icon: HandCoins, labelKey: "navFinance" },
   { to: "/admin/announcements", icon: Megaphone, labelKey: "navAnnouncements" },
   { to: "/admin/family-communication", icon: Mail, labelKey: "navFamilyCommunication" },

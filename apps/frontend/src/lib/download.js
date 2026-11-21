@@ -19,6 +19,7 @@ const ymd = (date) => date.toISOString().slice(0, 10)
 export function presetRange(preset, now = new Date()) {
   const year = now.getUTCFullYear()
   const month = now.getUTCMonth()
+  if (preset === "last30") return { startDate: ymd(new Date(now.getTime() - 29 * 86400000)), endDate: ymd(now) }
   if (preset === "month") return { startDate: ymd(new Date(Date.UTC(year, month, 1))), endDate: ymd(new Date(Date.UTC(year, month + 1, 0))) }
   if (preset === "previousMonth") return { startDate: ymd(new Date(Date.UTC(year, month - 1, 1))), endDate: ymd(new Date(Date.UTC(year, month, 0))) }
   if (preset === "schoolYear") {
