@@ -895,5 +895,17 @@
   "resourceTitleExample": "E.g. Lesson 01 - Mathematics",
   "seriesNameExample": "E.g. 3rd year",
   "subjectsExample": "E.g. Mathematics, Natural sciences",
-  "syncFailed": "Sync failed"
+  "syncFailed": "Sync failed",
+  "viewFile": "View",
+  "fileUnnamed": "File",
+  "fileOpenError": "The file could not be opened.",
+  "assignmentDocument": "Assignment document",
+  "mySubmittedFile": "My submitted file",
+  "submissionReplace": "Replace file",
+  "submissionLocked": "Already graded: the file can no longer be changed.",
+  "submissionsTitle": "Submissions",
+  "noSubmissions": "No student has submitted yet.",
+  "submissionsOnlyCreator": "Only the teacher who created the assignment can see the submissions.",
+  "assignmentAttachment": "Assignment document (optional)",
+  "assignmentAttachmentHint": "Only students of this class can view and download it. 20 MB maximum."
 }

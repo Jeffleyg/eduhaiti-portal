@@ -1087,5 +1087,17 @@
   "assignmentTitleExample": "Ex : Devoir de mathématiques n° 1",
   "resourceTitleExample": "Ex : Cours 01 - Mathématiques",
   "seriesNameExample": "Ex : 3e année fondamentale",
-  "subjectsExample": "Ex : Mathématiques, Sciences naturelles"
+  "subjectsExample": "Ex : Mathématiques, Sciences naturelles",
+  "viewFile": "Voir",
+  "fileUnnamed": "Fichier",
+  "fileOpenError": "Impossible d'ouvrir le fichier.",
+  "assignmentDocument": "Document du devoir",
+  "mySubmittedFile": "Mon fichier envoyé",
+  "submissionReplace": "Remplacer le fichier",
+  "submissionLocked": "Devoir déjà corrigé : le fichier ne peut plus être modifié.",
+  "submissionsTitle": "Remises",
+  "noSubmissions": "Aucun élève n'a encore rendu ce devoir.",
+  "submissionsOnlyCreator": "Seul l'enseignant qui a créé le devoir peut voir les remises.",
+  "assignmentAttachment": "Document du devoir (facultatif)",
+  "assignmentAttachmentHint": "Seuls les élèves de cette classe pourront le voir et le télécharger. 20 Mo maximum."
 }

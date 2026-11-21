@@ -16,6 +16,15 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN ?? '*',
   });
+  // Student hand-ins stored before assignment files became private must not
+  // stay public: they are served only by GET /api/assignments/.../file.
+  app.use('/uploads', (req: any, res: any, next: () => void) => {
+    if (/^\/submission-/i.test(req.path)) {
+      res.status(404).end();
+      return;
+    }
+    next();
+  });
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
   });

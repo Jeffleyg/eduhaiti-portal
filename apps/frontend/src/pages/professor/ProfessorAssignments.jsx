@@ -8,6 +8,8 @@ import Badge from "../../components/Badge";
 import LoadingState from "../../components/LoadingState";
 import EmptyState from "../../components/EmptyState";
 import Feedback from "../../components/Feedback";
+import AssignmentFileActions from "../../components/AssignmentFileActions";
+import { uiLocale } from "../../lib/locale";
 
 export default function ProfessorAssignments() {
   const { t } = useTranslation();
@@ -18,6 +20,8 @@ export default function ProfessorAssignments() {
   const [feedback, setFeedback] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [attachment, setAttachment] = useState(null);
+  const [openSubmissions, setOpenSubmissions] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -67,6 +71,12 @@ export default function ProfessorAssignments() {
       return;
     }
 
+    // Same limit the server applies to assignment documents
+    if (attachment && attachment.size > 20 * 1024 * 1024) {
+      setFeedback({ type: "error", message: t("submissionTooLarge") });
+      return;
+    }
+
     try {
       setSubmitting(true);
       // The backend endpoint is multipart (it accepts an optional attachment)
@@ -74,6 +84,7 @@ export default function ProfessorAssignments() {
       payload.append("title", formData.title);
       payload.append("description", formData.description);
       payload.append("dueDate", new Date(formData.dueDate).toISOString());
+      if (attachment) payload.append("file", attachment);
 
       await apiUpload(`/assignments/create/${formData.classId}`, {
         method: "POST",
@@ -83,6 +94,7 @@ export default function ProfessorAssignments() {
 
       setShowModal(false);
       setFormData({ title: "", description: "", dueDate: "", classId: "" });
+      setAttachment(null);
       // reload first: loadData clears the feedback banner
       await loadData();
       setFeedback({
@@ -148,16 +160,66 @@ export default function ProfessorAssignments() {
                     {item.class?.name || t("common.class", "Klas")}
                   </span>
                   <Badge variant={new Date(item.dueDate) < new Date() ? "danger" : "success"}>
-                    {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : t("assignments.noDueDate", "San dat")}
+                    {item.dueDate ? new Date(item.dueDate).toLocaleDateString(uiLocale()) : t("assignments.noDueDate", "San dat")}
                   </Badge>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">{item.title}</h3>
                 <p className="text-sm text-slate-600 line-clamp-3 mb-4">{item.description}</p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>ID: {item.id.slice(0, 8)}...</span>
-                <span>{item.class?.level || ""}</span>
+              {item.filePath && (
+                <div className="mb-3 text-xs">
+                  <AssignmentFileActions
+                    path={`/assignments/${item.id}/file`}
+                    fileName={item.fileName}
+                    label={t("assignmentDocument")}
+                  />
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 text-xs text-slate-600">
+                <div className="flex items-center justify-between gap-2">
+                  <span>{item.class?.level || ""}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    aria-expanded={openSubmissions === item.id}
+                    onClick={() => setOpenSubmissions((current) => (current === item.id ? null : item.id))}
+                  >
+                    {t("submissionsTitle")} ({item.submissionCount ?? item.submissions?.length ?? 0})
+                  </Button>
+                </div>
+
+                {openSubmissions === item.id && (
+                  <div className="mt-3 space-y-2" data-testid={`submissions-${item.id}`}>
+                    {(item.submissions ?? []).length === 0 ? (
+                      <p className="text-slate-500">
+                        {item.submissionCount > 0 ? t("submissionsOnlyCreator") : t("noSubmissions")}
+                      </p>
+                    ) : (
+                      item.submissions.map((submission) => (
+                        <div key={submission.id} className="rounded-lg bg-slate-50 p-2 space-y-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-medium text-slate-800">
+                              {submission.student?.name || submission.student?.email || t("studentLabel")}
+                            </span>
+                            <Badge variant={submission.status === "LATE" ? "warning" : "success"}>
+                              {submission.status === "LATE" ? t("submissionLate") : t("submissionDone")}
+                            </Badge>
+                          </div>
+                          <p className="text-slate-500">
+                            {new Date(submission.submittedAt).toLocaleString(uiLocale())}
+                            {submission.grade != null ? ` | ${t("gradeLabel")}: ${submission.grade}` : ""}
+                          </p>
+                          <AssignmentFileActions
+                            path={`/assignments/${item.id}/submissions/${submission.id}/file`}
+                            fileName={submission.fileName}
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </SectionCard>
           ))}
@@ -230,6 +292,19 @@ export default function ProfessorAssignments() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder={t("assignmentInstructionsPlaceholder")}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="assignment-attachment">
+                  {t("assignmentAttachment")}
+                </label>
+                <input
+                  id="assignment-attachment"
+                  type="file"
+                  className="w-full text-sm"
+                  onChange={(e) => setAttachment(e.target.files?.[0] ?? null)}
+                />
+                <p className="mt-1 text-xs text-slate-500">{t("assignmentAttachmentHint")}</p>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

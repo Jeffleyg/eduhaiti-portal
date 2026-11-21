@@ -1028,5 +1028,17 @@
   "assignmentTitleExample": "Egz: Devwa matematik #1",
   "resourceTitleExample": "Egz: Kou 01 - Matematik",
   "seriesNameExample": "Egz: 3yèm ane fondamantal",
-  "subjectsExample": "Egz: Matematik, Syans natirèl"
+  "subjectsExample": "Egz: Matematik, Syans natirèl",
+  "viewFile": "Gade",
+  "fileUnnamed": "Fichye",
+  "fileOpenError": "Nou pa ka louvri fichye a.",
+  "assignmentDocument": "Dokiman devwa a",
+  "mySubmittedFile": "Fichye mwen voye a",
+  "submissionReplace": "Ranplase fichye a",
+  "submissionLocked": "Devwa a deja korije: ou pa ka chanje fichye a ankò.",
+  "submissionsTitle": "Travay remèt",
+  "noSubmissions": "Pa gen elèv ki remèt li poko.",
+  "submissionsOnlyCreator": "Se sèlman pwofesè ki kreye devwa a ki ka wè travay elèv yo remèt.",
+  "assignmentAttachment": "Dokiman devwa a (si ou vle)",
+  "assignmentAttachmentHint": "Se sèlman elèv klas sa a ki ka wè l epi telechaje l. 20 MB maksimòm."
 }

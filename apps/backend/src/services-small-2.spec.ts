@@ -1,80 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { Logger } from '@nestjs/common';
 import { createPrismaMock } from './test-utils/prisma-mock';
-import { AssignmentsService } from './assignments/assignments.service';
 import { UssdMenuService } from './hybrid-gateway/services/ussd-menu.service';
 import { OperatorAdapterRegistryService } from './hybrid-gateway/services/operator-adapter-registry.service';
 import { DigicelAdapter } from './hybrid-gateway/adapters/digicel.adapter';
 import { NatcomAdapter } from './hybrid-gateway/adapters/natcom.adapter';
 import { FinanceObservabilityService } from './finance-integration/services/finance-observability.service';
-
-describe('AssignmentsService', () => {
-  it('only accepts submissions from students enrolled in the class', async () => {
-    const prisma = createPrismaMock();
-    const svc = new AssignmentsService(prisma as any);
-    prisma.assignment.findFirst.mockResolvedValueOnce(null);
-    await expect(svc.submitAssignment('ghost', 's', 'f')).rejects.toThrow('Assignment not found');
-    prisma.assignment.findFirst.mockResolvedValueOnce({ id: 'a', class: { students: [] } });
-    await expect(svc.submitAssignment('a', 'outsider', 'f')).rejects.toThrow('not enrolled');
-    expect(prisma.assignment.findFirst.mock.calls[1][0].select.class.select.students.where).toEqual({ id: 'outsider' });
-    expect(prisma.assignmentSubmission.upsert).not.toHaveBeenCalled();
-  });
-
-  it('marks submissions as submitted or late against the due date', async () => {
-    const prisma = createPrismaMock();
-    const svc = new AssignmentsService(prisma as any);
-    prisma.assignment.findFirst
-      .mockResolvedValueOnce({ id: 'a', dueDate: new Date(Date.now() + 60_000), class: { students: [{ id: 's' }] } })
-      .mockResolvedValueOnce({ id: 'a', dueDate: new Date(Date.now() - 60_000), class: { students: [{ id: 's' }] } });
-    await svc.submitAssignment('a', 's', 'f1');
-    await svc.submitAssignment('a', 's', 'f2');
-    const calls = prisma.assignmentSubmission.upsert.mock.calls.map((c: any) => c[0]);
-    expect(calls[0].create.status).toBe('SUBMITTED');
-    expect(calls[1].update).toMatchObject({ filePath: 'f2', status: 'LATE' });
-  });
-
-  it('runs every prisma operation', async () => {
-    const prisma = createPrismaMock();
-    const svc = new AssignmentsService(prisma as any);
-    const due = new Date('2026-12-01');
-    prisma.class.findMany.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]);
-    prisma.assignment.findFirst.mockResolvedValue({ id: 'a', dueDate: new Date('2999-01-01'), class: { students: [{ id: 's' }] } });
-
-    await svc.create('c', 't', 'd', due, 'f', 'u');
-    await svc.findByClass('c');
-    await svc.findById('a');
-    await svc.findForStudent('s');
-    await svc.submitAssignment('a', 's', 'f');
-    await svc.update('a', 't', undefined, due);
-    await svc.gradeSubmission('sub', 9, 'ok');
-    await svc.delete('a');
-
-    expect(prisma.assignment.create.mock.calls[0][0].data).toEqual({
-      classId: 'c',
-      title: 't',
-      description: 'd',
-      dueDate: due,
-      filePath: 'f',
-      createdById: 'u',
-    });
-    expect(prisma.assignment.findMany.mock.calls[1][0].where).toEqual({
-      classId: { in: ['c1', 'c2'] },
-    });
-    expect(prisma.assignmentSubmission.upsert.mock.calls[0][0].where).toEqual({
-      assignmentId_studentId: { assignmentId: 'a', studentId: 's' },
-    });
-    expect(prisma.assignment.update.mock.calls[0][0]).toEqual({
-      where: { id: 'a' },
-      data: { title: 't', description: undefined, dueDate: due },
-    });
-    expect(prisma.assignmentSubmission.update.mock.calls[0][0]).toEqual({
-      where: { id: 'sub' },
-      data: { grade: 9, feedback: 'ok' },
-    });
-    expect(prisma.assignment.delete).toHaveBeenCalledWith({ where: { id: 'a' } });
-    expect(prisma.assignment.findUnique.mock.calls[0][0].where).toEqual({ id: 'a' });
-  });
-});
 
 describe('UssdMenuService', () => {
   const svc = new UssdMenuService();

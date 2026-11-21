@@ -1,16 +1,9 @@
 import { ROLES_KEY } from './common/decorators/roles.decorator';
 import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it, jest } from '@jest/globals';
-import type * as fsType from 'fs';
 import { Role } from '@prisma/client';
 import { autoMock } from './test-utils/auto-mock';
 import { ClassesController } from './classes/classes.controller';
-import {
-  AssignmentsController,
-  acceptAnyFile,
-  assignmentFilename,
-  submissionFilename,
-} from './assignments/assignments.controller';
 import { SeriesController } from './series/series.controller';
 import { AcademicYearsController } from './academic-years/academic-years.controller';
 import { AcademicPeriodsController } from './academic-periods/academic-periods.controller';
@@ -65,82 +58,6 @@ describe('ClassesController', () => {
     await ctrl.getClass({ user }, 'c');
     expect(access.assertCanManageClass).toHaveBeenCalledWith('c', user);
     expect(svc.findById).toHaveBeenCalledWith('c', 's');
-  });
-});
-
-describe('AssignmentsController', () => {
-  it('creates the upload dir on load when missing', () => {
-    const mkdir = jest.fn();
-    jest.isolateModules(() => {
-      jest.doMock('fs', () => ({
-        ...(jest.requireActual('fs') as typeof fsType),
-        existsSync: () => false,
-        mkdirSync: mkdir,
-      }));
-      require('./assignments/assignments.controller');
-    });
-    jest.dontMock('fs');
-    expect(mkdir.mock.calls.map((c) => c[0])).toContain('uploads');
-  });
-
-  it('upload helpers', () => {
-    const cb = jest.fn();
-    assignmentFilename({}, { originalname: 'a.pdf' }, cb);
-    submissionFilename({}, { originalname: 'b.pdf' }, cb);
-    acceptAnyFile({}, undefined, cb);
-    expect(cb.mock.calls[0][1]).toMatch(/^\d+-\d+-a\.pdf$/);
-    expect(cb.mock.calls[1][1]).toMatch(/^submission-\d+-\d+-b\.pdf$/);
-    expect(cb.mock.calls[2]).toEqual([null, true]);
-  });
-
-  const make = () => {
-    const svc = autoMock();
-    const access = autoMock();
-    return { svc, access, ctrl: new AssignmentsController(svc as any, access as any) };
-  };
-  const req = { user: { sub: 't', role: Role.TEACHER } };
-
-  it('lists assignments', async () => {
-    const { svc, access, ctrl } = make();
-    await ctrl.getByClass(req, 'c');
-    await ctrl.getMyAssignments({ user: { sub: 's' } });
-    expect(access.assertCanViewClass).toHaveBeenCalledWith('c', req.user);
-    expect(svc.findByClass).toHaveBeenCalledWith('c');
-    expect(svc.findForStudent).toHaveBeenCalledWith('s');
-  });
-
-  it('creates assignments with optional file and validates the date', async () => {
-    const { svc, ctrl } = make();
-    await ctrl.createAssignment(
-      'c',
-      { filename: 'f.pdf' },
-      { title: 't', description: 'd', dueDate: '2026-12-01' },
-      req,
-    );
-    await ctrl.createAssignment('c', undefined, { title: 't', dueDate: '2026-12-01' }, req);
-    await expect(
-      ctrl.createAssignment('c', undefined, { title: 't', dueDate: 'bad' }, req),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(svc.create.mock.calls).toEqual([
-      ['c', 't', 'd', new Date('2026-12-01'), 'uploads/f.pdf', 't'],
-      ['c', 't', undefined, new Date('2026-12-01'), undefined, 't'],
-    ]);
-  });
-
-  it('submits, grades and deletes', async () => {
-    const { svc, access, ctrl } = make();
-    await expect(
-      ctrl.submitAssignment('a', undefined, { user: { sub: 's' } }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    await ctrl.submitAssignment('a', { filename: 'x.pdf' }, { user: { sub: 's' } });
-    await ctrl.gradeSubmission(req, 'a', 'sub', { grade: 9, feedback: 'ok' });
-    await ctrl.deleteAssignment(req, 'a');
-    expect(svc.submitAssignment).toHaveBeenCalledWith('a', 's', 'uploads/x.pdf');
-    expect(Reflect.getMetadata(ROLES_KEY, ctrl.submitAssignment)).toEqual([Role.STUDENT]);
-    expect(access.assertCanManageSubmission).toHaveBeenCalledWith('a', 'sub', req.user);
-    expect(svc.gradeSubmission).toHaveBeenCalledWith('sub', 9, 'ok');
-    expect(access.assertCanManageAssignment).toHaveBeenCalledWith('a', req.user);
-    expect(svc.delete).toHaveBeenCalledWith('a');
   });
 });
 

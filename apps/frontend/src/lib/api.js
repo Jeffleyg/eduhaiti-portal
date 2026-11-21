@@ -113,6 +113,12 @@ export async function apiFetchRaw(path, options = {}) {
   }
 }
 
+/** Downloads a protected file (sent with the user's token) as a Blob. */
+export async function apiFetchBlob(path, options = {}) {
+  const response = await apiFetchRaw(path, options)
+  return response.blob()
+}
+
 export async function apiUpload(path, options = {}) {
   const isSurvivalMode = survivalModeStateManager.getSurvivalMode()
   if (shouldBlockRequest(path, isSurvivalMode)) {

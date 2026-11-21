@@ -111,8 +111,22 @@ describe("ProfessorAssignments", () => {
       if (path === "/classes/my-classes") return [{ id: "c1", name: "3e", level: "A", academicYear: { year: "2026" } }, { id: "c2", name: "4e" }]
       if (path === "/assignments/class/c1")
         return [
-          { id: "a1234567890", title: "Homework", description: "d", dueDate: future },
-          { id: "b1234567890", title: "Late", dueDate: "2020-01-01", class: { name: "Other", level: "L" } },
+          {
+            id: "a1234567890",
+            title: "Homework",
+            description: "d",
+            dueDate: future,
+            filePath: "storage/assignments/task-1-2-enonce.pdf",
+            fileName: "enonce.pdf",
+            submissionCount: 3,
+            submissions: [
+              { id: "s1", student: { name: "Ana" }, status: "LATE", submittedAt: "2026-01-02T10:00:00Z", grade: 12, fileName: "ana.pdf" },
+              { id: "s2", student: { email: "b@x.ht" }, status: "SUBMITTED", submittedAt: "2026-01-02T10:00:00Z", fileName: "b.pdf" },
+              { id: "s3", status: "SUBMITTED", submittedAt: "2026-01-02T10:00:00Z" },
+            ],
+          },
+          { id: "b1234567890", title: "Late", dueDate: "2020-01-01", class: { name: "Other", level: "L" }, submissionCount: 2, submissions: [] },
+          { id: "c1234567890", title: "Fresh", dueDate: future },
         ]
       if (path === "/assignments/class/c2") return { not: "array" }
       return []
@@ -123,7 +137,64 @@ describe("ProfessorAssignments", () => {
     renderWithRouter(<ProfessorAssignments />)
     expect(await screen.findByText("Homework")).toBeInTheDocument()
     expect(screen.getByText("Other")).toBeInTheDocument()
-    expect(screen.getByText("ID: a1234567...")).toBeInTheDocument()
+    expect(screen.getByText("enonce.pdf")).toBeInTheDocument()
+    expect(apiFetch).toHaveBeenCalledWith("/classes/my-classes", { token: "tok" })
+  })
+
+  it("shows the hand-ins received by the teacher with each document", async () => {
+    routes()
+    renderWithRouter(<ProfessorAssignments />)
+    await screen.findByText("Homework")
+    const [homework, late, fresh] = screen.getAllByRole("button", { name: /submissionsTitle/ })
+    expect(homework).toHaveTextContent("submissionsTitle (3)")
+    expect(fresh).toHaveTextContent("submissionsTitle (0)")
+
+    await userEvent.click(homework)
+    const list = screen.getByTestId("submissions-a1234567890")
+    expect(list).toHaveTextContent("Ana")
+    expect(list).toHaveTextContent("b@x.ht")
+    expect(list).toHaveTextContent("studentLabel")
+    expect(list).toHaveTextContent("gradeLabel: 12")
+    expect(list).toHaveTextContent("ana.pdf")
+    expect(homework).toHaveAttribute("aria-expanded", "true")
+
+    // another teacher's assignment: the hand-ins exist but are not delivered here
+    await userEvent.click(late)
+    expect(screen.queryByTestId("submissions-a1234567890")).toBeNull()
+    expect(screen.getByText("submissionsOnlyCreator")).toBeInTheDocument()
+
+    await userEvent.click(fresh)
+    expect(screen.getByText("noSubmissions")).toBeInTheDocument()
+    await userEvent.click(fresh)
+    expect(screen.queryByText("noSubmissions")).toBeNull()
+  })
+
+  it("attaches a document to the assignment and refuses oversized ones", async () => {
+    routes()
+    apiUpload.mockResolvedValueOnce({})
+    const { container } = renderWithRouter(<ProfessorAssignments />)
+    await screen.findByText("Homework")
+    await userEvent.click(screen.getByText("assignments.newAssignment"))
+    fireEvent.change(container.querySelector("select"), { target: { value: "c1" } })
+    fireEvent.change(screen.getByPlaceholderText("assignmentTitleExample"), { target: { value: "Essay" } })
+    fireEvent.change(container.querySelector('input[type="date"]'), { target: { value: "2026-12-01" } })
+
+    const big = new File(["x"], "big.pdf")
+    Object.defineProperty(big, "size", { value: 21 * 1024 * 1024 })
+    fireEvent.change(screen.getByLabelText("assignmentAttachment"), { target: { files: [big] } })
+    fireEvent.submit(container.querySelector("form"))
+    expect(await screen.findByText("submissionTooLarge")).toBeInTheDocument()
+    expect(apiUpload).not.toHaveBeenCalled()
+
+    const doc = new File(["x"], "enonce.pdf")
+    fireEvent.change(screen.getByLabelText("assignmentAttachment"), { target: { files: [doc] } })
+    fireEvent.submit(container.querySelector("form"))
+    expect(await screen.findByText("assignments.createSuccess")).toBeInTheDocument()
+    expect(apiUpload.mock.calls[0][1].formData.get("file")).toBe(doc)
+
+    // the picker starts empty for the next assignment
+    await userEvent.click(screen.getByText("assignments.newAssignment"))
+    fireEvent.change(screen.getByLabelText("assignmentAttachment"), { target: { files: [] } })
     expect(apiFetch).toHaveBeenCalledWith("/classes/my-classes", { token: "tok" })
   })
 

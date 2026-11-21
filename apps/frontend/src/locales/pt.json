@@ -1019,5 +1019,17 @@
   "assignmentTitleExample": "Ex.: Tarefa de Matemática nº 1",
   "resourceTitleExample": "Ex.: Aula 01 - Matemática",
   "seriesNameExample": "Ex.: 3º ano fundamental",
-  "subjectsExample": "Ex.: Matemática, Ciências"
+  "subjectsExample": "Ex.: Matemática, Ciências",
+  "viewFile": "Ver",
+  "fileUnnamed": "Arquivo",
+  "fileOpenError": "Não foi possível abrir o arquivo.",
+  "assignmentDocument": "Documento da tarefa",
+  "mySubmittedFile": "Meu arquivo enviado",
+  "submissionReplace": "Substituir arquivo",
+  "submissionLocked": "Tarefa já corrigida: o arquivo não pode mais ser alterado.",
+  "submissionsTitle": "Entregas",
+  "noSubmissions": "Nenhum aluno entregou ainda.",
+  "submissionsOnlyCreator": "Somente o professor que criou a tarefa pode ver as entregas.",
+  "assignmentAttachment": "Documento da tarefa (opcional)",
+  "assignmentAttachmentHint": "Somente os alunos desta turma poderão ver e baixar. Máximo 20 MB."
 }

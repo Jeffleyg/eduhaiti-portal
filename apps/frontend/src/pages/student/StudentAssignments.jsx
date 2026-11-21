@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { apiAssetUrl, apiFetch, apiUpload } from "../../lib/api";
+import { apiFetch, apiUpload } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { uiLocale } from "../../lib/locale";
 import SectionCard from "../../components/SectionCard";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
 import LoadingState from "../../components/LoadingState";
 import EmptyState from "../../components/EmptyState";
 import Feedback from "../../components/Feedback";
+import AssignmentFileActions from "../../components/AssignmentFileActions";
 
 export default function StudentAssignments() {
   const { t } = useTranslation();
@@ -115,68 +117,82 @@ export default function StudentAssignments() {
               <div>
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold px-2 py-1 rounded bg-indigo-50 text-indigo-700">
-                    {item.discipline?.name || item.subject || t("common.discipline", "Matyè")}
+                    {item.class?.name || item.discipline?.name || item.subject || t("common.discipline", "Matyè")}
                   </span>
                   {getStatusBadge(item.dueDate)}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">{item.title}</h3>
                 <p className="text-sm text-slate-600 line-clamp-3 mb-4">{item.description}</p>
+                {item.filePath && (
+                  <div className="mb-3 text-xs">
+                    <AssignmentFileActions
+                      path={`/assignments/${item.id}/file`}
+                      fileName={item.fileName}
+                      label={t("assignmentDocument")}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span>
                   {item.dueDate
-                    ? `${t("assignments.dueDate", "Dat limit")}: ${new Date(item.dueDate).toLocaleDateString()}`
+                    ? `${t("assignments.dueDate", "Dat limit")}: ${new Date(item.dueDate).toLocaleDateString(uiLocale())}`
                     : t("assignments.noDueDate", "San dat limit")}
                 </span>
-                {(item.fileUrl || item.filePath) && (
-                  <a
-                    href={item.fileUrl || apiAssetUrl(item.filePath)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 hover:underline font-medium"
-                  >
-                    {t("common.downloadFile", "Telechaje fichye")}
-                  </a>
-                )}
               </div>
 
               {(() => {
                 const submission = item.submissions?.[0];
+                // A graded hand-in is final; before that the student can replace it
+                const locked = submission?.grade != null;
                 return (
                   <div className="mt-3 space-y-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
                     {submission ? (
-                      <p data-testid={`submission-${item.id}`}>
-                        {submission.status === "LATE" ? t("submissionLate") : t("submissionDone")}:{" "}
-                        {new Date(submission.submittedAt).toLocaleString()}
-                        {submission.grade != null ? ` | ${t("gradeLabel")}: ${submission.grade}` : ""}
-                        {submission.feedback ? ` | ${submission.feedback}` : ""}
-                      </p>
+                      <>
+                        <p data-testid={`submission-${item.id}`}>
+                          {submission.status === "LATE" ? t("submissionLate") : t("submissionDone")}:{" "}
+                          {new Date(submission.submittedAt).toLocaleString(uiLocale())}
+                          {submission.grade != null ? ` | ${t("gradeLabel")}: ${submission.grade}` : ""}
+                          {submission.feedback ? ` | ${submission.feedback}` : ""}
+                        </p>
+                        <AssignmentFileActions
+                          path={`/assignments/${item.id}/submissions/${submission.id}/file`}
+                          fileName={submission.fileName}
+                          label={t("mySubmittedFile")}
+                        />
+                      </>
                     ) : (
                       <p>{t("submissionPending")}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        type="file"
-                        aria-label={`${t("submissionFile")} ${item.title}`}
-                        onChange={(event) =>
-                          setFiles((prev) => ({ ...prev, [item.id]: event.target.files?.[0] ?? null }))
-                        }
-                        className="text-xs"
-                      />
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        disabled={!files[item.id] || submittingId === item.id}
-                        onClick={() => submit(item.id)}
-                      >
-                        {submittingId === item.id
-                          ? t("loading")
-                          : submission
-                            ? t("submissionResend")
-                            : t("submissionSend")}
-                      </Button>
-                    </div>
+                    {locked ? (
+                      <p className="text-slate-500">{t("submissionLocked")}</p>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          // remount after each hand-in so the picker is emptied
+                          key={submission?.submittedAt ?? "new"}
+                          type="file"
+                          aria-label={`${t("submissionFile")} ${item.title}`}
+                          onChange={(event) =>
+                            setFiles((prev) => ({ ...prev, [item.id]: event.target.files?.[0] ?? null }))
+                          }
+                          className="text-xs"
+                        />
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          disabled={!files[item.id] || submittingId === item.id}
+                          onClick={() => submit(item.id)}
+                        >
+                          {submittingId === item.id
+                            ? t("loading")
+                            : submission
+                              ? t("submissionReplace")
+                              : t("submissionSend")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 );
               })()}

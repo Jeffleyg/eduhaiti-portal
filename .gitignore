@@ -55,6 +55,7 @@ Thumbs.db
 # Uploads (if temporary)
 # ===============================
 uploads/
+storage/
 
 # ===============================
 # Docker

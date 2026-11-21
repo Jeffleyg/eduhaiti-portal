@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { jsonResponse } from "../test/utils.jsx"
-import { apiAssetUrl, apiFetch, apiFetchRaw, apiUpload } from "./api.js"
+import { apiAssetUrl, apiFetch, apiFetchBlob, apiFetchRaw, apiUpload } from "./api.js"
 import { classifyRequest, shouldBlockRequest, SurvivalModeNetworkError } from "./network-interceptor.js"
 import { survivalModeStateManager } from "./survival-mode-state.js"
 
@@ -134,6 +134,15 @@ describe("api", () => {
       await expect(apiFetchRaw("/analytics")).rejects.toBeInstanceOf(SurvivalModeNetworkError)
       await expect(apiUpload("/analytics")).rejects.toBeInstanceOf(SurvivalModeNetworkError)
       expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("apiFetchBlob", () => {
+    it("downloads protected files with the token", async () => {
+      const blob = new Blob(["pdf"])
+      fetchMock.mockResolvedValue({ ok: true, blob: async () => blob })
+      await expect(apiFetchBlob("/assignments/a/file", { token: "t" })).resolves.toBe(blob)
+      expect(fetchMock.mock.calls[0][1].headers).toEqual({ Authorization: "Bearer t" })
     })
   })
 

@@ -86,9 +86,10 @@ describe("StudentAssignments", () => {
     expect(screen.getByText("assignments.open")).toBeInTheDocument()
     expect(screen.getByText("assignments.expired")).toBeInTheDocument()
     expect(screen.getAllByText("assignments.noDueDate")).toHaveLength(2)
-    const links = screen.getAllByText("common.downloadFile")
-    expect(links[0]).toHaveAttribute("href", "http://localhost:3000/uploads/a.pdf")
-    expect(links[1]).toHaveAttribute("href", "http://x/f")
+    // the teacher document is opened through the authenticated route, never a public link
+    expect(screen.getAllByText("viewFile")).toHaveLength(1)
+    expect(screen.getByText("assignmentDocument:")).toBeInTheDocument()
+    expect(screen.queryByRole("link")).toBeNull()
     expect(screen.getByText("common.discipline")).toBeInTheDocument()
     expect(apiFetch).toHaveBeenCalledWith("/assignments/my-assignments", { token: "tok" })
   })
@@ -105,7 +106,13 @@ describe("StudentAssignments", () => {
       {
         id: "2",
         title: "Graded",
-        submissions: [{ status: "LATE", submittedAt: "2026-01-03T10:00:00Z", grade: 15, feedback: "Bien" }],
+        submissions: [{ id: "s2", status: "LATE", submittedAt: "2026-01-03T10:00:00Z", fileName: "late.pdf" }],
+      },
+      {
+        id: "3",
+        title: "Final",
+        class: { name: "3e A" },
+        submissions: [{ id: "s3", status: "LATE", submittedAt: "2026-01-03T10:00:00Z", grade: 15, feedback: "Bien" }],
       },
     ])
     apiUpload.mockImplementationOnce(async () => {
@@ -114,8 +121,14 @@ describe("StudentAssignments", () => {
     })
     renderWithRouter(<StudentAssignments />)
     expect(await screen.findByText("submissionPending")).toBeInTheDocument()
-    expect(screen.getByTestId("submission-2")).toHaveTextContent(/submissionLate: .* \| gradeLabel: 15 \| Bien/)
-    expect(screen.getByText("submissionResend")).toBeDisabled()
+    expect(screen.getByTestId("submission-3")).toHaveTextContent(/submissionLate: .* \| gradeLabel: 15 \| Bien/)
+    // graded work is final: no file picker, but the student still sees their document
+    expect(screen.getByText("submissionLocked")).toBeInTheDocument()
+    expect(screen.queryByLabelText("submissionFile Final")).toBeNull()
+    expect(screen.getByText("3e A")).toBeInTheDocument()
+    expect(screen.getByText("late.pdf")).toBeInTheDocument()
+    expect(screen.getAllByText("mySubmittedFile:")).toHaveLength(2)
+    expect(screen.getByText("submissionReplace")).toBeDisabled()
 
     const input = screen.getByLabelText("submissionFile Essay")
     const file = new File(["x"], "essay.pdf", { type: "application/pdf" })
@@ -129,25 +142,25 @@ describe("StudentAssignments", () => {
     const big = new File(["x"], "big.pdf")
     Object.defineProperty(big, "size", { value: 21 * 1024 * 1024 })
     fireEvent.change(screen.getByLabelText("submissionFile Graded"), { target: { files: [big] } })
-    await userEvent.click(screen.getAllByText("submissionResend")[1])
+    await userEvent.click(screen.getAllByText("submissionReplace")[1])
     expect(await screen.findByText("submissionTooLarge")).toBeInTheDocument()
     expect(apiUpload).toHaveBeenCalledTimes(1)
 
     fireEvent.change(screen.getByLabelText("submissionFile Graded"), { target: { files: [file] } })
     apiUpload.mockRejectedValueOnce(new Error("Student is not enrolled in this class"))
-    await userEvent.click(screen.getAllByText("submissionResend")[1])
+    await userEvent.click(screen.getAllByText("submissionReplace")[1])
     expect(await screen.findByText("Student is not enrolled in this class")).toBeInTheDocument()
 
     apiUpload.mockRejectedValueOnce(new Error(""))
-    await userEvent.click(screen.getAllByText("submissionResend")[1])
+    await userEvent.click(screen.getAllByText("submissionReplace")[1])
     expect(await screen.findByText("submissionFailed")).toBeInTheDocument()
 
     apiUpload.mockImplementationOnce(() => new Promise(() => {}))
-    await userEvent.click(screen.getAllByText("submissionResend")[1])
+    await userEvent.click(screen.getAllByText("submissionReplace")[1])
     expect(await screen.findByText("loading")).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText("submissionFile Essay"), { target: { files: [] } })
-    expect(screen.getAllByText("submissionResend")[0]).toBeDisabled()
+    expect(screen.getAllByText("submissionReplace")[0]).toBeDisabled()
   })
 
   it("accepts wrapped payloads, empty lists and errors", async () => {
