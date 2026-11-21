@@ -26,7 +26,7 @@ beforeEach(() => {
 describe("App routing", () => {
   it("renders the landing page", () => {
     visit("/")
-    expect(screen.getAllByText("brand").length).toBeGreaterThan(0)
+    expect(screen.getAllByAltText("brand").length).toBeGreaterThan(0)
   })
 
   it.each([

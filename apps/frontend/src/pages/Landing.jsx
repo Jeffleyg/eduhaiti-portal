@@ -13,6 +13,7 @@ import {
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import LanguageSelector from "../components/LanguageSelector"
+import BrandLogo from "../components/BrandLogo.jsx"
 
 function Landing() {
   const { t } = useTranslation()
@@ -50,17 +51,10 @@ function Landing() {
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img
-              src="/LogoEdu.png"
-              alt={t("brand")}
-              className="h-11 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1 shadow-lg shadow-brand-navy/10"
-            />
-            <div>
-              <p className="font-display text-2xl text-brand-navy">{t("brand")}</p>
-              <p className="text-xs font-medium uppercase tracking-[0.25em] text-brand-red/70">
-                {t("appSubtitle")}
-              </p>
-            </div>
+            <BrandLogo endorsed alt={t("brand")} className="h-12 sm:h-14" />
+            <p className="hidden border-l border-brand-navy/15 pl-3 text-xs font-medium uppercase tracking-[0.25em] text-brand-red/70 md:block">
+              {t("appSubtitle")}
+            </p>
           </div>
 
           <div className="flex items-center gap-3">

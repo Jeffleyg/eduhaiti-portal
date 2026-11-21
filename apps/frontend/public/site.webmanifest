@@ -1,0 +1,16 @@
+{
+  "name": "EduHaiti — Portail éducatif",
+  "short_name": "EduHaiti",
+  "description": "Portail éducatif EduHaiti, un produit du groupe Nevvik.",
+  "lang": "fr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5EFEA",
+  "theme_color": "#0F2B5E",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

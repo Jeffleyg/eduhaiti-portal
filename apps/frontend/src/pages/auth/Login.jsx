@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { apiFetch } from "../../lib/api.js"
 import { useAuth } from "../../context/AuthContext.jsx"
+import BrandLogo from "../../components/BrandLogo.jsx"
 
 function Login() {
   const { t } = useTranslation()
@@ -101,16 +102,11 @@ function Login() {
           <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-brand-red/10 blur-3xl" />
           <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-brand-sky/10 blur-3xl" />
 
-          <div className="relative flex items-center gap-3">
-            <img
-              src="/LogoEdu.png"
-              alt="EduHaiti"
-              className="h-12 w-auto rounded-xl border border-brand-navy/10 bg-white px-2 py-1"
-            />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/70">{t("educationSystem")}</p>
-              <h1 className="font-display text-3xl text-brand-navy">EduHaiti Portal</h1>
-            </div>
+          <div className="relative">
+            <h1>
+              <BrandLogo endorsed className="h-14 sm:h-16" />
+            </h1>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.3em] text-brand-red/70">{t("educationSystem")}</p>
           </div>
 
           <div className="relative mt-10 max-w-xl space-y-5">

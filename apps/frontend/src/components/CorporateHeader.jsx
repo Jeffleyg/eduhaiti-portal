@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx"
 import { useTranslation } from "react-i18next"
 import { sanitizeText, displayName } from "../lib/string.js"
 import { useState } from "react"
+import BrandLogo from "./BrandLogo.jsx"
 
 function CorporateHeader() {
   const { t } = useTranslation()
@@ -65,15 +66,9 @@ function CorporateHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo e Título */}
         <div className="flex items-center gap-3">
-          <img
-            src="/LogoEdu.png"
-            alt="EduHaiti"
-            className="h-10 w-auto rounded border border-white/20 bg-white/10 px-2 py-1"
-          />
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-white/70">EduHaiti Portal</p>
-            <p className="text-sm font-semibold text-white">{t(roleLabelKey)}</p>
-          </div>
+          <BrandLogo tone="white" className="h-8 sm:h-9" />
+          <span className="h-7 w-px bg-white/25" aria-hidden="true" />
+          <p className="text-sm font-semibold text-white/85">{t(roleLabelKey)}</p>
         </div>
 
         {/* Menu de Usuário */}

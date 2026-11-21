@@ -183,7 +183,7 @@ describe("Landing", () => {
         <Landing />
       </MemoryRouter>,
     )
-    expect(screen.getAllByText("brand").length).toBeGreaterThan(0)
+    expect(screen.getAllByAltText("brand").length).toBeGreaterThan(0)
     expect(screen.getAllByText("metricAttendance").length).toBeGreaterThan(0)
     expect(screen.getAllByRole("link").length).toBeGreaterThan(0)
   })

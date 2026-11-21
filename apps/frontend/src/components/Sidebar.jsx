@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext.jsx"
 import { isExactNavItem, navForRole, roleLabelKey } from "./navigation.js"
+import BrandLogo from "./BrandLogo.jsx"
 
 /**
  * Role navigation. `variant="drawer"` is the mobile off-canvas version: no
@@ -34,19 +35,19 @@ function Sidebar({ role, variant = "panel" }) {
             }`
       }
     >
-      <div className="flex shrink-0 items-center justify-between gap-2">
+      {/* Collapsed (32px of usable width): symbol above the expand button. */}
+      <div className={`flex shrink-0 gap-2 ${collapsed ? "flex-col items-center" : "items-center justify-between"}`}>
         <div className="flex min-w-0 items-center gap-3">
-          <img
-            src="/LogoEdu.png"
-            alt={t("brand")}
-            className="h-10 w-auto shrink-0 rounded-xl border border-brand-navy/10 bg-white px-2 py-1"
-          />
-          {!collapsed ? (
+          {collapsed ? (
+            <BrandLogo variant="mark" alt={t("brand")} className="h-8 shrink-0" />
+          ) : (
             <div className="min-w-0">
-              <h2 className="truncate font-display text-xl text-brand-navy">{t("brand")}</h2>
-              <p className="truncate text-xs font-medium text-brand-navy/70">{t(roleLabelKey(role))}</p>
+              <h2>
+                <BrandLogo alt={t("brand")} className="h-8" />
+              </h2>
+              <p className="mt-1 truncate pl-0.5 text-xs font-medium text-brand-navy/70">{t(roleLabelKey(role))}</p>
             </div>
-          ) : null}
+          )}
         </div>
 
         {!inDrawer ? (

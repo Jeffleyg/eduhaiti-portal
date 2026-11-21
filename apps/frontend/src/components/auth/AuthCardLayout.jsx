@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import BrandLogo from "../BrandLogo.jsx"
 
 /** Centered card used by the public account pages (password recovery, etc.). */
 function AuthCardLayout({ icon: Icon, tone = "navy", title, subtitle, children, footer }) {
@@ -17,10 +18,9 @@ function AuthCardLayout({ icon: Icon, tone = "navy", title, subtitle, children, 
       <header className="relative border-b border-brand-navy/10 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/login" className="flex items-center gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky">
-            <img src="/LogoEdu.png" alt="" className="h-10 w-auto rounded border border-brand-navy/10 bg-white px-2 py-1" />
-            <span>
-              <span className="block text-xs font-bold uppercase tracking-wider text-brand-red/60">{t("educationSystem")}</span>
-              <span className="block text-xl font-bold text-brand-navy">EduHaiti</span>
+            <BrandLogo className="h-9" />
+            <span className="hidden border-l border-brand-navy/15 pl-3 text-xs font-bold uppercase tracking-wider text-brand-red/60 sm:block">
+              {t("educationSystem")}
             </span>
           </Link>
         </div>

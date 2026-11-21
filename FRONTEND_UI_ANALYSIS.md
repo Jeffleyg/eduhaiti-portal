@@ -395,7 +395,7 @@ components/
 **7. Images & Alt Text**
 ```jsx
 // ✅ Good: Logo has alt text
-<img src="/LogoEdu.png" alt={t("brand")} />
+<BrandLogo alt={t("brand")} />  // components/BrandLogo.jsx
 
 // ❌ Some profile photos may lack alt text
 <img src={user?.profilePhoto} /> // No alt!

@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle, AlertCircle } from "lucide-react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
 import { apiFetch } from "../../lib/api.js"
+import BrandLogo from "../../components/BrandLogo.jsx"
 
 function RedeemAccess() {
   const { t } = useTranslation()
@@ -30,17 +31,10 @@ function RedeemAccess() {
         <div className="relative border-b border-brand-navy/10 bg-white/50 backdrop-blur-sm">
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
-              <img
-                src="/LogoEdu.png"
-                alt="EduHaiti"
-                className="h-10 w-auto rounded border border-brand-navy/10 bg-white px-2 py-1"
-              />
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-brand-red/60">
-                  {t("educationSystem")}
-                </p>
-                <h1 className="text-xl font-bold text-brand-navy">EduHaiti Portal</h1>
-              </div>
+              <BrandLogo className="h-9" />
+              <span className="hidden border-l border-brand-navy/15 pl-3 text-xs font-bold uppercase tracking-wider text-brand-red/60 sm:block">
+                {t("educationSystem")}
+              </span>
             </div>
           </div>
         </div>
@@ -136,17 +130,10 @@ function RedeemAccess() {
       <div className="relative border-b border-brand-navy/10 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <img
-              src="/LogoEdu.png"
-              alt="EduHaiti"
-              className="h-10 w-auto rounded border border-brand-navy/10 bg-white px-2 py-1"
-            />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-brand-red/60">
-                {t("educationSystem")}
-              </p>
-              <h1 className="text-xl font-bold text-brand-navy">EduHaiti Portal</h1>
-            </div>
+            <BrandLogo className="h-9" />
+            <span className="hidden border-l border-brand-navy/15 pl-3 text-xs font-bold uppercase tracking-wider text-brand-red/60 sm:block">
+              {t("educationSystem")}
+            </span>
           </div>
         </div>
       </div>
