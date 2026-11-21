@@ -2,7 +2,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { resolveCorsOrigin } from './common/cors-origin';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -13,8 +15,15 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
+  // Security headers. Uploaded images are embedded by the SPA from another
+  // origin, so resources must stay loadable cross-origin.
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? '*',
+    origin: resolveCorsOrigin(process.env),
   });
   // Student hand-ins stored before assignment files became private must not
   // stay public: they are served only by GET /api/assignments/.../file.

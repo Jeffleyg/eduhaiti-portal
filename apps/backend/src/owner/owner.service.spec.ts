@@ -25,9 +25,42 @@ describe('OwnerService', () => {
     delete process.env.FRONTEND_URL;
   });
 
-  it('lists schools', async () => {
-    await svc.listAllSchools();
-    expect(prisma.school.findMany).toHaveBeenCalled();
+  it('lists schools with live usage figures', async () => {
+    prisma.school.findMany.mockResolvedValueOnce([]);
+    await expect(svc.listAllSchools()).resolves.toEqual([]);
+    expect(prisma.user.groupBy).not.toHaveBeenCalled();
+
+    prisma.school.findMany.mockResolvedValueOnce([
+      { id: 'a', name: 'A', usageAnalytics: { id: 'ua', totalLogins: 0 } },
+      { id: 'b', name: 'B', usageAnalytics: null },
+    ]);
+    prisma.user.groupBy.mockResolvedValueOnce([
+      { schoolId: 'a', role: 'STUDENT', _count: { _all: 4 } },
+      { schoolId: 'a', role: 'TEACHER', _count: { _all: 2 } },
+      { schoolId: 'a', role: 'ADMIN', _count: { _all: 1 } },
+    ]);
+    prisma.class.count.mockResolvedValue(3);
+    prisma.attendance.count.mockResolvedValue(10);
+    prisma.grade.count.mockResolvedValue(5);
+    prisma.message.count.mockResolvedValue(6);
+    prisma.auditLog.count.mockResolvedValue(8);
+    const last = new Date();
+    prisma.auditLog.findFirst.mockResolvedValueOnce({ createdAt: last }).mockResolvedValueOnce(null);
+    const [a, b] = await svc.listAllSchools();
+    expect(a.usageAnalytics).toMatchObject({
+      id: 'ua',
+      totalUsers: 7,
+      studentCount: 4,
+      teacherCount: 2,
+      classCount: 3,
+      attendanceRecords: 10,
+      gradeCreations: 5,
+      messagesSent: 6,
+      totalLogins: 8,
+      lastActivityAt: last,
+    });
+    expect(b.usageAnalytics).toMatchObject({ totalUsers: 0, studentCount: 0, lastActivityAt: null });
+    expect(prisma.auditLog.count.mock.calls[0][0].where).toEqual({ action: 'LOGIN_SUCCESS', user: { schoolId: 'a' } });
   });
 
   it('gets school details', async () => {
@@ -182,23 +215,23 @@ describe('OwnerService', () => {
   it('summarizes analytics across schools', async () => {
     const last = new Date();
     prisma.school.findMany.mockResolvedValue([
-      {
-        id: 'a',
-        name: 'A',
-        usageAnalytics: {
-          totalLogins: 2,
-          totalUsers: 3,
-          studentCount: 4,
-          teacherCount: 5,
-          classCount: 6,
-          lastActivityAt: last,
-          gradeCreations: 7,
-          attendanceRecords: 8,
-          messagesSent: 9,
-        },
-      },
-      { id: 'b', name: 'B', usageAnalytics: null },
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
     ]);
+    prisma.user.groupBy.mockResolvedValue([
+      { schoolId: 'a', role: 'STUDENT', _count: { _all: 2 } },
+      { schoolId: 'a', role: 'TEACHER', _count: { _all: 1 } },
+    ]);
+    const perSchool = (a: number) => (args: any) =>
+      Promise.resolve(JSON.stringify(args).includes('"a"') ? a : 0);
+    prisma.class.count.mockImplementation(perSchool(6));
+    prisma.attendance.count.mockImplementation(perSchool(8));
+    prisma.grade.count.mockImplementation(perSchool(7));
+    prisma.message.count.mockImplementation(perSchool(9));
+    prisma.auditLog.count.mockImplementation(perSchool(2));
+    prisma.auditLog.findFirst.mockImplementation((args: any) =>
+      Promise.resolve(JSON.stringify(args).includes('"a"') ? { createdAt: last } : null),
+    );
     const r = await svc.getAnalyticsSummary();
     expect(r).toMatchObject({
       totalSchools: 2,
@@ -209,6 +242,7 @@ describe('OwnerService', () => {
       totalMessages: 9,
     });
     expect(r.schoolsDetails[0]).toMatchObject({ logins: 2, lastActivity: last });
+    expect(r.schoolsDetails[0]).toMatchObject({ users: 3, students: 2, teachers: 1, classes: 6 });
     expect(r.schoolsDetails[1]).toEqual({
       id: 'b',
       name: 'B',
@@ -219,6 +253,11 @@ describe('OwnerService', () => {
       classes: 0,
       lastActivity: undefined,
     });
+  });
+
+  it('summarizes an empty platform', async () => {
+    prisma.school.findMany.mockResolvedValue([]);
+    await expect(svc.getAnalyticsSummary()).resolves.toMatchObject({ totalSchools: 0, totalUsers: 0, schoolsDetails: [] });
   });
 
   it('tracks usage, creating the record when missing', async () => {

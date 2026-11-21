@@ -27,6 +27,18 @@ interface AnalyticsSummary {
   }>;
 }
 
+type LiveUsage = {
+  totalLogins: number;
+  totalUsers: number;
+  studentCount: number;
+  teacherCount: number;
+  classCount: number;
+  gradeCreations: number;
+  attendanceRecords: number;
+  messagesSent: number;
+  lastActivityAt: Date | null;
+};
+
 @Injectable()
 export class OwnerService {
   constructor(
@@ -34,9 +46,69 @@ export class OwnerService {
     private readonly emailService: EmailService,
   ) {}
 
+  /**
+   * Usage figures computed from the real tables. The SchoolUsageAnalytic
+   * counters were never incremented by the app, so reading them always
+   * showed zeros on the owner dashboard.
+   */
+  private async liveUsage(
+    schoolIds: string[],
+  ): Promise<Map<string, LiveUsage>> {
+    const result = new Map<string, LiveUsage>();
+    if (schoolIds.length === 0) return result;
+
+    const byRole = await this.prisma.user.groupBy({
+      by: ['schoolId', 'role'],
+      where: { schoolId: { in: schoolIds } },
+      _count: { _all: true },
+    });
+
+    await Promise.all(
+      schoolIds.map(async (schoolId) => {
+        const inSchool = { academicYear: { schoolId } };
+        const [
+          classCount,
+          attendanceRecords,
+          gradeCreations,
+          messagesSent,
+          totalLogins,
+          last,
+        ] = await Promise.all([
+          this.prisma.class.count({ where: inSchool }),
+          this.prisma.attendance.count({ where: { class: inSchool } }),
+          this.prisma.grade.count({ where: { class: inSchool } }),
+          this.prisma.message.count({ where: { from: { schoolId } } }),
+          this.prisma.auditLog.count({
+            where: { action: 'LOGIN_SUCCESS', user: { schoolId } },
+          }),
+          this.prisma.auditLog.findFirst({
+            where: { user: { schoolId } },
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true },
+          }),
+        ]);
+        const rows = byRole.filter((r) => r.schoolId === schoolId);
+        const countRole = (role: string) =>
+          rows.find((r) => r.role === role)?._count._all ?? 0;
+        result.set(schoolId, {
+          totalUsers: rows.reduce((sum, r) => sum + r._count._all, 0),
+          studentCount: countRole('STUDENT'),
+          teacherCount: countRole('TEACHER'),
+          classCount,
+          attendanceRecords,
+          gradeCreations,
+          messagesSent,
+          totalLogins,
+          lastActivityAt: last?.createdAt ?? null,
+        });
+      }),
+    );
+    return result;
+  }
+
   // Schools Management
   async listAllSchools() {
-    return this.prisma.school.findMany({
+    const schools = await this.prisma.school.findMany({
       include: {
         usageAnalytics: true,
         permissionCodes: {
@@ -52,6 +124,14 @@ export class OwnerService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    const usage = await this.liveUsage(schools.map((s) => s.id));
+    return schools.map((school) => ({
+      ...school,
+      usageAnalytics: {
+        ...(school.usageAnalytics ?? {}),
+        ...usage.get(school.id),
+      },
+    }));
   }
 
   async getSchoolDetails(schoolId: string) {
@@ -336,9 +416,14 @@ export class OwnerService {
   }
 
   async getAnalyticsSummary(): Promise<AnalyticsSummary> {
-    const schools = await this.prisma.school.findMany({
-      include: { usageAnalytics: true },
+    const rawSchools = await this.prisma.school.findMany({
+      select: { id: true, name: true },
     });
+    const usage = await this.liveUsage(rawSchools.map((s) => s.id));
+    const schools = rawSchools.map((school) => ({
+      ...school,
+      usageAnalytics: usage.get(school.id),
+    }));
 
     const summary: AnalyticsSummary = {
       totalSchools: schools.length,
@@ -360,7 +445,7 @@ export class OwnerService {
     };
 
     // Calculate totals
-    schools.forEach((school: any) => {
+    schools.forEach((school) => {
       if (school.usageAnalytics) {
         summary.totalLogins += school.usageAnalytics.totalLogins;
         summary.totalUsers += school.usageAnalytics.totalUsers;

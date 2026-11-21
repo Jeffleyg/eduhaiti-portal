@@ -299,7 +299,10 @@ export class ClassesService {
       where: { teacherId },
       include: {
         teacher: { select: { id: true, name: true } },
-        students: { select: { id: true, email: true, name: true } },
+        students: {
+          select: { id: true, email: true, name: true, enrollmentNumber: true },
+          orderBy: { name: 'asc' },
+        },
         series: { select: { id: true, name: true } },
         academicYear: { select: { id: true, year: true } },
       },
@@ -340,7 +343,10 @@ export class ClassesService {
       include: {
         academicYear: { select: { id: true, schoolId: true, year: true } },
         teacher: { select: { id: true, email: true, name: true } },
-        students: { select: { id: true, email: true, name: true } },
+        students: {
+          select: { id: true, email: true, name: true, enrollmentNumber: true },
+          orderBy: { name: 'asc' },
+        },
         series: { select: { id: true, name: true } },
         grades: {
           select: {

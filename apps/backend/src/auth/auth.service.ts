@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,8 +14,42 @@ import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
+// Brute-force protection: after MAX_LOGIN_FAILURES wrong passwords for the same
+// e-mail within LOGIN_WINDOW_MS, the account is locked for LOGIN_LOCK_MS.
+const MAX_LOGIN_FAILURES = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
+
 @Injectable()
 export class AuthService {
+  private readonly loginFailures = new Map<
+    string,
+    { count: number; firstAt: number; lockedUntil?: number }
+  >();
+
+  private assertNotLocked(email: string) {
+    const entry = this.loginFailures.get(email);
+    if (entry?.lockedUntil && entry.lockedUntil > Date.now()) {
+      throw new HttpException(
+        'Too many login attempts. Try again later.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  private registerLoginFailure(email: string) {
+    const now = Date.now();
+    const entry = this.loginFailures.get(email);
+    const fresh = !entry || now - entry.firstAt > LOGIN_WINDOW_MS;
+    const next: { count: number; firstAt: number; lockedUntil?: number } = fresh
+      ? { count: 1, firstAt: now }
+      : { ...entry, count: entry.count + 1 };
+    if (next.count >= MAX_LOGIN_FAILURES) {
+      next.lockedUntil = now + LOGIN_LOCK_MS;
+    }
+    this.loginFailures.set(email, next);
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -115,7 +151,12 @@ export class AuthService {
       data: { consumedAt: new Date() },
     });
 
-    const payload = { sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      schoolId: user.schoolId,
+    };
     const token = await this.jwtService.signAsync(payload);
 
     return {
@@ -143,7 +184,7 @@ export class AuthService {
         isActive: true,
         mustChangePassword: true,
         enrollmentNumber: true,
-            schoolId: true,
+        schoolId: true,
         classesAttending: {
           select: { id: true, name: true, level: true },
         },
@@ -190,6 +231,7 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const normalizedEmail = email.trim().toLowerCase();
+    this.assertNotLocked(normalizedEmail);
     const user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
@@ -216,6 +258,7 @@ export class AuthService {
           email: normalizedEmail,
         },
       });
+      this.registerLoginFailure(normalizedEmail);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -243,10 +286,17 @@ export class AuthService {
           email: user.email,
         },
       });
+      this.registerLoginFailure(normalizedEmail);
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId };
+    this.loginFailures.delete(normalizedEmail);
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      schoolId: user.schoolId,
+    };
     const token = await this.jwtService.signAsync(payload);
 
     const responseUser = {
@@ -337,7 +387,14 @@ export class AuthService {
         name,
         role,
       },
-          select: { id: true, email: true, role: true, name: true, isActive: true, schoolId: true },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        name: true,
+        isActive: true,
+        schoolId: true,
+      },
     });
 
     return user;
@@ -350,21 +407,32 @@ export class AuthService {
       throw new NotFoundException('Not found');
     }
 
+    // Same default as prisma/seed.ts (DEFAULT_SEED_PASSWORD), so the
+    // one-click test accounts on the login page actually work.
+    const seedPassword =
+      this.configService.get<string>('DEFAULT_SEED_PASSWORD') ?? 'Password@123';
+    const pick = (key: string) =>
+      this.configService.get<string>(key) ?? seedPassword;
     return {
       admin: {
         role: Role.ADMIN,
         email: 'admin@eduhaiti.ht',
-        password: this.configService.get('ADMIN_PASSWORD') ?? 'Admin@123',
+        password: pick('ADMIN_PASSWORD'),
       },
       teacher: {
         role: Role.TEACHER,
         email: 'professeur@eduhaiti.ht',
-        password: this.configService.get('TEACHER_PASSWORD') ?? 'Teacher@123',
+        password: pick('TEACHER_PASSWORD'),
       },
       student: {
         role: Role.STUDENT,
         email: 'eleve@eduhaiti.ht',
-        password: this.configService.get('STUDENT_PASSWORD') ?? 'Student@123',
+        password: pick('STUDENT_PASSWORD'),
+      },
+      owner: {
+        role: Role.OWNER,
+        email: 'owner@eduhaiti.ht',
+        password: pick('OWNER_PASSWORD'),
       },
     };
   }
