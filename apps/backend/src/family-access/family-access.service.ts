@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { buildAuditData, safeParseJson } from '../common/audit-compat';
 import { HybridOutboundSmsService } from '../hybrid-gateway/services/hybrid-outbound-sms.service';
+import { activeAnnouncementWhere } from '../announcements/announcements.service';
 
 @Injectable()
 export class FamilyAccessService {
@@ -141,7 +142,7 @@ export class FamilyAccessService {
         }),
         schoolId
           ? this.prisma.announcement.findMany({
-              where: { schoolId },
+              where: { schoolId, ...activeAnnouncementWhere() },
               select: {
                 id: true,
                 title: true,

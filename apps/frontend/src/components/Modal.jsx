@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next"
-import { useEffect } from "react"
+import { useEffect, useId } from "react"
 
 function Modal({ isOpen, onClose, title, children, size = "md", actions }) {
   const { t } = useTranslation()
+  const titleId = useId()
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -14,6 +15,16 @@ function Modal({ isOpen, onClose, title, children, size = "md", actions }) {
       document.body.style.overflow = "auto"
     }
   }, [isOpen])
+
+  // Escape closes the dialog, as users expect from any modal.
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -32,10 +43,11 @@ function Modal({ isOpen, onClose, title, children, size = "md", actions }) {
         }
       }}
     >
-      <div className={`${sizeClasses[size]} rounded-3xl bg-white shadow-xl`}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className={`${sizeClasses[size]} rounded-3xl bg-white shadow-xl`}>
         <div className="flex items-center justify-between border-b border-brand-navy/10 px-6 py-4">
-          <h2 className="font-display text-xl font-semibold text-brand-navy">{title}</h2>
+          <h2 id={titleId} className="font-display text-xl font-semibold text-brand-navy">{title}</h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-2xl leading-none text-brand-navy/50 hover:text-brand-navy"
             aria-label={t("closeDialog")}

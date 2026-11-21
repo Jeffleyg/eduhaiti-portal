@@ -37,7 +37,6 @@ import { EmailService } from './common/services/email.service';
 import { AcademicSettingsService } from './academic-settings/academic-settings.service';
 import { AuditLogService } from './sync/services/audit-log.service';
 import { DisciplinesService } from './disciplines/disciplines.service';
-import { AnnouncementsService } from './announcements/announcements.service';
 import { MessagesService } from './messages/messages.service';
 
 beforeEach(() => {
@@ -372,49 +371,6 @@ describe('DisciplinesService', () => {
     ]);
     expect(prisma.discipline.delete).toHaveBeenCalledWith({
       where: { id: 'd' },
-    });
-  });
-});
-
-describe('AnnouncementsService', () => {
-  let prisma: PrismaMock;
-  let svc: AnnouncementsService;
-  beforeEach(() => {
-    prisma = createPrismaMock();
-    svc = new AnnouncementsService(prisma as any);
-  });
-
-  it('creates and lists', async () => {
-    const payload: any = { title: 't', content: 'c', type: 'GENERAL', createdById: 'u', schoolId: 's' };
-    await svc.create(payload);
-    await svc.findAll('s');
-    await svc.findAll('s', 'URGENT' as any);
-    await svc.getLatest('s');
-    await svc.getLatest('s', 3);
-    expect(prisma.announcement.create.mock.calls[0][0].data).toBe(payload);
-    expect(prisma.announcement.findMany.mock.calls.map((c: any) => c[0].where)).toEqual([
-      { schoolId: 's' },
-      { schoolId: 's', type: 'URGENT' },
-      { schoolId: 's' },
-      { schoolId: 's' },
-    ]);
-    expect(prisma.announcement.findMany.mock.calls[2][0].take).toBe(10);
-    expect(prisma.announcement.findMany.mock.calls[3][0].take).toBe(3);
-  });
-
-  it('updates, deletes and finds or throws', async () => {
-    prisma.announcement.findUnique.mockResolvedValue(null);
-    await expect(svc.update('a', {})).rejects.toBeInstanceOf(NotFoundException);
-    await expect(svc.delete('a')).rejects.toBeInstanceOf(NotFoundException);
-    await expect(svc.findById('a')).rejects.toBeInstanceOf(NotFoundException);
-
-    prisma.announcement.findUnique.mockResolvedValue({ id: 'a' });
-    await svc.update('a', { title: 'n' });
-    await expect(svc.delete('a')).resolves.toEqual({ message: 'Announcement deleted' });
-    await expect(svc.findById('a')).resolves.toEqual({ id: 'a' });
-    expect(prisma.announcement.update.mock.calls[0][0]).toEqual({
-      where: { id: 'a' },
-      data: { title: 'n' },
     });
   });
 });

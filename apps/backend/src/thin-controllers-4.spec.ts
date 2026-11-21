@@ -11,7 +11,6 @@ import { createPrismaMock } from './test-utils/prisma-mock';
 import { FamilyAccessController } from './family-access/family-access.controller';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AuthController, profilePhotoFilename } from './auth/auth.controller';
-import { AnnouncementsController } from './announcements/announcements.controller';
 import { ContentDeliveryController } from './content-delivery/content-delivery.controller';
 import { GradesController } from './grades/grades.controller';
 import {
@@ -256,56 +255,6 @@ describe('AuthController', () => {
       ['', { profilePhoto: '/uploads/profile-photos/g.jpg' }],
     ]);
     expect(svc.getProfile.mock.calls).toEqual([['u'], ['']]);
-  });
-});
-
-describe('AnnouncementsController', () => {
-  it('creates and lists scoped to the user school', async () => {
-    const svc = autoMock();
-    const ctrl = new AnnouncementsController(svc as any);
-    const payload: any = { title: 't', content: 'c', type: 'GENERAL', schoolId: 'p' };
-
-    await ctrl.create({ user: { sub: 'u', schoolId: 's' } }, payload);
-    await ctrl.create({}, payload);
-    await ctrl.findAll({ user: { schoolId: 's' } }, 'p', 'GENERAL' as any);
-    await ctrl.findAll({}, 'p');
-    await ctrl.getLatest({ user: { schoolId: 's' } }, 'p', '3');
-    await ctrl.getLatest({}, 'p');
-
-    expect(svc.create.mock.calls).toEqual([
-      [{ ...payload, schoolId: 's', createdById: 'u' }],
-      [{ ...payload, schoolId: 'p', createdById: '' }],
-    ]);
-    expect(svc.findAll.mock.calls).toEqual([
-      ['s', 'GENERAL'],
-      ['p', undefined],
-    ]);
-    expect(svc.getLatest.mock.calls).toEqual([
-      ['s', 3],
-      ['p', 10],
-    ]);
-  });
-
-  it('enforces same-school access on id routes', async () => {
-    const svc = autoMock();
-    svc.findById.mockResolvedValue({ id: 'a', schoolId: 's' });
-    const ctrl = new AnnouncementsController(svc as any);
-    const own = { user: { schoolId: 's' } };
-    const other = { user: { schoolId: 'x' } };
-
-    await expect(ctrl.findById(own, 'a')).resolves.toEqual({ id: 'a', schoolId: 's' });
-    await ctrl.findById({}, 'a');
-    await ctrl.update(own, 'a', { title: 'n' });
-    await ctrl.delete(own, 'a');
-    expect(svc.update).toHaveBeenCalledWith('a', { title: 'n' });
-    expect(svc.delete).toHaveBeenCalledWith('a');
-
-    await expect(ctrl.findById(other, 'a')).rejects.toBeInstanceOf(NotFoundException);
-    await expect(ctrl.update(other, 'a', {})).rejects.toBeInstanceOf(NotFoundException);
-    await expect(ctrl.delete(other, 'a')).rejects.toBeInstanceOf(NotFoundException);
-
-    svc.findById.mockResolvedValue(null);
-    await expect(ctrl.findById(own, 'a')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 

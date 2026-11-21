@@ -62,11 +62,12 @@ describe("ProfessorDashboard", () => {
     unmount()
 
     // classes, inbox, summary (no data yet), then the leaderboard
-    apiFetch
-      .mockResolvedValueOnce([{ id: "c1" }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce({ attendanceRate: null })
-      .mockResolvedValueOnce(null)
+    apiFetch.mockImplementation(async (path) => {
+      if (path === "/classes/my-classes") return [{ id: "c1" }]
+      if (path === "/messages/inbox") return []
+      if (path === "/classes/my-summary") return { attendanceRate: null }
+      return null
+    })
     const second = renderWithRouter(<ProfessorDashboard />)
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/gamification/class/c1/leaderboard", { token: "tok" }))
     // Nothing measured yet: show "-" instead of an invented percentage.

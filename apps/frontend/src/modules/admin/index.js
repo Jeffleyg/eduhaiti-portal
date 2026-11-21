@@ -1,4 +1,5 @@
 export { default as AdminDashboard } from "../../pages/admin/AdminDashboard.jsx"
+export { default as AdminAnnouncements } from "../../pages/admin/AdminAnnouncements.jsx"
 export { default as AdminUsers } from "../../pages/admin/AdminUsers.jsx"
 export { default as AdminStudentManagement } from "../../pages/admin/AdminStudentManagement.jsx"
 export { default as AdminDisciplineManagement } from "../../pages/admin/AdminDisciplineManagement.jsx"

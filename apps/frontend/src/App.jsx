@@ -27,9 +27,11 @@ const GuardianTuitionPayment = fromModule(() => import("./modules/payments/index
 const FamilyPortal = fromModule(() => import("./modules/family/index.js"), "FamilyPortal")
 const UserProfile = fromModule(commonPages, "UserProfile")
 const Settings = fromModule(commonPages, "Settings")
+const Announcements = fromModule(commonPages, "Announcements")
 
 const AdminDashboard = fromModule(adminPages, "AdminDashboard")
 const AdminUsers = fromModule(adminPages, "AdminUsers")
+const AdminAnnouncements = fromModule(adminPages, "AdminAnnouncements")
 const AdminStudentManagement = fromModule(adminPages, "AdminStudentManagement")
 const AdminDisciplineManagement = fromModule(adminPages, "AdminDisciplineManagement")
 const AdminClassManagement = fromModule(adminPages, "AdminClassManagement")
@@ -112,6 +114,7 @@ function App() {
                   <Route path="resources" element={<TeacherResources />} />
                   <Route path="assignments" element={<TeacherAssignments />} />
                   <Route path="lesson-plans" element={<TeacherLessonPlans />} />
+                  <Route path="announcements" element={<Announcements />} />
                   <Route path="forum" element={<TeacherForum />} />
                   <Route path="messages" element={<TeacherMessages />} />
                   <Route path="profile" element={<UserProfile />} />
@@ -129,6 +132,7 @@ function App() {
                   <Route path="resources" element={<StudentResources />} />
                   <Route path="assignments" element={<StudentAssignments />} />
                   <Route path="lesson-plans" element={<StudentLessonPlans />} />
+                  <Route path="announcements" element={<Announcements />} />
                   <Route path="forum" element={<StudentForum />} />
                   <Route path="messages" element={<StudentMessages />} />
                   <Route path="profile" element={<UserProfile />} />
@@ -141,6 +145,7 @@ function App() {
                 <Route path="/admin" element={<AppShell role="admin" />}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="announcements" element={<AdminAnnouncements />} />
                   <Route path="students" element={<AdminStudentManagement />} />
                   <Route path="classes" element={<AdminClassManagement />} />
                   <Route path="disciplines" element={<AdminDisciplineManagement />} />

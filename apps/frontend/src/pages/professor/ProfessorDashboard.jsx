@@ -9,6 +9,7 @@ import { formatLastUpdated, readHomeCache, writeHomeCache } from "../../offline/
 import { useSurvivalMode } from "../../context/useSurvivalMode.js"
 import { useSyncControl } from "../../context/useSyncControl.js"
 import LoadMoreList from "../../components/LoadMoreList.jsx"
+import LatestAnnouncements from "../../components/announcements/LatestAnnouncements.jsx"
 
 function ProfessorDashboard() {
   const { t, i18n } = useTranslation()
@@ -92,6 +93,8 @@ function ProfessorDashboard() {
         <StatCard label={t("metricMessages")} value={stats.messages ?? "0"} />
         <StatCard label={t("metricTasks")} value={stats.tasks ?? "0"} />
       </div>
+
+      <LatestAnnouncements to="/teacher/announcements" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="module-card compact card-compact p-5">

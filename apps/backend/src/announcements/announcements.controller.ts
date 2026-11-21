@@ -1,117 +1,111 @@
 import {
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Param,
   Query,
   Req,
   UseGuards,
-  NotFoundException,
 } from '@nestjs/common';
-import { AnnouncementsService } from './announcements.service';
+import { AnnouncementType, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Role, AnnouncementType } from '@prisma/client';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { AnnouncementsService } from './announcements.service';
+import {
+  CreateAnnouncementDto,
+  UpdateAnnouncementDto,
+} from './dto/announcement.dto';
+
+type AuthRequest = {
+  user?: { sub?: string; role?: Role; schoolId?: string | null };
+};
+
+const TYPES = new Set<string>(Object.values(AnnouncementType));
 
 @Controller('announcements')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AnnouncementsController {
-  constructor(private readonly announcementsService: AnnouncementsService) {}
+  constructor(private readonly announcements: AnnouncementsService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  @Post()
-  async create(
-    @Req() req: { user?: { sub?: string; schoolId?: string | null } },
-    @Body()
-    payload: {
-      title: string;
-      content: string;
-      type: AnnouncementType;
-      schoolId: string;
-      expiresAt?: Date;
-    },
+  /**
+   * Active announcements of the user's school. School admins can add
+   * `?include=all` to also get scheduled and expired ones.
+   */
+  @Get()
+  list(
+    @Req() req: AuthRequest,
+    @Query('type') type?: string,
+    @Query('include') include?: string,
+    @Query('schoolId') schoolId?: string,
   ) {
-    return this.announcementsService.create({
-      ...payload,
-      schoolId: req.user?.schoolId ?? payload.schoolId,
-      createdById: req.user?.sub ?? '',
+    const school = this.school(req, schoolId);
+    const safeType = this.type(type);
+    if (include === 'all' && this.isAdmin(req)) {
+      return this.announcements.listAll(school, safeType);
+    }
+    return this.announcements.listActive(school, { type: safeType });
+  }
+
+  @Get('latest')
+  latest(
+    @Req() req: AuthRequest,
+    @Query('limit') limit?: string,
+    @Query('schoolId') schoolId?: string,
+  ) {
+    const parsed = Number.parseInt(limit ?? '', 10);
+    return this.announcements.listActive(this.school(req, schoolId), {
+      limit: Number.isNaN(parsed) ? 5 : parsed,
     });
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  async findAll(
-    @Req() req: { user?: { schoolId?: string | null } },
-    @Query('schoolId') schoolId: string,
-    @Query('type') type?: AnnouncementType,
-  ) {
-    return this.announcementsService.findAll(
-      req.user?.schoolId ?? schoolId,
-      type,
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('latest')
-  async getLatest(
-    @Req() req: { user?: { schoolId?: string | null } },
-    @Query('schoolId') schoolId: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.announcementsService.getLatest(
-      req.user?.schoolId ?? schoolId,
-      limit ? parseInt(limit) : 10,
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findById(
-    @Req() req: { user?: { schoolId?: string | null } },
-    @Param('id') announcementId: string,
-  ) {
-    await this.assertSameSchool(announcementId, req.user?.schoolId);
-    return this.announcementsService.findById(announcementId);
+  findOne(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.announcements.findOne(id, this.school(req), this.isAdmin(req));
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Post()
   @Roles(Role.ADMIN)
+  create(@Req() req: AuthRequest, @Body() body: CreateAnnouncementDto) {
+    return this.announcements.create(
+      this.school(req),
+      req.user?.sub ?? '',
+      body,
+    );
+  }
+
   @Put(':id')
-  async update(
-    @Req() req: { user?: { schoolId?: string | null } },
-    @Param('id') announcementId: string,
-    @Body()
-    payload: {
-      title?: string;
-      content?: string;
-      type?: AnnouncementType;
-      expiresAt?: Date;
-    },
-  ) {
-    await this.assertSameSchool(announcementId, req.user?.schoolId);
-    return this.announcementsService.update(announcementId, payload);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @Delete(':id')
-  async delete(
-    @Req() req: { user?: { schoolId?: string | null } },
-    @Param('id') announcementId: string,
+  update(
+    @Req() req: AuthRequest,
+    @Param('id') id: string,
+    @Body() body: UpdateAnnouncementDto,
   ) {
-    await this.assertSameSchool(announcementId, req.user?.schoolId);
-    return this.announcementsService.delete(announcementId);
+    return this.announcements.update(id, this.school(req), body);
   }
 
-  private async assertSameSchool(announcementId: string, schoolId?: string | null) {
-    if (!schoolId) return;
-    const announcement = await this.announcementsService.findById(announcementId);
-    if ((announcement as { schoolId?: string } | null)?.schoolId !== schoolId) {
-      throw new NotFoundException('Announcement not found');
-    }
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  remove(@Req() req: AuthRequest, @Param('id') id: string) {
+    return this.announcements.remove(id, this.school(req));
+  }
+
+  /** Always the token's school; only the platform owner may pick one. */
+  private school(req: AuthRequest, requested?: string) {
+    if (req.user?.schoolId) return req.user.schoolId;
+    if (req.user?.role === Role.OWNER && requested) return requested;
+    throw new ForbiddenException('User is not linked to a school');
+  }
+
+  private isAdmin(req: AuthRequest) {
+    return req.user?.role === Role.ADMIN;
+  }
+
+  private type(value?: string) {
+    return value && TYPES.has(value) ? (value as AnnouncementType) : undefined;
   }
 }
