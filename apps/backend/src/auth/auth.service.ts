@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
@@ -12,6 +13,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buildAuditData } from '../common/audit-compat';
 import { Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { createHash, randomBytes } from 'crypto';
+import { EmailService } from '../common/services/email.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 // Brute-force protection: after MAX_LOGIN_FAILURES wrong passwords for the same
@@ -19,6 +22,15 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 const MAX_LOGIN_FAILURES = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
+
+// Password reset links are single-use, expire after RESET_TOKEN_TTL_MS and at
+// most one is issued per account every RESET_THROTTLE_MS (anti e-mail spam).
+const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
+const RESET_THROTTLE_MS = 60 * 1000;
+const INVALID_RESET_LINK = 'Invalid or expired reset link';
+
+const hashResetToken = (token: string) =>
+  createHash('sha256').update(token).digest('hex');
 
 @Injectable()
 export class AuthService {
@@ -54,6 +66,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   async requestCode(email: string) {
@@ -400,10 +413,147 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Starts a password reset. The answer is the same whether or not the e-mail
+   * belongs to an account, so the endpoint cannot be used to discover users.
+   */
+  async forgotPassword(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const response: { success: true; devResetUrl?: string } = {
+      success: true,
+    };
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, email: true, isActive: true },
+    });
+    if (!user || !user.isActive) {
+      return response;
+    }
+
+    const recent = await this.prisma.passwordResetToken.findFirst({
+      where: {
+        userId: user.id,
+        createdAt: { gt: new Date(Date.now() - RESET_THROTTLE_MS) },
+      },
+      select: { id: true },
+    });
+    if (recent) {
+      return response;
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id, usedAt: null },
+    });
+    await this.prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash: hashResetToken(token), expiresAt },
+    });
+
+    const resetUrl = `${this.frontendUrl()}/reset-password?token=${token}`;
+    const delivered = await this.emailService.sendPasswordResetEmail(
+      user.email,
+      resetUrl,
+      expiresAt,
+    );
+
+    await this.logAccessEvent({
+      action: 'PASSWORD_RESET_REQUESTED',
+      entityId: user.id,
+      userId: user.id,
+      details: { email: user.email, delivered },
+    });
+
+    // Without SMTP in development the link is returned so the flow can be tested.
+    if (!delivered && !this.isProduction()) {
+      response.devResetUrl = resetUrl;
+    }
+    return response;
+  }
+
+  /** Tells the reset page up front whether its link can still be used. */
+  async checkResetToken(token: string) {
+    const record = await this.findUsableResetToken(token);
+    return { valid: Boolean(record) };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const record = await this.findUsableResetToken(token);
+    if (!record) {
+      throw new BadRequestException(INVALID_RESET_LINK);
+    }
+
+    // Claim the token atomically so two concurrent submits cannot both succeed.
+    const claimed = await this.prisma.passwordResetToken.updateMany({
+      where: { id: record.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    if (claimed.count !== 1) {
+      throw new BadRequestException(INVALID_RESET_LINK);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: record.userId },
+      data: {
+        passwordHash,
+        mustChangePassword: false,
+        tempPasswordExpiresAt: null,
+      },
+    });
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: record.userId, usedAt: null },
+    });
+
+    this.loginFailures.delete(record.user.email);
+    await this.logAccessEvent({
+      action: 'PASSWORD_RESET',
+      entityId: record.userId,
+      userId: record.userId,
+      details: { email: record.user.email },
+    });
+
+    return { success: true };
+  }
+
+  private async findUsableResetToken(token: string) {
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash: hashResetToken(token) },
+      select: {
+        id: true,
+        userId: true,
+        usedAt: true,
+        expiresAt: true,
+        user: { select: { email: true, isActive: true } },
+      },
+    });
+    if (
+      !record ||
+      record.usedAt ||
+      record.expiresAt <= new Date() ||
+      !record.user.isActive
+    ) {
+      return null;
+    }
+    return record;
+  }
+
+  private isProduction() {
+    return (
+      (this.configService.get('NODE_ENV') ?? 'development') === 'production'
+    );
+  }
+
+  private frontendUrl() {
+    const configured =
+      this.configService.get<string>('FRONTEND_URL') ??
+      this.configService.get<string>('CORS_ORIGIN')?.split(',')[0];
+    return (configured?.trim() || 'http://localhost:5173').replace(/\/+$/, '');
+  }
+
   getTestCredentials() {
-    const isProduction =
-      (this.configService.get('NODE_ENV') ?? 'development') === 'production';
-    if (isProduction) {
+    if (this.isProduction()) {
       throw new NotFoundException('Not found');
     }
 

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   NotFoundException,
@@ -27,15 +28,18 @@ describe('AuthService', () => {
   let jwt: { signAsync: jest.Mock<(...a: any[]) => Promise<string>> };
   let env: Record<string, string | undefined>;
   let svc: AuthService;
+  let email: { sendPasswordResetEmail: jest.Mock<(...a: any[]) => Promise<boolean>> };
 
   beforeEach(() => {
     prisma = createPrismaMock();
     jwt = { signAsync: jest.fn(async () => 'jwt') };
     env = {};
+    email = { sendPasswordResetEmail: jest.fn(async () => false) };
     svc = new AuthService(
       prisma as any,
       jwt as any,
       { get: (k: string) => env[k] } as any,
+      email as any,
     );
   });
 
@@ -347,6 +351,107 @@ describe('AuthService', () => {
         name: 'A',
         role: Role.STUDENT,
       });
+    });
+  });
+
+  describe('password reset', () => {
+    const TOKEN = 'a'.repeat(64);
+    const future = () => new Date(Date.now() + 60_000);
+
+    it('answers the same way for unknown or inactive accounts', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      await expect(svc.forgotPassword('no@x.y')).resolves.toEqual({ success: true });
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u', email: 'a@b.c', isActive: false });
+      await expect(svc.forgotPassword('a@b.c')).resolves.toEqual({ success: true });
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+      expect(email.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('does not issue a second link within a minute', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u', email: 'a@b.c', isActive: true });
+      prisma.passwordResetToken.findFirst.mockResolvedValueOnce({ id: 't' });
+      await expect(svc.forgotPassword('a@b.c')).resolves.toEqual({ success: true });
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+    });
+
+    it('stores only a hash, e-mails the link and returns it in development when not delivered', async () => {
+      env.FRONTEND_URL = 'https://app.ht/';
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u', email: 'a@b.c', isActive: true });
+      const r = await svc.forgotPassword(' A@B.C ');
+      expect(prisma.user.findUnique.mock.calls[0][0]).toMatchObject({ where: { email: 'a@b.c' } });
+      expect(prisma.passwordResetToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u', usedAt: null } });
+      const { data } = prisma.passwordResetToken.create.mock.calls[0][0];
+      const token = /token=([0-9a-f]{64})$/.exec(r.devResetUrl!)![1];
+      expect(r.devResetUrl).toBe(`https://app.ht/reset-password?token=${token}`);
+      expect(data.tokenHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(data.tokenHash).not.toBe(token);
+      expect(data.expiresAt.getTime()).toBeGreaterThan(Date.now() + 29 * 60_000);
+      expect(email.sendPasswordResetEmail).toHaveBeenCalledWith('a@b.c', r.devResetUrl, data.expiresAt);
+      expect(prisma.auditLog.create).toHaveBeenCalled();
+    });
+
+    it('never returns the link once delivered or in production', async () => {
+      env.CORS_ORIGIN = 'https://a.ht, https://b.ht';
+      email.sendPasswordResetEmail.mockResolvedValueOnce(true);
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u', email: 'a@b.c', isActive: true });
+      await expect(svc.forgotPassword('a@b.c')).resolves.toEqual({ success: true });
+      expect(email.sendPasswordResetEmail.mock.calls[0][1]).toMatch(/^https:\/\/a\.ht\/reset-password\?token=/);
+
+      env.NODE_ENV = 'production';
+      env.CORS_ORIGIN = undefined;
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'u', email: 'a@b.c', isActive: true });
+      await expect(svc.forgotPassword('a@b.c')).resolves.toEqual({ success: true });
+      expect(email.sendPasswordResetEmail.mock.calls[1][1]).toMatch(/^http:\/\/localhost:5173\/reset-password/);
+    });
+
+    it('reports whether a link is still usable', async () => {
+      prisma.passwordResetToken.findUnique.mockResolvedValueOnce(null);
+      await expect(svc.checkResetToken(TOKEN)).resolves.toEqual({ valid: false });
+      for (const record of [
+        { usedAt: new Date(), expiresAt: future(), user: { email: 'a@b.c', isActive: true } },
+        { usedAt: null, expiresAt: new Date(Date.now() - 1), user: { email: 'a@b.c', isActive: true } },
+        { usedAt: null, expiresAt: future(), user: { email: 'a@b.c', isActive: false } },
+      ]) {
+        prisma.passwordResetToken.findUnique.mockResolvedValueOnce({ id: 't', userId: 'u', ...record });
+        await expect(svc.checkResetToken(TOKEN)).resolves.toEqual({ valid: false });
+      }
+      prisma.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 't', userId: 'u', usedAt: null, expiresAt: future(), user: { email: 'a@b.c', isActive: true },
+      });
+      await expect(svc.checkResetToken(TOKEN)).resolves.toEqual({ valid: true });
+    });
+
+    it('rejects unusable or already claimed links', async () => {
+      prisma.passwordResetToken.findUnique.mockResolvedValueOnce(null);
+      await expect(svc.resetPassword(TOKEN, 'NewPass@1')).rejects.toBeInstanceOf(BadRequestException);
+      prisma.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 't', userId: 'u', usedAt: null, expiresAt: future(), user: { email: 'a@b.c', isActive: true },
+      });
+      prisma.passwordResetToken.updateMany.mockResolvedValueOnce({ count: 0 });
+      await expect(svc.resetPassword(TOKEN, 'NewPass@1')).rejects.toThrow('Invalid or expired reset link');
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('sets the new password, burns the link and lifts a login lock', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      for (let i = 0; i < 5; i++) {
+        await svc.login('a@b.c', 'bad').catch(() => undefined);
+      }
+      await expect(svc.login('a@b.c', 'bad')).rejects.toBeInstanceOf(HttpException);
+
+      prisma.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 't', userId: 'u', usedAt: null, expiresAt: future(), user: { email: 'a@b.c', isActive: true },
+      });
+      prisma.passwordResetToken.updateMany.mockResolvedValueOnce({ count: 1 });
+      await expect(svc.resetPassword(TOKEN, 'NewPass@1')).resolves.toEqual({ success: true });
+      expect(prisma.passwordResetToken.updateMany.mock.calls[0][0]).toMatchObject({ where: { id: 't', usedAt: null } });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u' },
+        data: { passwordHash: 'hash:NewPass@1', mustChangePassword: false, tempPasswordExpiresAt: null },
+      });
+      expect(prisma.passwordResetToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u', usedAt: null } });
+      // The lock is gone: the next attempt reaches the credential check again.
+      await expect(svc.login('a@b.c', 'bad')).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 

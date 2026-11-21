@@ -208,6 +208,7 @@ model User {
   schoolId              String?
 
   loginCodes            LoginCode[]
+  passwordResetTokens   PasswordResetToken[]
   classesTeaching       Class[]                @relation("ClassesTeaching")
   classesAttending      Class[]                @relation("ClassStudents")
   grades                Grade[]
@@ -241,6 +242,19 @@ model LoginCode {
   user       User?     @relation(fields: [userId], references: [id])
 
   @@index([email])
+}
+
+// Single-use password reset link. Only the SHA-256 of the token is stored.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Class {

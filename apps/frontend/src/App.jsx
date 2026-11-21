@@ -18,6 +18,8 @@ const commonPages = () => import("./modules/common/index.js")
 
 const ChangePassword = lazy(() => import("./pages/auth/ChangePassword.jsx"))
 const RedeemAccess = lazy(() => import("./pages/auth/RedeemAccess.jsx"))
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword.jsx"))
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword.jsx"))
 const VerifyTranscript = lazy(() => import("./pages/VerifyTranscript.jsx"))
 const OwnerDashboard = lazy(() => import("./pages/owner/OwnerDashboard.jsx"))
 const GuardianTuitionPayment = fromModule(() => import("./modules/payments/index.js"), "GuardianTuitionPayment")
@@ -73,6 +75,8 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/redeem-access" element={<RedeemAccess />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/tuition-payment" element={<GuardianTuitionPayment />} />
               <Route path="/family" element={<FamilyPortal />} />
               <Route path="/verify-transcript/:id" element={<VerifyTranscript />} />

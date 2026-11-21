@@ -1,5 +1,17 @@
-import { BadRequestException, ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import { Role } from '@prisma/client';
 import { createPrismaMock, PrismaMock } from './test-utils/prisma-mock';
 
@@ -39,19 +51,29 @@ afterEach(() => {
   createTransport.mockClear();
 });
 
-const config = (env: Record<string, string | undefined>) => ({ get: (k: string) => env[k] }) as any;
+const config = (env: Record<string, string | undefined>) =>
+  ({ get: (k: string) => env[k] }) as any;
 
 describe('EmailService', () => {
   it('stays disabled without SMTP config', async () => {
     const svc = new EmailService(config({}));
     expect(createTransport).not.toHaveBeenCalled();
-    await expect(svc.sendTempPasswordEmail('a@b.c', 'pw', new Date())).resolves.toBe(false);
+    await expect(
+      svc.sendTempPasswordEmail('a@b.c', 'pw', new Date()),
+    ).resolves.toBe(false);
   });
 
   it('uses defaults for port, secure and from address', () => {
-    new EmailService(config({ SMTP_HOST: 'h', SMTP_USER: 'u@x', SMTP_PASS: 'p' }));
+    new EmailService(
+      config({ SMTP_HOST: 'h', SMTP_USER: 'u@x', SMTP_PASS: 'p' }),
+    );
     expect(createTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ host: 'h', port: 587, secure: false, auth: { user: 'u@x', pass: 'p' } }),
+      expect.objectContaining({
+        host: 'h',
+        port: 587,
+        secure: false,
+        auth: { user: 'u@x', pass: 'p' },
+      }),
     );
   });
 
@@ -67,30 +89,80 @@ describe('EmailService', () => {
         MAIL_FROM: 'School <s@x>',
       }),
     );
-    expect(createTransport.mock.calls[0][0]).toMatchObject({ port: 465, secure: true });
-    await expect(svc.sendTempPasswordEmail('a@b.c', 'pw', new Date())).resolves.toBe(true);
-    expect(sendMail.mock.calls[0][0]).toMatchObject({ from: 'School <s@x>', to: 'a@b.c' });
+    expect(createTransport.mock.calls[0][0]).toMatchObject({
+      port: 465,
+      secure: true,
+    });
+    await expect(
+      svc.sendTempPasswordEmail('a@b.c', 'pw', new Date()),
+    ).resolves.toBe(true);
+    expect(sendMail.mock.calls[0][0]).toMatchObject({
+      from: 'School <s@x>',
+      to: 'a@b.c',
+    });
     expect((sendMail.mock.calls[0][0] as any).text).toContain('pw');
+  });
+
+  it('sends the password reset link without ever logging it', async () => {
+    const spies = (['log', 'warn', 'error', 'debug', 'verbose'] as const).map(
+      (level) =>
+        jest.spyOn(Logger.prototype, level).mockImplementation(() => undefined),
+    );
+    const url = 'https://app/reset-password?token=SECRET';
+    await expect(
+      new EmailService(config({})).sendPasswordResetEmail(
+        'a@b.c',
+        url,
+        new Date(),
+      ),
+    ).resolves.toBe(false);
+
+    sendMail.mockResolvedValueOnce({});
+    const svc = new EmailService(
+      config({ SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p' }),
+    );
+    await expect(
+      svc.sendPasswordResetEmail('a@b.c', url, new Date()),
+    ).resolves.toBe(true);
+    const mail = sendMail.mock.calls[0][0] as any;
+    expect(mail).toMatchObject({ to: 'a@b.c' });
+    expect(mail.text).toContain(url);
+    expect(mail.html).toContain(`href="${url}"`);
+
+    sendMail.mockRejectedValueOnce(new Error('auth'));
+    await expect(
+      svc.sendPasswordResetEmail('a@b.c', url, new Date()),
+    ).resolves.toBe(false);
+
+    const logged = spies.flatMap((s) => s.mock.calls.flat()).join(' ');
+    expect(logged).not.toContain('SECRET');
   });
 
   it('returns false when sending fails', async () => {
     sendMail.mockRejectedValue(new Error('auth'));
-    const svc = new EmailService(config({ SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p' }));
-    await expect(svc.sendTempPasswordEmail('a@b.c', 'pw', new Date())).resolves.toBe(false);
+    const svc = new EmailService(
+      config({ SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p' }),
+    );
+    await expect(
+      svc.sendTempPasswordEmail('a@b.c', 'pw', new Date()),
+    ).resolves.toBe(false);
   });
 
   it('never writes the temporary password to the logs', async () => {
-    const spies = (['log', 'warn', 'error', 'debug', 'verbose'] as const).map((level) =>
-      jest.spyOn(Logger.prototype, level).mockImplementation(() => undefined),
+    const spies = (['log', 'warn', 'error', 'debug', 'verbose'] as const).map(
+      (level) =>
+        jest.spyOn(Logger.prototype, level).mockImplementation(() => undefined),
     );
     try {
-      await new EmailService(config({})).sendTempPasswordEmail('a@b.c', 'S3cretPw', new Date());
-      sendMail.mockRejectedValue(new Error('auth'));
-      await new EmailService(config({ SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p' })).sendTempPasswordEmail(
+      await new EmailService(config({})).sendTempPasswordEmail(
         'a@b.c',
         'S3cretPw',
         new Date(),
       );
+      sendMail.mockRejectedValue(new Error('auth'));
+      await new EmailService(
+        config({ SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p' }),
+      ).sendTempPasswordEmail('a@b.c', 'S3cretPw', new Date());
       const logged = spies.flatMap((spy) => spy.mock.calls.flat()).join(' ');
       expect(logged).toContain('a@b.c');
       expect(logged).not.toContain('S3cretPw');
@@ -118,10 +190,18 @@ describe('AcademicSettingsService', () => {
 
   it('resolves the school by exact or partial match', async () => {
     prisma.school.findMany.mockResolvedValueOnce([{ id: 's1' }]);
-    prisma.academicSetting.findUnique.mockResolvedValueOnce({ schoolId: 's1', passAverage: 12 });
-    await expect(svc.getBySchool(' s1 ')).resolves.toEqual({ schoolId: 's1', passAverage: 12 });
+    prisma.academicSetting.findUnique.mockResolvedValueOnce({
+      schoolId: 's1',
+      passAverage: 12,
+    });
+    await expect(svc.getBySchool(' s1 ')).resolves.toEqual({
+      schoolId: 's1',
+      passAverage: 12,
+    });
 
-    prisma.school.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 's2' }]);
+    prisma.school.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 's2' }]);
     prisma.academicSetting.findUnique.mockResolvedValueOnce(null);
     await expect(svc.getBySchool('Lycée')).resolves.toMatchObject({
       schoolId: 's2',
@@ -131,11 +211,19 @@ describe('AcademicSettingsService', () => {
   });
 
   it('rejects empty, ambiguous and unknown schools', async () => {
-    await expect(svc.getBySchool('  ')).rejects.toThrow('School identifier is required');
+    await expect(svc.getBySchool('  ')).rejects.toThrow(
+      'School identifier is required',
+    );
     prisma.school.findMany.mockResolvedValueOnce([{ id: 'a' }, { id: 'b' }]);
-    await expect(svc.getBySchool('x')).rejects.toThrow('Multiple schools match that identifier');
-    prisma.school.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'a' }, { id: 'b' }]);
-    await expect(svc.getBySchool('x')).rejects.toThrow('Multiple schools match that name');
+    await expect(svc.getBySchool('x')).rejects.toThrow(
+      'Multiple schools match that identifier',
+    );
+    prisma.school.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'a' }, { id: 'b' }]);
+    await expect(svc.getBySchool('x')).rejects.toThrow(
+      'Multiple schools match that name',
+    );
     prisma.school.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     await expect(svc.getBySchool('x')).rejects.toThrow('School x not found');
   });
@@ -156,10 +244,12 @@ describe('AcademicSettingsService', () => {
       assignmentLateDaysLimit: 2,
       gradeReviewWindowDays: 7,
     });
-    expect(prisma.academicSetting.upsert.mock.calls[1][0].create).toMatchObject({
-      passAverage: 12,
-      maxAbsencesPerCourse: 3,
-    });
+    expect(prisma.academicSetting.upsert.mock.calls[1][0].create).toMatchObject(
+      {
+        passAverage: 12,
+        maxAbsencesPerCourse: 3,
+      },
+    );
   });
 });
 
@@ -190,17 +280,26 @@ describe('AuditLogService', () => {
   });
 
   it('tolerates a missing log and warns on other errors', async () => {
-    fsMock.readFile.mockRejectedValueOnce(Object.assign(new Error('x'), { code: 'ENOENT' }));
+    fsMock.readFile.mockRejectedValueOnce(
+      Object.assign(new Error('x'), { code: 'ENOENT' }),
+    );
     await new AuditLogService().onModuleInit();
     expect(Logger.prototype.warn).not.toHaveBeenCalled();
-    fsMock.readFile.mockRejectedValueOnce(Object.assign(new Error('x'), { code: 'EACCES' }));
+    fsMock.readFile.mockRejectedValueOnce(
+      Object.assign(new Error('x'), { code: 'EACCES' }),
+    );
     await new AuditLogService().onModuleInit();
     expect(Logger.prototype.warn).toHaveBeenCalled();
   });
 
   it('writes entries and tracks final statuses only', async () => {
     const svc = new AuditLogService();
-    const base = { deviceId: 'd', entityType: 'e', entityId: 'i', timestamp: 't' };
+    const base = {
+      deviceId: 'd',
+      entityType: 'e',
+      entityId: 'i',
+      timestamp: 't',
+    };
     await svc.write({ ...base, actionId: 'x1', status: 'applied' });
     await svc.write({ ...base, actionId: 'x2', status: 'ignored' });
     await svc.write({ ...base, actionId: 'x3', status: 'conflict' });
@@ -225,14 +324,20 @@ describe('DisciplinesService', () => {
 
   it('creates disciplines with validation', async () => {
     prisma.series.findUnique.mockResolvedValueOnce(null);
-    await expect(svc.create({ seriesId: 's', name: 'n' } as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      svc.create({ seriesId: 's', name: 'n' } as any),
+    ).rejects.toBeInstanceOf(NotFoundException);
     prisma.series.findUnique.mockResolvedValue({ id: 's' });
     prisma.discipline.findFirst.mockResolvedValueOnce({ id: 'd' });
-    await expect(svc.create({ seriesId: 's', name: 'n' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      svc.create({ seriesId: 's', name: 'n' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
     prisma.discipline.findFirst.mockResolvedValue(null);
     await svc.create({ seriesId: 's', name: 'n', code: 'C' } as any);
     await svc.create({ seriesId: 's', name: 'n', credits: 3 } as any);
-    expect(prisma.discipline.create.mock.calls.map((c: any) => c[0].data.credits)).toEqual([0, 3]);
+    expect(
+      prisma.discipline.create.mock.calls.map((c: any) => c[0].data.credits),
+    ).toEqual([0, 3]);
   });
 
   it('filters by series and school', async () => {
@@ -248,7 +353,9 @@ describe('DisciplinesService', () => {
   it('finds, updates and deletes or throws when missing', async () => {
     prisma.discipline.findUnique.mockResolvedValue(null);
     await expect(svc.findById('d')).rejects.toBeInstanceOf(NotFoundException);
-    await expect(svc.update('d', {} as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(svc.update('d', {} as any)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
     await expect(svc.delete('d')).rejects.toBeInstanceOf(NotFoundException);
 
     const existing = { id: 'd', name: 'Old', code: 'O', credits: 2 };
@@ -257,11 +364,15 @@ describe('DisciplinesService', () => {
     await svc.update('d', {} as any);
     await svc.update('d', { name: 'New', code: 'N', credits: 4 } as any);
     await svc.delete('d');
-    expect(prisma.discipline.update.mock.calls.map((c: any) => c[0].data)).toEqual([
+    expect(
+      prisma.discipline.update.mock.calls.map((c: any) => c[0].data),
+    ).toEqual([
       { name: 'Old', code: 'O', credits: 2 },
       { name: 'New', code: 'N', credits: 4 },
     ]);
-    expect(prisma.discipline.delete).toHaveBeenCalledWith({ where: { id: 'd' } });
+    expect(prisma.discipline.delete).toHaveBeenCalledWith({
+      where: { id: 'd' },
+    });
   });
 });
 
@@ -325,24 +436,35 @@ describe('MessagesService', () => {
     const where = prisma.user.findMany.mock.calls.map((c: any) => c[0].where);
     expect(where[0].OR[1]).toEqual({ role: Role.ADMIN, schoolId: 's' });
     expect(where[1].OR[1]).toEqual({ role: Role.ADMIN });
-    expect(where[2]).toEqual({ id: { not: 'a' }, isActive: true, schoolId: 's' });
+    expect(where[2]).toEqual({
+      id: { not: 'a' },
+      isActive: true,
+      schoolId: 's',
+    });
     expect(where[3]).toEqual({ id: { not: 'a' }, isActive: true });
   });
 
   it('reads inbox and sent', async () => {
     await svc.findReceivedBy('u');
     await svc.findSentBy('u');
-    expect(prisma.message.findMany.mock.calls.map((c: any) => c[0].where)).toEqual([
-      { toId: 'u' },
-      { fromId: 'u' },
-    ]);
+    expect(
+      prisma.message.findMany.mock.calls.map((c: any) => c[0].where),
+    ).toEqual([{ toId: 'u' }, { fromId: 'u' }]);
   });
 
   it('validates and authorizes before sending', async () => {
-    await expect(svc.send('', 't', 's', 'b')).rejects.toBeInstanceOf(ForbiddenException);
-    await expect(svc.send('u', '', 's', 'b')).rejects.toBeInstanceOf(BadRequestException);
-    await expect(svc.send('u', 't', 's', '  ')).rejects.toBeInstanceOf(BadRequestException);
-    await expect(svc.send('u', 't', 's', undefined as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(svc.send('', 't', 's', 'b')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    await expect(svc.send('u', '', 's', 'b')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(svc.send('u', 't', 's', '  ')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(
+      svc.send('u', 't', 's', undefined as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
     prisma.user.findMany.mockResolvedValueOnce([{ id: 'other' }]);
     await expect(

@@ -47,7 +47,9 @@ export class EmailService {
   ): Promise<boolean> {
     if (!this.transporter) {
       // Never log the password: callers hand it to the admin once when this returns false.
-      this.logger.warn(`SMTP não configurado; e-mail de senha temporária não enviado para ${to}.`);
+      this.logger.warn(
+        `SMTP não configurado; e-mail de senha temporária não enviado para ${to}.`,
+      );
       return false;
     }
 
@@ -61,12 +63,76 @@ export class EmailService {
         text: `Votre mot de passe temporaire est : ${tempPassword}\nIl expire le : ${expiresAtText}\nLors de votre première connexion, vous devrez changer ce mot de passe.\n\n---\n\nModpas tanporè ou se: ${tempPassword}\nLi ekspire: ${expiresAtText}\nLè w konekte premye fwa a, w ap oblije chanje modpas la.`,
       });
 
-      this.logger.log(`E-mail com senha temporária enviado com sucesso para: ${to}`);
+      this.logger.log(
+        `E-mail com senha temporária enviado com sucesso para: ${to}`,
+      );
       return true;
     } catch (error: any) {
       // Captura a falha de autenticação ou rede sem propagar o erro 500 para a rota
       this.logger.error(
         `Falha ao enviar e-mail para ${to} (${error.message}). A operação continuará normalmente.`,
+      );
+      return false;
+    }
+  }
+
+  async sendPasswordResetEmail(
+    to: string,
+    resetUrl: string,
+    expiresAt: Date,
+  ): Promise<boolean> {
+    if (!this.transporter) {
+      // Never log the link: it grants access to the account until it expires.
+      this.logger.warn(
+        `SMTP não configurado; e-mail de redefinição de senha não enviado para ${to}.`,
+      );
+      return false;
+    }
+
+    const expiresAtText = expiresAt.toLocaleString('fr-FR');
+    const text = [
+      'Bonjour,',
+      '',
+      'Une demande de réinitialisation du mot de passe a été faite pour votre compte EduHaiti.',
+      `Pour choisir un nouveau mot de passe, ouvrez ce lien (valable jusqu'au ${expiresAtText}) :`,
+      resetUrl,
+      '',
+      "Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe reste inchangé.",
+      '',
+      '---',
+      '',
+      'Bonjou,',
+      'Yo mande chanje modpas kont EduHaiti ou a.',
+      `Pou chwazi yon nouvo modpas, louvri lyen sa a (li bon jiska ${expiresAtText}) :`,
+      resetUrl,
+      '',
+      'Si se pa ou ki fè demann sa a, pa okipe mesaj la: modpas ou pa chanje.',
+    ].join('\n');
+
+    const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#0f2a4a">
+  <h2 style="margin:0 0 12px">EduHaiti</h2>
+  <p>Une demande de réinitialisation du mot de passe a été faite pour votre compte.</p>
+  <p style="margin:24px 0"><a href="${resetUrl}" style="background:#0f2a4a;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold">Choisir un nouveau mot de passe</a></p>
+  <p style="font-size:13px;color:#555">Lien valable jusqu'au ${expiresAtText}. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>
+  <hr style="border:none;border-top:1px solid #ddd;margin:20px 0">
+  <p>Yo mande chanje modpas kont ou a. <a href="${resetUrl}">Klike la a pou chwazi yon nouvo modpas</a>.</p>
+  <p style="font-size:13px;color:#555">Lyen an bon jiska ${expiresAtText}. Si se pa ou ki fè demann lan, pa okipe mesaj la.</p>
+</div>`;
+
+    try {
+      await this.transporter.sendMail({
+        from: this.fromAddress,
+        to,
+        subject: 'Réinitialisation du mot de passe / Chanje modpas - EduHaiti',
+        text,
+        html,
+      });
+      this.logger.log(`E-mail de redefinição de senha enviado para: ${to}`);
+      return true;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Falha ao enviar e-mail de redefinição para ${to} (${reason}).`,
       );
       return false;
     }

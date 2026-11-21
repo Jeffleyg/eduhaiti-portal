@@ -59,12 +59,24 @@ describe('FamilyAccessController', () => {
     const svc = autoMock();
     const auth = autoMock();
     const ctrl = new FamilyAccessController(svc as any, auth as any);
-    const family = { studentId: 'st', guardianId: 'g', guardianName: 'Jean', guardianPhone: '+50937123456' };
+    const family = {
+      studentId: 'st',
+      guardianId: 'g',
+      guardianName: 'Jean',
+      guardianPhone: '+50937123456',
+    };
 
     await ctrl.requestAccessCode({ enrollmentNumber: 'E1', phone: '37123456' });
-    await ctrl.verifyAccessCode({ enrollmentNumber: 'E1', phone: '37123456', code: '123456' });
+    await ctrl.verifyAccessCode({
+      enrollmentNumber: 'E1',
+      phone: '37123456',
+      code: '123456',
+    });
     await ctrl.getFamilyOverview({ family });
-    await ctrl.createFamilyContactRequest({ family }, { subject: 's', body: 'b', urgent: true });
+    await ctrl.createFamilyContactRequest(
+      { family },
+      { subject: 's', body: 'b', urgent: true },
+    );
 
     expect(auth.requestCode).toHaveBeenCalledWith('E1', '37123456');
     expect(auth.verifyCode).toHaveBeenCalledWith('E1', '37123456', '123456');
@@ -86,18 +98,44 @@ describe('FamilyAccessController', () => {
 
     await ctrl.listFamilyContactRequests({ user: { schoolId: 's' } });
     await ctrl.listFamilyContactRequests({});
-    await ctrl.respondFamilyContactRequest('r', { user: { sub: 'u', schoolId: 's' } }, {
-      responseMessage: 'ok',
-      notifyFamily: true,
-    });
+    await ctrl.respondFamilyContactRequest(
+      'r',
+      { user: { sub: 'u', schoolId: 's' } },
+      {
+        responseMessage: 'ok',
+        notifyFamily: true,
+      },
+    );
     await ctrl.respondFamilyContactRequest('r', {}, { responseMessage: 'ok' });
-    await ctrl.createSchoolFamilyNotice({ user: { sub: 'u', schoolId: 's' } }, notice);
+    await ctrl.createSchoolFamilyNotice(
+      { user: { sub: 'u', schoolId: 's' } },
+      notice,
+    );
     await ctrl.createSchoolFamilyNotice({}, notice);
 
-    expect(svc.listFamilyContactRequests.mock.calls).toEqual([['s'], [undefined]]);
+    expect(svc.listFamilyContactRequests.mock.calls).toEqual([
+      ['s'],
+      [undefined],
+    ]);
     expect(svc.respondToFamilyContactRequest.mock.calls).toEqual([
-      [{ requestId: 'r', responseMessage: 'ok', notifyFamily: true, actorId: 'u', schoolId: 's' }],
-      [{ requestId: 'r', responseMessage: 'ok', notifyFamily: undefined, actorId: '', schoolId: undefined }],
+      [
+        {
+          requestId: 'r',
+          responseMessage: 'ok',
+          notifyFamily: true,
+          actorId: 'u',
+          schoolId: 's',
+        },
+      ],
+      [
+        {
+          requestId: 'r',
+          responseMessage: 'ok',
+          notifyFamily: undefined,
+          actorId: '',
+          schoolId: undefined,
+        },
+      ],
     ]);
     expect(svc.createSchoolFamilyNotice.mock.calls).toEqual([
       [{ ...notice, actorId: 'u', schoolId: 's' }],
@@ -111,13 +149,25 @@ describe('AttendanceController', () => {
     const svc = autoMock();
     const access = autoMock();
     const ctrl = new AttendanceController(svc as any, access as any);
-    const payload: any = { studentId: 's', classId: 'c', date: new Date(), status: 'PRESENT' };
+    const payload: any = {
+      studentId: 's',
+      classId: 'c',
+      date: new Date(),
+      status: 'PRESENT',
+    };
     const teacher = { sub: 't', role: Role.TEACHER };
 
-    await ctrl.markAttendance({ user: { sub: 'a', role: Role.ADMIN } }, payload);
+    await ctrl.markAttendance(
+      { user: { sub: 'a', role: Role.ADMIN } },
+      payload,
+    );
     await ctrl.markAttendance({}, payload);
     await ctrl.deleteAttendance('id');
-    await ctrl.getMyAttendance({ user: { sub: 's' } }, '2026-01-01', '2026-01-31');
+    await ctrl.getMyAttendance(
+      { user: { sub: 's' } },
+      '2026-01-01',
+      '2026-01-31',
+    );
     await ctrl.getMyAttendance({});
     await ctrl.getMyStats({ user: { sub: 's' } }, 'c');
     await ctrl.getMyStats({}, 'c');
@@ -152,10 +202,19 @@ describe('AuthController', () => {
 
     await ctrl.login({ email: 'e', password: 'p' } as any);
     await ctrl.getTestCredentials();
+    await ctrl.forgotPassword({ email: 'e' } as any);
+    await ctrl.checkResetToken({ token: 't' } as any);
+    await ctrl.resetPassword({ token: 't', newPassword: 'n' } as any);
     await ctrl.logout(req);
     await ctrl.logout({});
-    await ctrl.changePassword(req, { currentPassword: 'a', newPassword: 'b' } as any);
-    await ctrl.changePassword({}, { currentPassword: 'a', newPassword: 'b' } as any);
+    await ctrl.changePassword(req, {
+      currentPassword: 'a',
+      newPassword: 'b',
+    } as any);
+    await ctrl.changePassword({}, {
+      currentPassword: 'a',
+      newPassword: 'b',
+    } as any);
     await ctrl.getProfile(req);
     await ctrl.getProfile({});
     await ctrl.updateProfile(req, { name: 'n' } as any);
@@ -163,6 +222,9 @@ describe('AuthController', () => {
 
     expect(svc.login).toHaveBeenCalledWith('e', 'p');
     expect(svc.getTestCredentials).toHaveBeenCalled();
+    expect(svc.forgotPassword).toHaveBeenCalledWith('e');
+    expect(svc.checkResetToken).toHaveBeenCalledWith('t');
+    expect(svc.resetPassword).toHaveBeenCalledWith('t', 'n');
     expect(svc.logout.mock.calls).toEqual([
       ['u', 'e'],
       ['', undefined],
@@ -184,7 +246,10 @@ describe('AuthController', () => {
     await expect(ctrl.uploadProfilePhoto({}, undefined)).rejects.toBeInstanceOf(
       BadRequestException,
     );
-    await ctrl.uploadProfilePhoto({ user: { sub: 'u' } }, { filename: 'f.jpg' });
+    await ctrl.uploadProfilePhoto(
+      { user: { sub: 'u' } },
+      { filename: 'f.jpg' },
+    );
     await ctrl.uploadProfilePhoto({}, { filename: 'g.jpg' });
     expect(svc.updateProfile.mock.calls).toEqual([
       ['u', { profilePhoto: '/uploads/profile-photos/f.jpg' }],
@@ -264,56 +329,109 @@ describe('ContentDeliveryController', () => {
     const { manifest, access, ctrl } = make();
     await ctrl.getManifest(teacher as any, { since: 'x', classId: 'c' } as any);
     expect(access.assertCanViewClass).toHaveBeenCalledWith('c', teacher.user);
-    expect(manifest.buildDeltaManifest).toHaveBeenCalledWith({ since: 'x', classIds: ['c'] });
+    expect(manifest.buildDeltaManifest).toHaveBeenCalledWith({
+      since: 'x',
+      classIds: ['c'],
+    });
   });
 
   it("limits the full manifest to the caller's classes", async () => {
     const { manifest, prisma, ctrl } = make();
     prisma.class.findMany.mockResolvedValue([{ id: 'c1' }, { id: 'c2' }]);
 
-    await ctrl.getManifest({ user: { sub: 's', role: Role.STUDENT } } as any, {} as any);
+    await ctrl.getManifest(
+      { user: { sub: 's', role: Role.STUDENT } } as any,
+      {} as any,
+    );
     await ctrl.getManifest(teacher as any, {} as any);
-    await ctrl.getManifest({ user: { sub: 'a', role: Role.ADMIN, schoolId: 'sc' } } as any, {} as any);
-    expect(prisma.class.findMany.mock.calls.map((c: any) => c[0].where)).toEqual([
+    await ctrl.getManifest(
+      { user: { sub: 'a', role: Role.ADMIN, schoolId: 'sc' } } as any,
+      {} as any,
+    );
+    expect(
+      prisma.class.findMany.mock.calls.map((c: any) => c[0].where),
+    ).toEqual([
       { students: { some: { id: 's' } } },
       { teacherId: 't' },
       { academicYear: { schoolId: 'sc' } },
     ]);
-    expect(manifest.buildDeltaManifest).toHaveBeenLastCalledWith({ since: undefined, classIds: ['c1', 'c2'] });
+    expect(manifest.buildDeltaManifest).toHaveBeenLastCalledWith({
+      since: undefined,
+      classIds: ['c1', 'c2'],
+    });
 
-    await ctrl.getManifest({ user: { sub: 'o', role: Role.OWNER } } as any, {} as any);
-    expect(manifest.buildDeltaManifest).toHaveBeenLastCalledWith({ since: undefined, classIds: undefined });
+    await ctrl.getManifest(
+      { user: { sub: 'o', role: Role.OWNER } } as any,
+      {} as any,
+    );
+    expect(manifest.buildDeltaManifest).toHaveBeenLastCalledWith({
+      since: undefined,
+      classIds: undefined,
+    });
 
     await expect(
-      ctrl.getManifest({ user: { sub: 'a', role: Role.ADMIN } } as any, {} as any),
+      ctrl.getManifest(
+        { user: { sub: 'a', role: Role.ADMIN } } as any,
+        {} as any,
+      ),
     ).rejects.toBeInstanceOf(ForbiddenException);
-    await expect(ctrl.getManifest({} as any, {} as any)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(ctrl.getManifest({} as any, {} as any)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 
   it('resolves the target student for audio summaries', async () => {
     const { manifest, prisma, ctrl } = make();
-    await ctrl.getLessonAudioSummary({ user: { sub: 'st', role: Role.STUDENT } } as any, 'other');
+    await ctrl.getLessonAudioSummary(
+      { user: { sub: 'st', role: Role.STUDENT } } as any,
+      'other',
+    );
     await ctrl.getLessonAudioSummary({ user: { role: Role.STUDENT } } as any);
 
     prisma.class.findFirst.mockResolvedValueOnce({ id: 'c' });
     await ctrl.getLessonAudioSummary(teacher as any, 'st2');
-    expect(prisma.class.findFirst.mock.calls[0][0].where).toEqual({ teacherId: 't', students: { some: { id: 'st2' } } });
+    expect(prisma.class.findFirst.mock.calls[0][0].where).toEqual({
+      teacherId: 't',
+      students: { some: { id: 'st2' } },
+    });
 
     prisma.user.findFirst.mockResolvedValueOnce({ id: 'st3' });
-    await ctrl.getLessonAudioSummary({ user: { sub: 'a', role: Role.ADMIN, schoolId: 'sc' } } as any, 'st3');
-    expect(prisma.user.findFirst.mock.calls[0][0].where).toEqual({ id: 'st3', schoolId: 'sc' });
+    await ctrl.getLessonAudioSummary(
+      { user: { sub: 'a', role: Role.ADMIN, schoolId: 'sc' } } as any,
+      'st3',
+    );
+    expect(prisma.user.findFirst.mock.calls[0][0].where).toEqual({
+      id: 'st3',
+      schoolId: 'sc',
+    });
 
-    await ctrl.getLessonAudioSummary({ user: { sub: 'o', role: Role.OWNER } } as any, 'st4');
-    expect(manifest.buildLessonAudioSummary.mock.calls).toEqual([['st'], [''], ['st2'], ['st3'], ['st4']]);
+    await ctrl.getLessonAudioSummary(
+      { user: { sub: 'o', role: Role.OWNER } } as any,
+      'st4',
+    );
+    expect(manifest.buildLessonAudioSummary.mock.calls).toEqual([
+      ['st'],
+      [''],
+      ['st2'],
+      ['st3'],
+      ['st4'],
+    ]);
   });
 
   it('refuses audio summaries of students outside the caller reach', async () => {
     const { manifest, prisma, ctrl } = make();
-    await expect(ctrl.getLessonAudioSummary(teacher as any)).rejects.toBeInstanceOf(BadRequestException);
-    prisma.class.findFirst.mockResolvedValueOnce(null);
-    await expect(ctrl.getLessonAudioSummary(teacher as any, 'x')).rejects.toBeInstanceOf(ForbiddenException);
     await expect(
-      ctrl.getLessonAudioSummary({ user: { sub: 'a', role: Role.ADMIN } } as any, 'x'),
+      ctrl.getLessonAudioSummary(teacher as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    prisma.class.findFirst.mockResolvedValueOnce(null);
+    await expect(
+      ctrl.getLessonAudioSummary(teacher as any, 'x'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      ctrl.getLessonAudioSummary(
+        { user: { sub: 'a', role: Role.ADMIN } } as any,
+        'x',
+      ),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(manifest.buildLessonAudioSummary).not.toHaveBeenCalled();
   });
@@ -322,8 +440,12 @@ describe('ContentDeliveryController', () => {
     const { audio, prisma, access, ctrl } = make();
     const req: any = { user: { sub: 'u' } };
 
-    access.assertCanManageResource.mockRejectedValueOnce(new ForbiddenException());
-    await expect(ctrl.convertToAudio({ resourceId: 'r' } as any, req)).rejects.toBeInstanceOf(ForbiddenException);
+    access.assertCanManageResource.mockRejectedValueOnce(
+      new ForbiddenException(),
+    );
+    await expect(
+      ctrl.convertToAudio({ resourceId: 'r' } as any, req),
+    ).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.resource.findUnique).not.toHaveBeenCalled();
 
     prisma.resource.findUnique.mockResolvedValue(null);
@@ -369,7 +491,10 @@ describe('ContentDeliveryController', () => {
     });
     expect(prisma.auditLog.create).toHaveBeenCalled();
 
-    prisma.resource.findUnique.mockResolvedValue({ ...source, description: 'd' });
+    prisma.resource.findUnique.mockResolvedValue({
+      ...source,
+      description: 'd',
+    });
     await ctrl.convertToAudio({ resourceId: 'r' } as any, req);
     expect(prisma.resource.create.mock.calls[1][0].data.description).toBe('d');
   });
@@ -381,7 +506,12 @@ describe('GradesController', () => {
     const access = autoMock();
     const ctrl = new GradesController(svc as any, access as any);
     const t = { user: { sub: 't', role: Role.TEACHER } };
-    const payload: any = { studentId: 's', classId: 'c', disciplineId: 'd', score: 8 };
+    const payload: any = {
+      studentId: 's',
+      classId: 'c',
+      disciplineId: 'd',
+      score: 8,
+    };
 
     await ctrl.createGrade(t, payload);
     await ctrl.createGrade({}, payload);
@@ -429,7 +559,11 @@ describe('ResourcesController', () => {
     const svc = autoMock();
     const optimizer = autoMock();
     const access = autoMock();
-    const ctrl = new ResourcesController(svc as any, optimizer as any, access as any);
+    const ctrl = new ResourcesController(
+      svc as any,
+      optimizer as any,
+      access as any,
+    );
     return { svc, optimizer, access, ctrl };
   };
 
@@ -439,7 +573,10 @@ describe('ResourcesController', () => {
     await ctrl.getByClass(req, 'c');
     await ctrl.getLibraryBySeries(req, 'se');
     await ctrl.getLibraryBySchool(req, 's');
-    await ctrl.getLibraryBySchool({ user: { role: Role.OWNER, schoolId: 's' } }, 'x');
+    await ctrl.getLibraryBySchool(
+      { user: { role: Role.OWNER, schoolId: 's' } },
+      'x',
+    );
     await ctrl.getLibraryBySchool({}, 'x');
     await expect(ctrl.getLibraryBySchool(req, 'x')).rejects.toBeInstanceOf(
       ForbiddenException,
@@ -472,10 +609,22 @@ describe('ResourcesController', () => {
       { title: 't', description: 'd' },
       req,
     );
-    expect(out).toEqual({ id: 'r1', optimization: { contentHash: 'h', sizeBytes: 5 } });
+    expect(out).toEqual({
+      id: 'r1',
+      optimization: { contentHash: 'h', sizeBytes: 5 },
+    });
     expect(access.assertCanManageClass).toHaveBeenCalledWith('c', req.user);
-    expect(optimizer.optimizeUploadedAsset).toHaveBeenCalledWith('uploads/f.pdf');
-    expect(svc.create).toHaveBeenLastCalledWith('c', 't', 'd', 'uploads/o.pdf', 'pdf', 't');
+    expect(optimizer.optimizeUploadedAsset).toHaveBeenCalledWith(
+      'uploads/f.pdf',
+    );
+    expect(svc.create).toHaveBeenLastCalledWith(
+      'c',
+      't',
+      'd',
+      'uploads/o.pdf',
+      'pdf',
+      't',
+    );
 
     optimizer.optimizeUploadedAsset.mockResolvedValue({
       optimizedPath: 'uploads/o2',
@@ -483,14 +632,28 @@ describe('ResourcesController', () => {
       contentHash: 'h',
       sizeBytes: 5,
     });
-    await ctrl.uploadResource('c', { filename: 'g', originalname: 'G.DOCX' }, { title: 't' }, req);
-    expect(svc.create).toHaveBeenLastCalledWith('c', 't', undefined, 'uploads/o2', 'docx', 't');
+    await ctrl.uploadResource(
+      'c',
+      { filename: 'g', originalname: 'G.DOCX' },
+      { title: 't' },
+      req,
+    );
+    expect(svc.create).toHaveBeenLastCalledWith(
+      'c',
+      't',
+      undefined,
+      'uploads/o2',
+      'docx',
+      't',
+    );
   });
 
   it('deletes after checking access', async () => {
     const { svc, access, ctrl } = make();
     await ctrl.deleteResource({ user: { sub: 't' } }, 'r');
-    expect(access.assertCanManageResource).toHaveBeenCalledWith('r', { sub: 't' });
+    expect(access.assertCanManageResource).toHaveBeenCalledWith('r', {
+      sub: 't',
+    });
     expect(svc.delete).toHaveBeenCalledWith('r');
   });
 });

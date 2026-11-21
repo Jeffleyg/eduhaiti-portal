@@ -1,5 +1,5 @@
-import { Eye, EyeOff, Lock, Mail } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { CircleCheck, Eye, EyeOff, Lock, Mail } from "lucide-react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { apiFetch } from "../../lib/api.js"
@@ -8,8 +8,10 @@ import { useAuth } from "../../context/AuthContext.jsx"
 function Login() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(location.state?.email ?? "")
+  const notice = location.state?.notice === "passwordReset" ? t("passwordResetNotice") : ""
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -170,9 +172,18 @@ function Login() {
             </div>
 
             <div>
-              <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
-                {t("password")}
-              </label>
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-navy/50">
+                  {t("password")}
+                </label>
+                <Link
+                  to="/forgot-password"
+                  state={email ? { email } : undefined}
+                  className="text-xs font-semibold text-brand-sky hover:text-brand-navy hover:underline"
+                >
+                  {t("forgotPassword")}
+                </Link>
+              </div>
               <div className="mt-2 flex items-center gap-3 rounded-2xl border border-brand-navy/10 bg-sand px-4 py-3 transition-all focus-within:border-brand-navy/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-sky/30">
                 <Lock className="h-5 w-5 text-brand-navy/60" aria-hidden="true" />
                 <input
@@ -197,6 +208,13 @@ function Login() {
                 </button>
               </div>
             </div>
+
+            {notice && !error ? (
+              <div role="status" className="flex items-center gap-2 rounded-2xl border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800">
+                <CircleCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {notice}
+              </div>
+            ) : null}
 
             {error ? (
               <div role="alert" className="rounded-2xl border border-brand-red/30 bg-brand-red/10 p-3 text-sm text-brand-red">
